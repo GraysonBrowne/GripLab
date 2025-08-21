@@ -17,7 +17,7 @@ An open-source Python tool for FSAE/Formula Student teams to process and analyze
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/yourusername/GripLab.git
+git clone https://github.com/{yourusername}/GripLab.git
 cd GripLab
 pip install -r requirements.txt
 ```
@@ -34,10 +34,10 @@ Example (Python script or Jupyter notebook):
 - [ ] Implement core data import  
 - [ ] Add 2D plotting functions  
 - [ ] Add 3D visualization  
-- [ ] Implement model fitting (Pacejka, polynomial)  
+- [ ] Implement model fitting (PAC2002, MF6.2)  
 - [ ] Documentation and tutorials  
 
-See [requirements.md](requirements.md) for full details.  
+See [project_requirements.md](project_requirements.md) for full details.  
 
 ---
 
