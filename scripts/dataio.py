@@ -55,6 +55,12 @@ def import_mat(filepath):
         # Stack channel data into a single array
         data = np.column_stack([file_data[chan] for chan in channels])
 
+        # Ensure 'SL' channel exists
+        if 'SL' not in channels:
+            channels.append('SL')
+            units.append('none')
+            data = np.column_stack([data,np.zeros(len(data),np.float64)])
+
         # Extract tire ID and rim width
         tire_info = file_data['tireid'][0].split(',')
         tire_id = tire_info[0]
@@ -108,6 +114,12 @@ def import_dat(filepath):
 
         # Stack channel data into a single array
         data = np.loadtxt(filepath,delimiter='\t',skiprows=3)
+
+        # Ensure 'SL' channel exists
+        if 'SL' not in channels:
+            channels.append('SL')
+            units.append('none')
+            data = np.column_stack([data,np.zeros(len(data),np.float64)])
 
         # Extract tire ID and rim width
         tire_match = re.search(r'Tire_Name=([^;]+)', first_three[0])
