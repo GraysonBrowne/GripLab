@@ -46,17 +46,29 @@ def import_mat(filepath):
         ValueError: If rim width cannot be extracted from the tire ID string.
     """
     try:
-        file = loadmat(filepath)
-        name = filepath.stem
-        channels = np.concatenate(file['channel'][0][0][0][0]).ravel().tolist()
-        units = np.concatenate(file['channel'][0][0][1][0]).ravel().tolist()
-        data = np.column_stack([file[chan] for chan in channels])
-        tire_id = file['tireid'][0].split(',')[0]
-        rim_width = re.search(r"\d+", file['tireid'][0].split(',')[1]).group()
+        # Load the .mat file
+        file_data = loadmat(filepath)
+        file_name = filepath.stem
+
+        # Extract channel names and units
+        channels = np.concatenate(file_data['channel'][0][0][0][0]).ravel().tolist()
+        units = np.concatenate(file_data['channel'][0][0][1][0]).ravel().tolist()
+
+        # Stack channel data into a single array
+        data = np.column_stack([file_data[chan] for chan in channels])
+
+        # Extract tire ID and rim width
+        tire_info = file_data['tireid'][0].split(',')
+        tire_id = tire_info[0]
+        rim_width = re.search(r"\d+", tire_info[1]).group()
+
+        # Determine unit system
         unit_system = 'USCS' if 'lb' in units else 'Metric'
-        coordinate_system = 'SAE' if 'coord' not in file.keys() else file['coord']
+
+        # Determine coordinate system
+        coordinate_system = 'SAE' if 'coord' not in file_data.keys() else file_data['coord']
         
-        logger.info(f"{name} successfully imported.")
+        logger.info(f"{file_name} successfully imported.")
     except Exception as e:
         logger.error(f"Error importing .MAT file {e}")
-    return dataset(filepath,name,channels,units,data,tire_id,rim_width,unit_system,coordinate_system)
+    return dataset(filepath,file_name,channels,units,data,tire_id,rim_width,unit_system,coordinate_system)
