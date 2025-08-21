@@ -13,15 +13,20 @@ The goal of this project is to develop an open-source Python application to help
 ### 2.2 Data Processing and Manipulation
 - Filter, smooth, and normalize raw data.  
 - Select and subset data (e.g., specific loads, pressures, slip ranges).  
-- Perform unit conversions where applicable.  
+- Perform unit/coordinate system conversions where applicable.  
 - Handle missing or corrupt data gracefully.  
-- Combine datasets
-- Parse/remove unwanted data points
+- Combine datasets.
+- Parse/remove unwanted data points.
+- Custom math channels.
 
 ### 2.3 Visualization
 - **2D Plots:**  
   - Tire forces vs. slip angle, slip ratio, normal load, etc.  
   - Overlay experimental data and fitted model results.  
+  - Colorbar option for third variable.
+  - Set marker size, color, and downsample rate.
+  - Find slope and peak value of model plots.
+  - Subplots and multichannel overlays. 
 - **3D Plots:**  
   - Surface plots (e.g., lateral force vs. slip angle & normal load).  
   - Interactive rotation and zoom functionality.  
@@ -48,7 +53,7 @@ The goal of this project is to develop an open-source Python application to help
 - Vehicle-level simulation is not included (students can export fitted models for use in external simulation tools).  
 
 ## 5. Future Enhancements (Optional)
-- Support for additional tire models (e.g., MF-Tyre, Dugoff).  
+- Support for additional tire models (e.g., brush, rigid-ring).  
 - Automated report generation (plots + parameters).  
 - Web-based interface for easier accessibility.  
 - Integration with vehicle simulation software (CarSim, Adams, etc.).  
