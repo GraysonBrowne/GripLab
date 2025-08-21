@@ -1,5 +1,2 @@
 numpy
-pandas
-matplotlib
 scipy
-plotly
