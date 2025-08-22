@@ -1,4 +1,4 @@
-# Data import/export functions
+# scripts/dataio.py
 import numpy as np
 from numpy.typing import NDArray
 from scipy.io import loadmat
@@ -7,6 +7,7 @@ import re
 from itertools import islice
 from dataclasses import dataclass
 from logger_setup import logger
+from unit_conversion import UnitSystemConverter
 
 @dataclass
 class dataset:
@@ -14,6 +15,7 @@ class dataset:
     name: str
     channels: list
     units: list
+    unit_types: list
     data: NDArray[np.float64]
     tire_id: str
     rim_width: str
@@ -34,6 +36,7 @@ def import_mat(filepath):
             - file_name (str): The base name of the file without extension.
             - channels (list): List of channel names.
             - units (list): List of units corresponding to each channel.
+            - unit_types (list): List of unit types corresponding to each channel.
             - data (np.ndarray): 2D array of channel data.
             - tire_id (str): Tire identifier extracted from the file.
             - rim_width (str): Rim width extracted from the tire ID string.
@@ -51,6 +54,7 @@ def import_mat(filepath):
         # Extract channel names and units
         channels = np.concatenate(file_data['channel'][0][0][0][0]).ravel().tolist()
         units = np.concatenate(file_data['channel'][0][0][1][0]).ravel().tolist()
+        unit_types = UnitSystemConverter.map_channels_to_types(channels)
 
         # Stack channel data into a single array
         data = np.column_stack([file_data[chan] for chan in channels])
@@ -77,7 +81,8 @@ def import_mat(filepath):
         logger.info(f"{file_name} successfully imported.")
     except Exception as e:
         logger.error(f"Error importing .MAT file {e}")
-    return dataset(filepath,file_name,channels,units,data,tire_id,rim_width,unit_system,coordinate_system)
+    return dataset(filepath, file_name, channels, units, unit_types, data,
+                   tire_id, rim_width, unit_system, coordinate_system)
 
 def import_dat(filepath):
     """
@@ -90,11 +95,12 @@ def import_dat(filepath):
         dataset: An instance of the dataset class containing:
             - filepath (os.PathLike): The original file path.
             - file_name (str): The base name of the file without extension.
-            - channels (list of str): List of channel names.
-            - units (list of str): List of units corresponding to each channel.
+            - channels (list): List of channel names.
+            - units (list): List of units corresponding to each channel.
+            - unit_types (list): List of unit types corresponding to each channel.
             - data (np.ndarray): 2D array of channel data.
             - tire_id (str): Tire identifier extracted from the file.
-            - rim_width (str or None): Rim width extracted from the tire ID string.
+            - rim_width (str): Rim width extracted from the tire ID string.
             - unit_system (str): 'USCS' if units are in pounds, otherwise 'Metric'.
             - coordinate_system (str): Extracted coordinate system, defaults to 'SAE' if not found.
 
@@ -111,6 +117,7 @@ def import_dat(filepath):
         # Extract channel names and units
         channels = first_three[1].strip().split('\t')
         units = first_three[2].strip().split('\t')
+        unit_types = UnitSystemConverter.map_channels_to_types(channels)
 
         # Stack channel data into a single array
         data = np.loadtxt(filepath,delimiter='\t',skiprows=3)
@@ -139,4 +146,5 @@ def import_dat(filepath):
         logger.info(f"{file_name} successfully imported.")
     except Exception as e:
         logger.error(f"Error importing .DAT/.TXT file {e}")
-    return dataset(filepath,file_name,channels,units,data,tire_id,rim_width,unit_system,coordinate_system)
+    return dataset(filepath, file_name, channels, units, unit_types, data,
+                   tire_id, rim_width, unit_system, coordinate_system)
