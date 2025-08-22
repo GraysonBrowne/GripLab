@@ -80,13 +80,16 @@ class UnitSystemConverter:
         Returns:
             list of unit types, aligned with input channels
         """
-        # Build reverse lookup {channel -> unit_type}
-        channel_to_type = {
-            ch: t for t, chs in cls.unit_types.items() for ch in chs
-        }
-
-        # Map channels, use "none" if not found
-        return [channel_to_type.get(ch, "none") for ch in channels]
+        try:
+            # Build reverse lookup {channel -> unit_type}
+            channel_to_type = {
+                ch: t for t, chs in cls.unit_types.items() for ch in chs
+            }
+            
+            # Map channels, use "none" if not found
+            return [channel_to_type.get(ch, "none") for ch in channels]
+        except Exception as e:
+            logger.error(f"Error determining unit types: {e}")
     
     @classmethod
     def convert_dataset(cls, dataset, to_system: str):
@@ -100,55 +103,58 @@ class UnitSystemConverter:
         Returns:
             dataset: The converted dataset with updated units and data.
         """
-
-        from_system = dataset.unit_system
-        if from_system == to_system:
-            return dataset
-        
-        converted_data = dataset.data.copy()
-        updated_units = []
-
-        logger.info(f"Converting {dataset.name} from {from_system} to {to_system}")
-        for i, utype in enumerate(dataset.unit_types):
-            if utype == "none":
-                updated_units.append("none")
-                continue
-
-            # Get definitions
-            defs = cls.unit_definitions[utype]
-
-            from_def = defs[from_system]
-            to_def = defs[to_system]
-
-            # Handle temperature offset
-            if isinstance(from_def["offset"], tuple):
-                from_offset = from_def["offset"][0]
-                to_offset = to_def["offset"]
-            elif isinstance(to_def["offset"], tuple):
-                from_offset = from_def["offset"]
-                to_offset = to_def["offset"][1]
-            else:
-                from_offset = from_def["offset"]
-                to_offset = to_def["offset"]
-
-            if from_def["unit"] == to_def["unit"]:
-                # No conversion needed
-                converted_data[:, i] = converted_data[:, i] - from_offset
-                updated_units.append(to_def["unit"])
-                continue
+        try:
+            from_system = dataset.unit_system
+            if from_system == to_system:
+                return dataset
             
-            # Convert to SI (base)
-            values_si = (converted_data[:, i] * from_def["factor"]) + from_offset
+            converted_data = dataset.data.copy()
+            updated_units = []
 
-            # Convert SI → target
-            converted_data[:, i] = (values_si / to_def["factor"]) - to_offset
+            logger.info(f"Converting {dataset.name} from {from_system} to {to_system}")
+            for i, utype in enumerate(dataset.unit_types):
+                if utype == "none":
+                    updated_units.append("none")
+                    continue
 
-            updated_units.append(to_def["unit"])
+                # Get definitions
+                defs = cls.unit_definitions[utype]
 
-        # Update dataset with new unit system and converted data
-        dataset.data = converted_data 
-        dataset.unit_system = to_system
-        dataset.units = updated_units
+                from_def = defs[from_system]
+                to_def = defs[to_system]
 
-        return dataset
+                # Handle temperature offset
+                if isinstance(from_def["offset"], tuple):
+                    from_offset = from_def["offset"][0]
+                    to_offset = to_def["offset"]
+                elif isinstance(to_def["offset"], tuple):
+                    from_offset = from_def["offset"]
+                    to_offset = to_def["offset"][1]
+                else:
+                    from_offset = from_def["offset"]
+                    to_offset = to_def["offset"]
+
+                if from_def["unit"] == to_def["unit"]:
+                    # No conversion needed
+                    converted_data[:, i] = converted_data[:, i] - from_offset
+                    updated_units.append(to_def["unit"])
+                    continue
+
+                # Convert to SI (base)
+                values_si = (converted_data[:, i] * from_def["factor"]) + from_offset
+
+                # Convert SI → target
+                converted_data[:, i] = (values_si / to_def["factor"]) - to_offset
+
+                updated_units.append(to_def["unit"])
+
+            # Update dataset with new unit system and converted data
+            dataset.data = converted_data 
+            dataset.unit_system = to_system
+            dataset.units = updated_units
+
+            logger.info(f"Conversion complete: {dataset.name} now in {to_system} system")
+            return dataset
+        except Exception as e:
+            logger.error(f"Error converting units: {e}")
 
