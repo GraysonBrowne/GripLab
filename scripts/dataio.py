@@ -8,6 +8,7 @@ from itertools import islice
 from dataclasses import dataclass
 from logger_setup import logger
 from unit_conversion import UnitSystemConverter
+from cmd_generator import CmdChannelGenerator
 
 @dataclass
 class dataset:
@@ -54,7 +55,6 @@ def import_mat(filepath):
         # Extract channel names and units
         channels = np.concatenate(file_data['channel'][0][0][0][0]).ravel().tolist()
         units = np.concatenate(file_data['channel'][0][0][1][0]).ravel().tolist()
-        unit_types = UnitSystemConverter.map_channels_to_types(channels)
 
         # Stack channel data into a single array
         data = np.column_stack([file_data[chan] for chan in channels])
@@ -77,6 +77,12 @@ def import_mat(filepath):
 
         # Determine coordinate system
         coordinate_system = 'SAE' if 'coord' not in file_data.keys() else file_data['coord']
+
+        # Create command channels if needed
+        channels, units, data = CmdChannelGenerator.create_cmd_channels(channels, units, data)
+        
+        # Map channels to unit types
+        unit_types = UnitSystemConverter.map_channels_to_types(channels)
         
         logger.info(f"{file_name} successfully imported.")
     except Exception as e:
@@ -117,7 +123,6 @@ def import_dat(filepath):
         # Extract channel names and units
         channels = first_three[1].strip().split('\t')
         units = first_three[2].strip().split('\t')
-        unit_types = UnitSystemConverter.map_channels_to_types(channels)
 
         # Stack channel data into a single array
         data = np.loadtxt(filepath,delimiter='\t',skiprows=3)
@@ -141,8 +146,13 @@ def import_dat(filepath):
         # Determine coordinate system
         coord_match = re.search(r'Coordinate_System=([^;]+)', first_three[0])
         coordinate_system = coord_match.group(1) if coord_match else 'SAE'
-            
+
+        # Create command channels if needed
+        channels, units, data = CmdChannelGenerator.create_cmd_channels(channels, units, data)
         
+        # Map channels to unit types
+        unit_types = UnitSystemConverter.map_channels_to_types(channels)
+            
         logger.info(f"{file_name} successfully imported.")
     except Exception as e:
         logger.error(f"Error importing .DAT/.TXT file {e}")

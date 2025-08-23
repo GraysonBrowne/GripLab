@@ -85,7 +85,7 @@ class UnitSystemConverter:
             channel_to_type = {
                 ch: t for t, chs in cls.unit_types.items() for ch in chs
             }
-            
+
             # Map channels, use "none" if not found
             return [channel_to_type.get(ch, "none") for ch in channels]
         except Exception as e:
@@ -157,4 +157,3 @@ class UnitSystemConverter:
             return dataset
         except Exception as e:
             logger.error(f"Error converting units: {e}")
-
