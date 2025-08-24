@@ -1,5 +1,6 @@
 # modules/unit_conversion.py
 import math
+from dataclasses import replace
 from logger_setup import logger
 
 class UnitSystemConverter:
@@ -111,7 +112,7 @@ class UnitSystemConverter:
                 return dataset
             
             # Create a copy of the dataset to avoid modifying the original
-            result = dataset.copy()
+            result = replace(dataset, data=dataset.data.copy())
 
             # Prepare for conversion
             converted_data = result.data.copy()

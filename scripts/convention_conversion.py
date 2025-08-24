@@ -1,4 +1,5 @@
 # scripts/convention_conversion.py
+from dataclasses import replace
 from logger_setup import logger
 
 class ConventionConverter:
@@ -51,7 +52,7 @@ class ConventionConverter:
             raise ValueError(f"Unsupported target convention: {target_convention}")
 
         # Create a copy of the dataset to avoid modifying the original
-        result = dataset.copy()
+        result = replace(dataset, data=dataset.data.copy())
 
         # Convert each channel as needed
         for idx, channel in enumerate(result.channels):
