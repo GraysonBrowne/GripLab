@@ -2,10 +2,13 @@
 import numpy as np
 from logger_setup import logger
 from processing import low_pass_filter
+from convention_conversion import ConventionConverter
 
 class CmdChannelGenerator:
-    # Assumes coordinate system is SAE for now
-    # look back at these values again once plotting is further along
+    # TODO:
+    # Confirm these values again once plotting is further along
+    # Make a unit conversion method to make the target dict less redundant
+
     # Target command values for various channels in different unit systems
     cmd_target = {
         'V': {
@@ -31,31 +34,34 @@ class CmdChannelGenerator:
     }
 
     @classmethod
-    def create_cmd_channels(cls, channels:list, units:list, data:np.ndarray, unit_system:str):
+    def create_cmd_channels(cls, channels: list, units: list, data: np.ndarray, 
+                            unit_system: str, sign_convention: str):
         """
-        Creates and appends command channels to the provided channel list based 
-        on target values. This method checks if command channels (e.g., 'CmdFZ',
-        'CmdP', etc.) already exist in the provided `channels` list. If not, it
-        generates new command channels by mapping each value in the specified 
-        channels to the nearest target value defined in `cls.cmd_target` for the 
-        given `unit_system`. For the 'FZ' channel, a low-pass filter is applied 
-        to reduce noise before matching to target values.
-        Parameters:
+        Creates command channels (e.g., CmdFZ, CmdP) based on specified target 
+        values for each channel and appends them to the dataset if they do not 
+        already exist. This method ensures that command channels are generated 
+        according to the specified unit system and sign convention, applying 
+        necessary conversions and filtering as needed. For each target channel, 
+        it maps the original data to the nearest target value, optionally 
+        applying a low-pass filter for specific channels (e.g., FZ) to reduce 
+        noise before matching.
+        Args:
             channels (list): List of existing channel names.
             units (list): List of units corresponding to each channel.
-            data (np.ndarray): 2D array of data, where each column corresponds 
-                to a channel.
-            unit_system (str): The unit system to use for target values 
-                (e.g., 'USCS', 'Metric').
+            data (np.ndarray): 2D array of shape containing the data.
+            unit_system (str): The unit system to use for target values (e.g., 'USCS', 'Metric').
+            sign_convention (str): The sign convention of the input data (e.g., 'SAE', 'ISO').
         Returns:
-            tuple: Updated (channels, units, data) with new command channels 
-                appended if created.
+            tuple: Updated (channels, units, data) with command channels 
+                appended if they were created.
         Raises:
             ValueError: If the specified unit system is not supported for a channel.
+            Exception: For any other errors encountered during processing.
         Notes:
-            - If all command channels already exist, the input is returned unchanged.
-            - The method logs the creation of new command channels or any errors 
-                encountered.
+            - If command channels already exist in the input, the method returns
+                 the original data unchanged.
+            - Data is internally converted to the 'SAE' convention for 
+                processing and converted back to the original convention if needed.
         """
         try:
             # Check if command channels already exist
@@ -66,6 +72,16 @@ class CmdChannelGenerator:
 
             new_channels, new_units, new_data = [], [], []
 
+            # Convert data to SAE convention for consistent processing
+            if sign_convention != 'SAE':    
+                logger.info(f"Converting data to SAE convention for command channel generation.")
+                data_sae = ConventionConverter.convert_channel_convention(channels,
+                                                                        data, 
+                                                                        sign_convention, 
+                                                                        target_convention = 'SAE')
+            else:
+                data_sae = data
+                                                                
             # Generate command channels
             for chan, targets in cls.cmd_target.items():
                 if f"Cmd{chan}" in channels:
@@ -82,9 +98,9 @@ class CmdChannelGenerator:
 
                 # For FZ, apply low-pass filter to reduce noise before matching
                 if chan == 'FZ':
-                    values = low_pass_filter(data[:, col_idx], cutoff_hz=1, fs=100, order=2)
+                    values = low_pass_filter(data_sae[:, col_idx], cutoff_hz=1, fs=100, order=2)
                 else:
-                    values = data[:, col_idx]
+                    values = data_sae[:, col_idx]
 
                 # Map each value to the nearest target
                 nearest = target_arr[np.abs(values[:, None] - target_arr).argmin(axis=1)]
@@ -98,10 +114,20 @@ class CmdChannelGenerator:
             if new_channels:
                 channels.extend(new_channels)
                 units.extend(new_units)
-                data = np.column_stack([data] + new_data)
+                data_sae = np.column_stack([data_sae] + new_data)
                 logger.info(f"Created {len(new_channels)} command channels: {', '.join(new_channels)}")
 
-            return (channels, units, data)
+            # Convert back to original sign convention if needed
+            if sign_convention != 'SAE':    
+                logger.info(f"Converting Cmd channels back to {sign_convention} convention.")
+                result = ConventionConverter.convert_channel_convention(channels, 
+                                                                        data_sae, 
+                                                                        current_convention = 'SAE', 
+                                                                        target_convention = sign_convention)
+            else:
+                result = data_sae
+
+            return (channels, units, result)
         except Exception as e:
             logger.error(f"Error creating command channels: {e}")
-            return (channels, units, data)
+            return (channels, units, result)

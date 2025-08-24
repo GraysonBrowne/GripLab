@@ -79,7 +79,11 @@ def import_mat(filepath):
         sign_convention = 'SAE' if 'sign' not in file_data.keys() else file_data['sign']
 
         # Create command channels if needed
-        channels, units, data = CmdChannelGenerator.create_cmd_channels(channels, units, data, unit_system)
+        channels, units, data = CmdChannelGenerator.create_cmd_channels(channels, 
+                                                                        units, 
+                                                                        data, 
+                                                                        unit_system, 
+                                                                        sign_convention)
         
         # Map channels to unit types
         unit_types = UnitSystemConverter.map_channels_to_types(channels)
@@ -87,8 +91,8 @@ def import_mat(filepath):
         logger.info(f"{file_name} successfully imported.")
     except Exception as e:
         logger.error(f"Error importing .MAT file {e}")
-    return dataset(filepath, file_name, channels, units, unit_types, data,
-                   tire_id, rim_width, unit_system, sign_convention)
+    return (dataset(filepath, file_name, channels, units, unit_types, data,
+                   tire_id, rim_width, unit_system, sign_convention))
 
 def import_dat(filepath):
     """
@@ -148,7 +152,11 @@ def import_dat(filepath):
         sign_convention = sign_match.group(1) if sign_match else 'SAE'
 
         # Create command channels if needed
-        channels, units, data = CmdChannelGenerator.create_cmd_channels(channels, units, data, unit_system)
+        channels, units, data = CmdChannelGenerator.create_cmd_channels(channels, 
+                                                                        units, 
+                                                                        data, 
+                                                                        unit_system, 
+                                                                        sign_convention)
         
         # Map channels to unit types
         unit_types = UnitSystemConverter.map_channels_to_types(channels)
@@ -156,5 +164,5 @@ def import_dat(filepath):
         logger.info(f"{file_name} successfully imported.")
     except Exception as e:
         logger.error(f"Error importing .DAT/.TXT file {e}")
-    return dataset(filepath, file_name, channels, units, unit_types, data,
-                   tire_id, rim_width, unit_system, sign_convention)
+    return (dataset(filepath, file_name, channels, units, unit_types, data,
+                   tire_id, rim_width, unit_system, sign_convention))
