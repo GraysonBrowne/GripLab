@@ -2,3 +2,4 @@ numpy
 scipy
 panel
 rich
+watchfiles
