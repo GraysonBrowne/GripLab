@@ -3,3 +3,4 @@ scipy
 panel
 rich
 watchfiles
+pandas
