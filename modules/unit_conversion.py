@@ -87,7 +87,8 @@ class UnitSystemConverter:
             }
 
             # Map channels, use "none" if not found
-            return [channel_to_type.get(ch, "none") for ch in channels]
+            channel_types = [channel_to_type.get(ch, "none") for ch in channels]
+            return channel_types
         except Exception as e:
             logger.error(f"Error determining unit types: {e}")
     
@@ -104,22 +105,27 @@ class UnitSystemConverter:
             dataset: The converted dataset with updated units and data.
         """
         try:
+            # Validate target system
             from_system = dataset.unit_system
             if from_system == to_system:
                 return dataset
             
-            converted_data = dataset.data.copy()
+            # Create a copy of the dataset to avoid modifying the original
+            result = dataset.copy()
+
+            # Prepare for conversion
+            converted_data = result.data.copy()
             updated_units = []
 
-            logger.info(f"Converting {dataset.name} from {from_system} to {to_system}")
-            for i, utype in enumerate(dataset.unit_types):
+            logger.info(f"Converting {result.name} from {from_system} to {to_system}")
+            # Convert each channel based on its unit type
+            for i, utype in enumerate(result.unit_types):
                 if utype == "none":
                     updated_units.append("none")
                     continue
 
                 # Get definitions
                 defs = cls.unit_definitions[utype]
-
                 from_def = defs[from_system]
                 to_def = defs[to_system]
 
@@ -148,12 +154,12 @@ class UnitSystemConverter:
 
                 updated_units.append(to_def["unit"])
 
-            # Update dataset with new unit system and converted data
-            dataset.data = converted_data 
-            dataset.unit_system = to_system
-            dataset.units = updated_units
+            # Update result with new unit system and converted data
+            result.data = converted_data 
+            result.unit_system = to_system
+            result.units = updated_units
 
-            logger.info(f"Conversion complete: {dataset.name} now in {to_system} system")
-            return dataset
+            logger.info(f"Conversion complete: {result.name} now in {to_system} system")
+            return result
         except Exception as e:
             logger.error(f"Error converting units: {e}")
