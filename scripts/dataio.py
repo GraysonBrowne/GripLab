@@ -23,6 +23,21 @@ class dataset:
     unit_system: str
     sign_convention: str
 
+class DataManager:
+    def __init__(self):
+        self._datasets = {}  # key: name, value: dataset object
+
+    def add_dataset(self, name, dataset):
+        self._datasets[name] = dataset
+
+    def get_dataset(self, name):
+        return self._datasets.get(name)
+
+    def list_datasets(self):
+        return list(self._datasets.keys())
+
+    def remove_dataset(self, name):
+        self._datasets.pop(name, None)
 
 def import_mat(filepath):
     """
