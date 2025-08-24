@@ -1,5 +1,6 @@
 # main.py
 import panel as pn
+import pandas as pd
 import sys
 from pathlib import Path
 from scripts.tk_utilities import Tk_utils 
@@ -11,7 +12,7 @@ pn.extension('tabulator')
 dm = IO.DataManager()
 
 class callback:
-    def import_data(event):
+    def import_data(clicks):
         # Open file dialog for user to select a data file
         file_path = Path(Tk_utils.select_file(filetypes=[('Valid File Types',
                                                           '*.mat *.dat *.txt')], 
@@ -39,15 +40,25 @@ class callback:
 
         # Add the imported dataset to the DataManager
         dm.add_dataset(name,data)
+
+        data_table.value = pd.DataFrame({'Dataset': dm.list_datasets()})
         logger.info(f"Data imported from {file_path.name}: {data}")
 
+## Sidebar Widgets
 import_button = pn.widgets.Button(name='Import Data', button_type='primary')
-pn.bind(callback.import_data, import_button, watch=True)
+pn.bind(callback.import_data, import_button.param.clicks, watch=True)
+
+data_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Dataset']), 
+                                  show_index=False, 
+                                  configuration={'columnDefaults':{'headerSort':False}},
+                                  selectable='checkbox',
+                                  sizing_mode='stretch_width',
+                                  )
 
 # Define the main application template
 template = pn.template.FastGridTemplate(
     title='GripLab',
-    sidebar=[import_button],
+    sidebar=[import_button, data_table],
     sidebar_width=300,
     header_background='#2A3F5F',
     header_color='white',
