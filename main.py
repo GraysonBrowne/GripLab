@@ -4,9 +4,11 @@ import sys
 from pathlib import Path
 from scripts.tk_utilities import Tk_utils 
 from scripts.logger_setup import logger
-from scripts.dataio import import_mat, import_dat
+import scripts.dataio as IO
 
 pn.extension('tabulator')
+
+dm = IO.DataManager()
 
 class callback:
     def import_data(event):
@@ -27,7 +29,9 @@ class callback:
         else:
             logger.error("Unsupported file type selected.")
             return
-        
+
+        # Add the imported dataset to the DataManager
+        dm.add_dataset(name,data)
         logger.info(f"Data imported from {file_path.name}: {data}")
 
 import_button = pn.widgets.Button(name='Import Data', button_type='primary')
