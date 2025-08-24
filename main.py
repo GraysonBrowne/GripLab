@@ -17,15 +17,22 @@ class callback:
                                                           '*.mat *.dat *.txt')], 
                                               initialdir='.'),)
         
+        name = file_path.stem
+
+        # Handle duplicate dataset names
+        if name in dm.list_datasets():
+            dm._datasets[name].copy += 1
+            name = f"{name} ({dm._datasets[name].copy})"
+        
         # If no file was selected, exit the function
         if str(file_path) == '.':
             return
         
         # Determine file type and import data accordingly
         if file_path.suffix.lower() == '.mat':
-            data = import_mat(file_path)
+            data = IO.import_mat(file_path, name)
         elif file_path.suffix.lower() in ['.dat', '.txt']:
-            data = import_dat(file_path)
+            data = IO.import_dat(file_path, name)
         else:
             logger.error("Unsupported file type selected.")
             return

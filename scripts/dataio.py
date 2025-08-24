@@ -22,6 +22,7 @@ class dataset:
     rim_width: str
     unit_system: str
     sign_convention: str
+    copy: int = 0
 
 class DataManager:
     def __init__(self):
@@ -39,7 +40,7 @@ class DataManager:
     def remove_dataset(self, name):
         self._datasets.pop(name, None)
 
-def import_mat(filepath):
+def import_mat(filepath, file_name):
     """
     Imports data from a MATLAB .mat file and constructs a dataset object with relevant metadata.
 
@@ -65,7 +66,6 @@ def import_mat(filepath):
     try:
         # Load the .mat file
         file_data = loadmat(filepath)
-        file_name = filepath.stem
 
         # Extract channel names and units
         channels = np.concatenate(file_data['channel'][0][0][0][0]).ravel().tolist()
@@ -109,7 +109,7 @@ def import_mat(filepath):
     return (dataset(filepath, file_name, channels, units, unit_types, data,
                    tire_id, rim_width, unit_system, sign_convention))
 
-def import_dat(filepath):
+def import_dat(filepath, file_name):
     """
     Imports data from a .dat/.txt file and constructs a dataset object with relevant metadata.
 
@@ -133,9 +133,7 @@ def import_dat(filepath):
         Exception: Logs and handles any errors encountered during file import.
     """
     try:
-        # Load the .dat file
-        file_name = filepath.stem
-
+        # Read the first three lines for metadata
         with open(filepath, "r") as f:
             first_three = list(islice(f, 3))
 
