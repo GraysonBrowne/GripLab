@@ -21,7 +21,7 @@ class dataset:
     tire_id: str
     rim_width: str
     unit_system: str
-    coordinate_system: str
+    sign_convention: str
 
 
 def import_mat(filepath):
@@ -42,7 +42,7 @@ def import_mat(filepath):
             - tire_id (str): Tire identifier extracted from the file.
             - rim_width (str): Rim width extracted from the tire ID string.
             - unit_system (str): 'USCS' if units are in pounds, otherwise 'Metric'.
-            - coordinate_system (str): Extracted coordinate system, defaults to 'SAE' if not found.
+            - sign_convention (str): Extracted sign convention, defaults to 'SAE' if not found.
 
     Raises:
         Exception: Logs and handles any errors encountered during file import.
@@ -75,8 +75,8 @@ def import_mat(filepath):
         # Determine unit system
         unit_system = 'USCS' if 'lb' in units else 'Metric'
 
-        # Determine coordinate system
-        coordinate_system = 'SAE' if 'coord' not in file_data.keys() else file_data['coord']
+        # Determine sign convention
+        sign_convention = 'SAE' if 'sign' not in file_data.keys() else file_data['sign']
 
         # Create command channels if needed
         channels, units, data = CmdChannelGenerator.create_cmd_channels(channels, units, data)
@@ -88,7 +88,7 @@ def import_mat(filepath):
     except Exception as e:
         logger.error(f"Error importing .MAT file {e}")
     return dataset(filepath, file_name, channels, units, unit_types, data,
-                   tire_id, rim_width, unit_system, coordinate_system)
+                   tire_id, rim_width, unit_system, sign_convention)
 
 def import_dat(filepath):
     """
@@ -108,7 +108,7 @@ def import_dat(filepath):
             - tire_id (str): Tire identifier extracted from the file.
             - rim_width (str): Rim width extracted from the tire ID string.
             - unit_system (str): 'USCS' if units are in pounds, otherwise 'Metric'.
-            - coordinate_system (str): Extracted coordinate system, defaults to 'SAE' if not found.
+            - sign_convention (str): Extracted sign convention, defaults to 'SAE' if not found.
 
     Raises:
         Exception: Logs and handles any errors encountered during file import.
@@ -143,9 +143,9 @@ def import_dat(filepath):
         # Determine unit system
         unit_system = 'USCS' if 'lb' in units else 'Metric'
 
-        # Determine coordinate system
-        coord_match = re.search(r'Coordinate_System=([^;]+)', first_three[0])
-        coordinate_system = coord_match.group(1) if coord_match else 'SAE'
+        # Determine sign convention
+        sign_match = re.search(r'Sign_Convention=([^;]+)', first_three[0])
+        sign_convention = sign_match.group(1) if sign_match else 'SAE'
 
         # Create command channels if needed
         channels, units, data = CmdChannelGenerator.create_cmd_channels(channels, units, data)
@@ -157,4 +157,4 @@ def import_dat(filepath):
     except Exception as e:
         logger.error(f"Error importing .DAT/.TXT file {e}")
     return dataset(filepath, file_name, channels, units, unit_types, data,
-                   tire_id, rim_width, unit_system, coordinate_system)
+                   tire_id, rim_width, unit_system, sign_convention)
