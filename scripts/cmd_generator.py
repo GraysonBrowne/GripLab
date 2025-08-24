@@ -73,15 +73,11 @@ class CmdChannelGenerator:
             new_channels, new_units, new_data = [], [], []
 
             # Convert data to SAE convention for consistent processing
-            if sign_convention != 'SAE':    
-                logger.info(f"Converting data to SAE convention for command channel generation.")
-                data_sae = ConventionConverter.convert_channel_convention(channels,
-                                                                        data, 
-                                                                        sign_convention, 
-                                                                        target_convention = 'SAE')
-            else:
-                data_sae = data
-                                                                
+            data_sae = ConventionConverter.convert_channel_convention(channels,
+                                                                      data, 
+                                                                      sign_convention, 
+                                                                      target_convention = 'SAE')
+                                                                    
             # Generate command channels
             for chan, targets in cls.cmd_target.items():
                 if f"Cmd{chan}" in channels:
@@ -118,14 +114,10 @@ class CmdChannelGenerator:
                 logger.info(f"Created {len(new_channels)} command channels: {', '.join(new_channels)}")
 
             # Convert back to original sign convention if needed
-            if sign_convention != 'SAE':    
-                logger.info(f"Converting Cmd channels back to {sign_convention} convention.")
-                result = ConventionConverter.convert_channel_convention(channels, 
-                                                                        data_sae, 
-                                                                        current_convention = 'SAE', 
-                                                                        target_convention = sign_convention)
-            else:
-                result = data_sae
+            result = ConventionConverter.convert_channel_convention(channels, 
+                                                                    data_sae, 
+                                                                    current_convention = 'SAE', 
+                                                                    target_convention = sign_convention)
 
             return (channels, units, result)
         except Exception as e:
