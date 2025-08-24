@@ -1,8 +1,8 @@
 # scripts/cmd_generator.py
 import numpy as np
-from logger_setup import logger
-from processing import low_pass_filter
-from convention_conversion import ConventionConverter
+from .logger_setup import logger
+from .processing import low_pass_filter
+from .convention_conversion import ConventionConverter
 
 class CmdChannelGenerator:
     # TODO:

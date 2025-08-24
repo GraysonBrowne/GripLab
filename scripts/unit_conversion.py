@@ -1,7 +1,7 @@
 # scripts/unit_conversion.py
 import math
 from dataclasses import replace
-from logger_setup import logger
+from .logger_setup import logger
 
 class UnitSystemConverter:
     """

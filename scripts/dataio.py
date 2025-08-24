@@ -6,9 +6,9 @@ import os
 import re
 from itertools import islice
 from dataclasses import dataclass
-from logger_setup import logger
-from unit_conversion import UnitSystemConverter
-from cmd_generator import CmdChannelGenerator
+from .logger_setup import logger
+from .unit_conversion import UnitSystemConverter
+from .cmd_generator import CmdChannelGenerator
 
 @dataclass
 class dataset:

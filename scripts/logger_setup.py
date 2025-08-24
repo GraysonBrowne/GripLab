@@ -1,4 +1,4 @@
-# modules/logger_setup.py
+# scripts/logger_setup.py
 import logging
 from pathlib import Path
 import sys

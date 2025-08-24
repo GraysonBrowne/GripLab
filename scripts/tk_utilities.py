@@ -1,5 +1,5 @@
 from tkinter import Tk, filedialog
-from logger_setup import logger
+from .logger_setup import logger
 
 class Tk_utils:
     def select_file(filetypes,initialdir,icon=''):

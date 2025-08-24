@@ -1,7 +1,7 @@
 # scripts/convention_conversion.py
 import numpy as np
 from dataclasses import replace
-from logger_setup import logger
+from .logger_setup import logger
 
 class ConventionConverter:
     # Sign convention definitions for various channels relative to SAE
