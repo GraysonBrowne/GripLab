@@ -41,6 +41,7 @@ class callback:
         # Add the imported dataset to the DataManager
         dm.add_dataset(name,data)
 
+        # Update the data table to reflect the newly added dataset
         data_table.value = pd.DataFrame({'Dataset': dm.list_datasets()})
         logger.info(f"Data imported from {file_path.name}: {data}")
 
@@ -55,11 +56,26 @@ data_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Dataset']),
                                   sizing_mode='stretch_width',
                                   )
 
+unit_select = pn.widgets.Select(name='Units', options=['USCS', 'Metric'], value='USCS', 
+                                description="USCS: lb, ft-lb, in, psi, mph, deg F \n\r" \
+                                "Metric: N, N-m, cm, kPa, kph, deg C",
+                                sizing_mode='stretch_width')
+sign_select = pn.widgets.Select(name='Sign Convention', 
+                                options=['SAE', 'Apdapted SAE', 'ISO', 'Adapted ISO'], 
+                                value='ISO',
+                                description="SAE: As supplied from TTC \n\r" \
+                                "Adapted SAE: Used in Pacejka 2012 \n\r" \
+                                "ISO: Standard used in most sim tools (ADAMS, MF-Tyre/MF-Swift, ect.) \n\r" \
+                                "Adapted ISO: Used in Besselink 2000",
+                                sizing_mode='stretch_width')
+
 # Define the main application template
 template = pn.template.FastGridTemplate(
     title='GripLab',
-    sidebar=[import_button, data_table],
-    sidebar_width=300,
+    sidebar=[import_button, 
+             data_table, 
+             pn.Row(unit_select, sign_select)],
+    #sidebar_width=300,
     header_background='#2A3F5F',
     header_color='white',
     accent_base_color='#2A3F5F',
