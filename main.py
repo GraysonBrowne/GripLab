@@ -46,6 +46,15 @@ class callback:
         data_table.value = pd.DataFrame({'Dataset': dm.list_datasets()})
         logger.info(f"Data imported from {file_path.name}: {data}")
 
+    def update_plot_type(event):
+        # Enable/disable axis selectors based on the selected plot type
+        states = plot_states.get(event)
+        x_select.disabled = states["x"]
+        y_select.disabled = states["y"]
+        z_select.disabled = states["z"]
+        color_select.disabled = states["c"]
+
+
 ## Sidebar Widgets
 import_button = pn.widgets.Button(name='Import Data', button_type='primary')
 pn.bind(callback.import_data, import_button.param.clicks, watch=True)
@@ -57,22 +66,53 @@ data_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Dataset']),
                                   sizing_mode='stretch_width',
                                   )
 
-unit_select = pn.widgets.Select(name='Units', options=['USCS', 'Metric'], value='USCS', 
+unit_select = pn.widgets.Select(name='Unit System', options=['USCS', 'Metric'], value='USCS', 
                                 description="USCS: lb, ft-lb, in, psi, mph, deg F \n\r" \
                                 "Metric: N, N-m, cm, kPa, kph, deg C",
                                 sizing_mode='stretch_width')
 sign_select = pn.widgets.Select(name='Sign Convention', 
-                                options=['SAE', 'Apdapted SAE', 'ISO', 'Adapted ISO'], 
+                                options=['SAE', 'Adapted SAE', 'ISO', 'Adapted ISO'], 
                                 value='ISO',
                                 description="SAE: As supplied from TTC \n\r" \
                                 "Adapted SAE: Used in Pacejka 2012 \n\r" \
-                                "ISO: Standard used in most sim tools (ADAMS, MF-Tyre/MF-Swift, ect.) \n\r" \
+                                "ISO: Used in most commercial sim tools (ADAMS, MF-Tyre/MF-Swift, ect.) \n\r" \
                                 "Adapted ISO: Used in Besselink 2000",
                                 sizing_mode='stretch_width')
 
 ## Main pane
+
 px.defaults.template = "plotly_dark" if pn.config.theme == "dark" else "plotly_white"
+# 
 fig = pn.pane.Plotly(px.scatter(), sizing_mode='stretch_both')
+
+# plot type selection
+plot_radio_group = pn.widgets.RadioBoxGroup(name='Plot Type', 
+                                       options=['2D', '2D Color', '3D', '3D Color'], 
+                                       inline=True)
+
+# Define plot states for enabling/disabling axis selectors
+plot_states = {
+    "2D":       {"x": False, "y": False, "z": True,  "c": True},
+    "2D Color": {"x": False, "y": False, "z": True,  "c": False},
+    "3D":       {"x": False, "y": False, "z": False, "c": True},
+    "3D Color": {"x": False, "y": False, "z": False, "c": False},
+}
+pn.bind(callback.update_plot_type, plot_radio_group.param.value, watch=True)
+
+x_select = pn.widgets.Select(name='X-Axis', options=['string'], 
+                             sizing_mode='stretch_width',
+                             disabled=False)
+y_select = pn.widgets.Select(name='Y-Axis', options=['string'], 
+                             sizing_mode='stretch_width',
+                             disabled=False)
+z_select = pn.widgets.Select(name='Z-Axis', options=['string'], 
+                             sizing_mode='stretch_width',
+                             disabled=True)
+color_select = pn.widgets.Select(name='Color', options=['string'], 
+                                 sizing_mode='stretch_width',
+                                 disabled=True)
+
+
 
 # Define the main application template
 template = pn.template.FastListTemplate(
@@ -80,7 +120,9 @@ template = pn.template.FastListTemplate(
     sidebar=[import_button, 
              data_table, 
              pn.Row(unit_select, sign_select)],
-    main=[fig],
+    main=[pn.Column(fig,
+          plot_radio_group,
+          pn.Row(x_select, y_select, z_select, color_select))],
     #sidebar_width=300,
     header_background='#2A3F5F',
     header_color='white',
