@@ -40,6 +40,13 @@ class DataManager:
     def remove_dataset(self, name):
         self._datasets.pop(name, None)
 
+    def get_channels(self, names):
+        channels = []
+        for name in names:
+            dataset = self.get_dataset(name)
+            channels.extend(dataset.channels)
+        return list(dict.fromkeys(channels))  # Return unique channels
+
 def import_mat(filepath, file_name):
     """
     Imports data from a MATLAB .mat file and constructs a dataset object with relevant metadata.

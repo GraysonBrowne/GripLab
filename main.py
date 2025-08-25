@@ -44,6 +44,14 @@ class callback:
 
         # Update the data table to reflect the newly added dataset
         data_table.value = pd.DataFrame({'Dataset': dm.list_datasets()})
+
+        # Update channel selection options based on the imported data
+        channels = dm.get_channels(dm.list_datasets())
+        x_select.options = channels
+        y_select.options = channels
+        z_select.options = channels
+        color_select.options = channels
+
         logger.info(f"Data imported from {file_path.name}: {data}")
 
     def update_plot_type(event):
@@ -63,7 +71,8 @@ data_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Dataset']),
                                   show_index=False, 
                                   configuration={'columnDefaults':{'headerSort':False}},
                                   selectable='checkbox',
-                                  sizing_mode='stretch_width',
+                                  sizing_mode='stretch_both',
+                                  min_height=400
                                   )
 
 unit_select = pn.widgets.Select(name='Unit System', options=['USCS', 'Metric'], value='USCS', 
@@ -82,7 +91,6 @@ sign_select = pn.widgets.Select(name='Sign Convention',
 ## Main pane
 
 px.defaults.template = "plotly_dark" if pn.config.theme == "dark" else "plotly_white"
-# 
 fig = pn.pane.Plotly(px.scatter(), sizing_mode='stretch_both')
 
 # plot type selection
@@ -99,16 +107,16 @@ plot_states = {
 }
 pn.bind(callback.update_plot_type, plot_radio_group.param.value, watch=True)
 
-x_select = pn.widgets.Select(name='X-Axis', options=['string'], 
+x_select = pn.widgets.Select(name='X-Axis', options=[], 
                              sizing_mode='stretch_width',
                              disabled=False)
-y_select = pn.widgets.Select(name='Y-Axis', options=['string'], 
+y_select = pn.widgets.Select(name='Y-Axis', options=[], 
                              sizing_mode='stretch_width',
                              disabled=False)
-z_select = pn.widgets.Select(name='Z-Axis', options=['string'], 
+z_select = pn.widgets.Select(name='Z-Axis', options=[], 
                              sizing_mode='stretch_width',
                              disabled=True)
-color_select = pn.widgets.Select(name='Color', options=['string'], 
+color_select = pn.widgets.Select(name='Color', options=[], 
                                  sizing_mode='stretch_width',
                                  disabled=True)
 
