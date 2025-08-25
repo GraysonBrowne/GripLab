@@ -22,7 +22,6 @@ class dataset:
     rim_width: str
     unit_system: str
     sign_convention: str
-    copy: int = 0
 
 class DataManager:
     def __init__(self):

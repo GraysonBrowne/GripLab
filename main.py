@@ -22,9 +22,12 @@ class callback:
         name = file_path.stem
 
         # Handle duplicate dataset names
-        if name in dm.list_datasets():
-            dm._datasets[name].copy += 1
-            name = f"{name} ({dm._datasets[name].copy})"
+        copy = 0
+        while name in dm.list_datasets():
+            if copy == 0:
+                og_name = name
+            copy += 1
+            name = f"{og_name} ({copy})"
         
         # If no file was selected, exit the function
         if str(file_path) == '.':
