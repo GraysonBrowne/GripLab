@@ -71,7 +71,8 @@ sign_select = pn.widgets.Select(name='Sign Convention',
                                 sizing_mode='stretch_width')
 
 ## Main pane
-fig = pn.pane.Plotly(px.scatter(template='plotly_dark'), sizing_mode='stretch_both')
+px.defaults.template = "plotly_dark" if pn.config.theme == "dark" else "plotly_white"
+fig = pn.pane.Plotly(px.scatter(), sizing_mode='stretch_both')
 
 # Define the main application template
 template = pn.template.FastListTemplate(
