@@ -1,13 +1,14 @@
 # main.py
 import panel as pn
 import pandas as pd
+import plotly.express as px
 import sys
 from pathlib import Path
 from scripts.tk_utilities import Tk_utils 
 from scripts.logger_setup import logger
 import scripts.dataio as IO
 
-pn.extension('tabulator')
+pn.extension('tabulator','plotly')
 
 dm = IO.DataManager()
 
@@ -69,12 +70,16 @@ sign_select = pn.widgets.Select(name='Sign Convention',
                                 "Adapted ISO: Used in Besselink 2000",
                                 sizing_mode='stretch_width')
 
+## Main pane
+fig = pn.pane.Plotly(px.scatter(template='plotly_dark'), sizing_mode='stretch_both')
+
 # Define the main application template
-template = pn.template.FastGridTemplate(
+template = pn.template.FastListTemplate(
     title='GripLab',
     sidebar=[import_button, 
              data_table, 
              pn.Row(unit_select, sign_select)],
+    main=[fig],
     #sidebar_width=300,
     header_background='#2A3F5F',
     header_color='white',

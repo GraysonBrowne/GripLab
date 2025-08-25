@@ -4,3 +4,4 @@ panel
 rich
 watchfiles
 pandas
+plotly
