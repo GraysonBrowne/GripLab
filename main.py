@@ -25,7 +25,7 @@ template = pn.template.FastListTemplate(
 class callback:
     def import_data(clicks):
         # Open file dialog for user to select a data file
-        file_path = Path(Tk_utils.select_file(filetypes=[('Valid File Types',
+        file_path = Path(Tk_utils.select_file(filetypes=[('MATLAB/ASCII Data Files',
                                                           '*.mat *.dat *.txt')], 
                                               initialdir='.'),)
         
@@ -75,6 +75,47 @@ class callback:
         z_select.disabled = states["z"]
         color_select.disabled = states["c"]
 
+    def plot_data(clicks):
+        selection = data_table.selection
+
+        if len(selection) == 0:
+            logger.warning("No datasets selected to plot.")
+            return
+        
+        logger.debug(f"Selected rows: {selection}")
+        names = [dm.list_datasets()[idx] for idx in selection]
+        logger.debug(f"Selected datasets: {names}")
+
+        x_channel = x_select.value
+        y_channel = y_select.value
+
+        fig = px.scatter()
+        for name in names:
+            dataset = dm.get_dataset(name)
+            logger.debug(f"Dataset '{name}' channels: {dataset.channels}")
+
+ 
+            fig.add_scatter(x=dataset.data[:, dataset.channels.index(x_channel)],
+                                     y=dataset.data[:, dataset.channels.index(y_channel)],
+                                    #labels={ "x": f"{x_channel} [{dataset.units[dataset.channels.index(x_channel)]}]",
+                                    #"y": f"{y_channel} [{dataset.units[dataset.channels.index(y_channel)]}]"},
+                                    )
+            
+            plotly_pane.object = fig
+
+
+        '''
+        fig.objects[0].update_layout(title="Combined Plot of Selected Datasets")
+        fig = px.scatter(x=dataset.data[:, dataset.channels.index(x)],
+                    y=dataset.data[:, dataset.channels.index(y)],
+                    color=dataset.data[:, dataset.channels.index(color)] if color else None,
+                    labels={ "x": f"{x} ({dataset.units[dataset.channels.index(x)]})",
+                            "y": f"{y} ({dataset.units[dataset.channels.index(y)]})",
+                            "color": f"{color} ({dataset.units[dataset.channels.index(color)]})" if color else None},
+                    title=f"2D Scatter Plot of {y} vs {x}" + (f" colored by {color}" if color else ""),
+                    #size_max=size,
+                    )'''
+
 
 ## Sidebar Widgets
 import_button = pn.widgets.Button(name='Import Data', button_type='primary')
@@ -106,11 +147,10 @@ template.sidebar.objects = [import_button,
                             pn.Row(unit_select, sign_select)]
 
 ## Main pane
-
 # Bind the plotly theme to the panel theme
 px.defaults.template = "plotly_dark" if template.theme.name == "DarkTheme" else "plotly_white"
 # Initial empty figure
-fig = pn.pane.Plotly(px.scatter(), sizing_mode='stretch_both')
+plotly_pane = pn.pane.Plotly(px.scatter(), sizing_mode='stretch_both')
 
 # plot type selection
 plot_radio_group = pn.widgets.RadioBoxGroup(name='Plot Type', 
@@ -139,9 +179,13 @@ color_select = pn.widgets.Select(name='Color', options=[],
                                  sizing_mode='stretch_width',
                                  disabled=True)
 
-template.main.objects = [pn.Column(fig,
-                         plot_radio_group,
-                         pn.Row(x_select, y_select, z_select, color_select))]
+plot_data_button = pn.widgets.Button(name='Plot Data', button_type='primary')
+pn.bind(callback.plot_data, plot_data_button.param.clicks, watch=True)
+
+template.main.objects = [pn.Column(plotly_pane,
+                         pn.Row(pn.Column(plot_radio_group,
+                         pn.Row(x_select, y_select, z_select, color_select)),
+                                plot_data_button))]
 
 if getattr(sys, 'frozen', False):
     # If the application is run as a bundle, the PyInstaller bootloader
