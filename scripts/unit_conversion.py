@@ -12,11 +12,11 @@ class UnitSystemConverter:
     # Known unit type definitions
     unit_types = {
         "length": ['RL', 'RE'],
-        "force": ['FX', 'FY', 'FZ'],
+        "force": ['FX', 'FY', 'FZ', 'CmdFZ'],
         "torque": ['MX', 'MY', 'MZ'],
-        "pressure": ['P'],
-        "angle": ['SA', 'IA'],
-        "speed": ['V'],
+        "pressure": ['P', 'CmdP'],
+        "angle": ['SA', 'IA', 'CmdSA', 'CmdIA'],
+        "speed": ['V', 'CmdV'],
         "rotational_speed": ['N'],
         "temperature": ['RST', 'TSTI', 'TSTC', 'TSTO', 'AmbTmp'],
         "time": ['ET']
@@ -40,7 +40,7 @@ class UnitSystemConverter:
         },
         "pressure": {
             "SI"    : {"unit": "Pa", "factor": 1.0, "offset": 0},                 # base
-            "Metric": {"unit": "kPa", "factor": 0.001, "offset": 0},              # Pa → kPa
+            "Metric": {"unit": "kPa", "factor": 1000, "offset": 0},              # Pa → kPa
             "USCS"  : {"unit": "psi", "factor":6894.76, "offset": 0},             # Pa → psi
         },
         "angle": {

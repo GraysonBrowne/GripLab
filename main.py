@@ -7,6 +7,7 @@ from pathlib import Path
 from scripts.tk_utilities import Tk_utils 
 from scripts.logger_setup import logger
 import scripts.dataio as IO
+from scripts.unit_conversion import UnitSystemConverter
 
 pn.extension('tabulator','plotly')
 
@@ -92,7 +93,7 @@ class callback:
         fig = px.scatter()
 
         for name in names:
-            dataset = dm.get_dataset(name)
+            dataset = UnitSystemConverter.convert_dataset(dm.get_dataset(name), to_system=unit_select.value)
  
             fig.add_scatter(x=dataset.data[:, dataset.channels.index(x_channel)],
                             y=dataset.data[:, dataset.channels.index(y_channel)],
@@ -100,8 +101,8 @@ class callback:
                             #mode='markers', # 'markers' mode seems to be memory intensive
                             )
             
-        x_unit = dm.get_dataset(name).units[dm.get_dataset(name).channels.index(x_channel)]
-        y_unit = dm.get_dataset(name).units[dm.get_dataset(name).channels.index(y_channel)]
+        x_unit = dataset.units[dataset.channels.index(x_channel)]
+        y_unit = dataset.units[dataset.channels.index(y_channel)]
 
         if len(names) == 1:
             title = name
