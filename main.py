@@ -8,6 +8,7 @@ from scripts.tk_utilities import Tk_utils
 from scripts.logger_setup import logger
 import scripts.dataio as IO
 from scripts.unit_conversion import UnitSystemConverter
+from scripts.convention_conversion import ConventionConverter
 
 pn.extension('tabulator','plotly')
 
@@ -93,8 +94,11 @@ class callback:
         fig = px.scatter()
 
         for name in names:
-            dataset = UnitSystemConverter.convert_dataset(dm.get_dataset(name), to_system=unit_select.value)
- 
+            dataset_unit = UnitSystemConverter.convert_dataset(dm.get_dataset(name),
+                                                               to_system=unit_select.value)
+            dataset = ConventionConverter.convert_dataset_convention(dataset_unit,
+                                                                     target_convention=sign_select.value)
+            
             fig.add_scatter(x=dataset.data[:, dataset.channels.index(x_channel)],
                             y=dataset.data[:, dataset.channels.index(y_channel)],
                             name=name,

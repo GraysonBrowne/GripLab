@@ -6,20 +6,20 @@ from .logger_setup import logger
 class ConventionConverter:
     # Sign convention definitions for various channels relative to SAE
     definitions = {
-        "IA": {"SAE": 1, "AdaptedSAE":  1, "ISO":  1, "AdaptedISO": -1},
-        "SA": {"SAE": 1, "AdaptedSAE": -1, "ISO": -1, "AdaptedISO":  1},
-        "SR": {"SAE": 1, "AdaptedSAE":  1, "ISO":  1, "AdaptedISO":  1},
-        "SL": {"SAE": 1, "AdaptedSAE":  1, "ISO":  1, "AdaptedISO":  1},
-        "FX": {"SAE": 1, "AdaptedSAE":  1, "ISO":  1, "AdaptedISO":  1},
-        "FY": {"SAE": 1, "AdaptedSAE":  1, "ISO": -1, "AdaptedISO": -1},
-        "FZ": {"SAE": 1, "AdaptedSAE": -1, "ISO": -1, "AdaptedISO": -1},
-        "MX": {"SAE": 1, "AdaptedSAE":  1, "ISO":  1, "AdaptedISO":  1},
-        "MY": {"SAE": 1, "AdaptedSAE":  1, "ISO": -1, "AdaptedISO": -1},
-        "MZ": {"SAE": 1, "AdaptedSAE":  1, "ISO": -1, "AdaptedISO": -1},
+        "IA": {"SAE": 1, "Adapted SAE":  1, "ISO":  1, "Adapted ISO": -1},
+        "SA": {"SAE": 1, "Adapted SAE": -1, "ISO": -1, "Adapted ISO":  1},
+        "SR": {"SAE": 1, "Adapted SAE":  1, "ISO":  1, "Adapted ISO":  1},
+        "SL": {"SAE": 1, "Adapted SAE":  1, "ISO":  1, "Adapted ISO":  1},
+        "FX": {"SAE": 1, "Adapted SAE":  1, "ISO":  1, "Adapted ISO":  1},
+        "FY": {"SAE": 1, "Adapted SAE":  1, "ISO": -1, "Adapted ISO": -1},
+        "FZ": {"SAE": 1, "Adapted SAE": -1, "ISO": -1, "Adapted ISO": -1},
+        "MX": {"SAE": 1, "Adapted SAE":  1, "ISO":  1, "Adapted ISO":  1},
+        "MY": {"SAE": 1, "Adapted SAE":  1, "ISO": -1, "Adapted ISO": -1},
+        "MZ": {"SAE": 1, "Adapted SAE":  1, "ISO": -1, "Adapted ISO": -1},
 
-        "CmdIA": {"SAE": 1, "AdaptedSAE":  1, "ISO":  1, "AdaptedISO": -1},
-        "CmdSA": {"SAE": 1, "AdaptedSAE": -1, "ISO": -1, "AdaptedISO":  1},
-        "CmdFZ": {"SAE": 1, "AdaptedSAE": -1, "ISO": -1, "AdaptedISO": -1},
+        "CmdIA": {"SAE": 1, "Adapted SAE":  1, "ISO":  1, "Adapted ISO": -1},
+        "CmdSA": {"SAE": 1, "Adapted SAE": -1, "ISO": -1, "Adapted ISO":  1},
+        "CmdFZ": {"SAE": 1, "Adapted SAE": -1, "ISO": -1, "Adapted ISO": -1},
     }
 
     # List of supported target conventions
@@ -69,13 +69,13 @@ class ConventionConverter:
                 values_sae = result.data[:, idx] / current
                 result.data[:, idx] = values_sae * target
         
-            logger.debug(f"Converted {dataset.name} from {result.sign_convention} → {target_convention}")
+            logger.debug(f"Converted {dataset.name} from {result.sign_convention} -> {target_convention}")
             
             # Update dataset metadata
             result.sign_convention = target_convention
             return result
         except Exception as e:
-            logger.error(f"Error converting dataset convention: {e}")
+            logger.error(f"Error converting dataset convention: {e}", exc_info=True)
             return dataset          
     
     @classmethod
@@ -124,10 +124,10 @@ class ConventionConverter:
                 target = cls.definitions[channel][target_convention]
 
                 # normalize to SAE, then apply target
-                values_sae = result.data[:, idx] / current
-                result.data[:, idx] = values_sae * target
+                values_sae = result[:, idx] / current
+                result[:, idx] = values_sae * target
         
             return result
         except Exception as e:
-            logger.error(f"Error converting data convention: {e}")
+            logger.error(f"Error converting data convention: {e}", exc_info=True)
             return data      
