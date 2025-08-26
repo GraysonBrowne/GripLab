@@ -12,6 +12,16 @@ pn.extension('tabulator','plotly')
 
 dm = IO.DataManager()
 
+# Define the main application template
+template = pn.template.FastListTemplate(
+    title='GripLab',
+    #sidebar_width=300,
+    header_background='#2A3F5F',
+    header_color='white',
+    accent_base_color='#2A3F5F',
+    theme='dark',
+)
+
 class callback:
     def import_data(clicks):
         # Open file dialog for user to select a data file
@@ -91,9 +101,15 @@ sign_select = pn.widgets.Select(name='Sign Convention',
                                 "Adapted ISO: Used in Besselink 2000",
                                 sizing_mode='stretch_width')
 
+template.sidebar.objects = [import_button, 
+                            data_table, 
+                            pn.Row(unit_select, sign_select)]
+
 ## Main pane
 
-px.defaults.template = "plotly_dark" if pn.config.theme == "dark" else "plotly_white"
+# Bind the plotly theme to the panel theme
+px.defaults.template = "plotly_dark" if template.theme.name == "DarkTheme" else "plotly_white"
+# Initial empty figure
 fig = pn.pane.Plotly(px.scatter(), sizing_mode='stretch_both')
 
 # plot type selection
@@ -123,23 +139,9 @@ color_select = pn.widgets.Select(name='Color', options=[],
                                  sizing_mode='stretch_width',
                                  disabled=True)
 
-
-
-# Define the main application template
-template = pn.template.FastListTemplate(
-    title='GripLab',
-    sidebar=[import_button, 
-             data_table, 
-             pn.Row(unit_select, sign_select)],
-    main=[pn.Column(fig,
-          plot_radio_group,
-          pn.Row(x_select, y_select, z_select, color_select))],
-    #sidebar_width=300,
-    header_background='#2A3F5F',
-    header_color='white',
-    accent_base_color='#2A3F5F',
-    theme='dark',
-)
+template.main.objects = [pn.Column(fig,
+                         plot_radio_group,
+                         pn.Row(x_select, y_select, z_select, color_select))]
 
 if getattr(sys, 'frozen', False):
     # If the application is run as a bundle, the PyInstaller bootloader
