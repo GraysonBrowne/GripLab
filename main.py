@@ -90,31 +90,32 @@ class callback:
         y_channel = y_select.value
 
         fig = px.scatter()
+
         for name in names:
             dataset = dm.get_dataset(name)
-            logger.debug(f"Dataset '{name}' channels: {dataset.channels}")
-
  
             fig.add_scatter(x=dataset.data[:, dataset.channels.index(x_channel)],
-                                     y=dataset.data[:, dataset.channels.index(y_channel)],
-                                    #labels={ "x": f"{x_channel} [{dataset.units[dataset.channels.index(x_channel)]}]",
-                                    #"y": f"{y_channel} [{dataset.units[dataset.channels.index(y_channel)]}]"},
-                                    )
+                            y=dataset.data[:, dataset.channels.index(y_channel)],
+                            name=name,
+                            #mode='markers', # 'markers' mode seems to be memory intensive
+                            )
             
-            plotly_pane.object = fig
+        x_unit = dm.get_dataset(name).units[dm.get_dataset(name).channels.index(x_channel)]
+        y_unit = dm.get_dataset(name).units[dm.get_dataset(name).channels.index(y_channel)]
 
+        if len(names) == 1:
+            title = name
+        else:
+            title = ""
+        fig.update_layout(title=f"{title} <br><sup>Plot Subtitle</sup>",
+                            #title=f"{title} <br><sup>{conditons}</sup>",
+                            xaxis_title=f"{x_channel} [{x_unit}]",
+                            yaxis_title=f"{y_channel} [{y_unit}]",
+                            
+                            )
+        fig.update_traces(hovertemplate = f"{x_channel}: %{{x}} {x_unit}<br>{y_channel}: %{{y}} {y_unit}<extra></extra>",)
+        plotly_pane.object = fig
 
-        '''
-        fig.objects[0].update_layout(title="Combined Plot of Selected Datasets")
-        fig = px.scatter(x=dataset.data[:, dataset.channels.index(x)],
-                    y=dataset.data[:, dataset.channels.index(y)],
-                    color=dataset.data[:, dataset.channels.index(color)] if color else None,
-                    labels={ "x": f"{x} ({dataset.units[dataset.channels.index(x)]})",
-                            "y": f"{y} ({dataset.units[dataset.channels.index(y)]})",
-                            "color": f"{color} ({dataset.units[dataset.channels.index(color)]})" if color else None},
-                    title=f"2D Scatter Plot of {y} vs {x}" + (f" colored by {color}" if color else ""),
-                    #size_max=size,
-                    )'''
 
 
 ## Sidebar Widgets
