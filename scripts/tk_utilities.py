@@ -23,7 +23,7 @@ class Tk_utils:
             root.iconbitmap(icon)
             root.withdraw()  # Hide the root window
             root.call('wm', 'attributes', '.', '-topmost', True)  # Bring the dialog to the front
-            file_path = filedialog.askopenfilename(
+            file_path = filedialog.askopenfilenames(
                 title="Select Data File(s)",
                 initialdir=initialdir,
                 filetypes=filetypes

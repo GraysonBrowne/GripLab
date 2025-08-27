@@ -31,47 +31,48 @@ template = pn.template.FastListTemplate(
 class callback:
     def import_data(clicks):
         # Open file dialog for user to select a data file
-        file_path = Path(Tk_utils.select_file(filetypes=[('MATLAB/ASCII Data Files',
-                                                          '*.mat *.dat *.txt')], 
-                                              initialdir='.'),)
-        
-        name = file_path.stem
+        files = Tk_utils.select_file(filetypes=[('MATLAB/ASCII Data Files',
+                                                 '*.mat *.dat *.txt')], 
+                                     initialdir='.')
+        for file_path in files:
+            file_path = Path(file_path)
+            name = file_path.stem
 
-        # Handle duplicate dataset names
-        copy = 0
-        while name in dm.list_datasets():
-            if copy == 0:
-                og_name = name
-            copy += 1
-            name = f"{og_name} ({copy})"
-        
-        # If no file was selected, exit the function
-        if str(file_path) == '.':
-            return
-        
-        # Determine file type and import data accordingly
-        if file_path.suffix.lower() == '.mat':
-            data = IO.import_mat(file_path, name)
-        elif file_path.suffix.lower() in ['.dat', '.txt']:
-            data = IO.import_dat(file_path, name)
-        else:
-            logger.error("Unsupported file type selected.")
-            return
+            # Handle duplicate dataset names
+            copy = 0
+            while name in dm.list_datasets():
+                if copy == 0:
+                    og_name = name
+                copy += 1
+                name = f"{og_name} ({copy})"
+            
+            # If no file was selected, exit the function
+            if str(file_path) == '.':
+                return
+            
+            # Determine file type and import data accordingly
+            if file_path.suffix.lower() == '.mat':
+                data = IO.import_mat(file_path, name)
+            elif file_path.suffix.lower() in ['.dat', '.txt']:
+                data = IO.import_dat(file_path, name)
+            else:
+                logger.error("Unsupported file type selected.")
+                return
 
-        # Add the imported dataset to the DataManager
-        dm.add_dataset(name,data)
+            # Add the imported dataset to the DataManager
+            dm.add_dataset(name,data)
 
-        # Update the data table to reflect the newly added dataset
-        data_table.value = pd.DataFrame({'Dataset': dm.list_datasets()})
+            # Update the data table to reflect the newly added dataset
+            data_table.value = pd.DataFrame({'Dataset': dm.list_datasets()})
 
-        # Update channel selection options based on the imported data
-        channels = dm.get_channels(dm.list_datasets())
-        x_select.options = channels
-        y_select.options = channels
-        z_select.options = channels
-        color_select.options = channels
+            # Update channel selection options based on the imported data
+            channels = dm.get_channels(dm.list_datasets())
+            x_select.options = channels
+            y_select.options = channels
+            z_select.options = channels
+            color_select.options = channels
 
-        logger.info(f"Data imported from {file_path.name}: {data}")
+            logger.info(f"Data imported from {file_path.name}: {data}")
 
     def update_plot_type(event):
         # Enable/disable axis selectors based on the selected plot type
