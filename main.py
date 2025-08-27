@@ -29,8 +29,12 @@ template = pn.template.FastListTemplate(
     header_background='#2A3F5F',
     header_color='white',
     accent_base_color='#2A3F5F',
-    theme='dark',
+    theme=config['theme'],
 )
+
+# Define colorway for plots
+color = config['ploting']['colorway']
+colorway = px.colors.qualitative.__getattribute__(color) if hasattr(px.colors.qualitative, color) else px.colors.qualitative.G10
 
 class callback:
     def import_data(clicks):
@@ -53,12 +57,12 @@ class callback:
             # If no file was selected, exit the function
             if str(file_path) == '.':
                 return
-            
+            color = colorway[len(dm.list_datasets()) % len(colorway)]
             # Determine file type and import data accordingly
             if file_path.suffix.lower() == '.mat':
-                data = IO.import_mat(file_path, name)
+                data = IO.import_mat(file_path, name, color)
             elif file_path.suffix.lower() in ['.dat', '.txt']:
-                data = IO.import_dat(file_path, name)
+                data = IO.import_dat(file_path, name, color)
             else:
                 logger.error("Unsupported file type selected.")
                 return
@@ -121,7 +125,7 @@ class callback:
                 fig = px.scatter(x=x, y=y, name=name, render_mode='webgl')
             else:'''
             fig.add_scatter(x=x, y=y, name=name,
-                            #line=dict(color="blue")
+                            line=dict(color=dm.get_dataset(name).node_color),
                             mode='markers', # 'markers' mode seems to be memory intensive
                             )
             
@@ -175,6 +179,7 @@ template.sidebar.objects = [import_button,
 ## Main pane
 # Bind the plotly theme to the panel theme
 px.defaults.template = "plotly_dark" if template.theme.name == "DarkTheme" else "plotly_white"
+
 # Initial empty figure
 plotly_pane = pn.pane.Plotly(px.scatter(), sizing_mode='stretch_both')
 

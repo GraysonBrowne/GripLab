@@ -22,6 +22,7 @@ class dataset:
     rim_width: str
     unit_system: str
     sign_convention: str
+    node_color: str
 
 class DataManager:
     def __init__(self):
@@ -46,7 +47,7 @@ class DataManager:
             channels.extend(dataset.channels)
         return list(dict.fromkeys(channels))  # Return unique channels
 
-def import_mat(filepath, file_name):
+def import_mat(filepath, file_name, node_color):
     """
     Imports data from a MATLAB .mat file and constructs a dataset object with relevant metadata.
 
@@ -113,9 +114,9 @@ def import_mat(filepath, file_name):
     except Exception as e:
         logger.error(f"Error importing .MAT file {e}")
     return (dataset(filepath, file_name, channels, units, unit_types, data,
-                   tire_id, rim_width, unit_system, sign_convention))
+                   tire_id, rim_width, unit_system, sign_convention, node_color))
 
-def import_dat(filepath, file_name):
+def import_dat(filepath, file_name, node_color):
     """
     Imports data from a .dat/.txt file and constructs a dataset object with relevant metadata.
 
@@ -184,4 +185,4 @@ def import_dat(filepath, file_name):
     except Exception as e:
         logger.error(f"Error importing .DAT/.TXT file {e}")
     return (dataset(filepath, file_name, channels, units, unit_types, data,
-                   tire_id, rim_width, unit_system, sign_convention))
+                   tire_id, rim_width, unit_system, sign_convention, node_color))
