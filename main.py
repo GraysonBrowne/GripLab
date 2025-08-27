@@ -5,6 +5,7 @@ import plotly.express as px
 import plotly.io as pio
 import plotly.graph_objects as go
 import sys
+import yaml
 from pathlib import Path
 from scripts.tk_utilities import Tk_utils 
 from scripts.logger_setup import logger
@@ -15,6 +16,9 @@ from scripts.processing import downsample_uniform
 from plotly_resampler import FigureResampler
 
 pn.extension('tabulator','plotly')
+
+with open("config.yaml") as f:
+    config = yaml.safe_load(f)
 
 dm = IO.DataManager()
 
@@ -33,7 +37,7 @@ class callback:
         # Open file dialog for user to select a data file
         files = Tk_utils.select_file(filetypes=[('MATLAB/ASCII Data Files',
                                                  '*.mat *.dat *.txt')], 
-                                     initialdir='.')
+                                     initialdir=config['paths']['data_dir'],)
         for file_path in files:
             file_path = Path(file_path)
             name = file_path.stem
