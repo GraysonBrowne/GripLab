@@ -2,6 +2,8 @@
 import panel as pn
 import pandas as pd
 import plotly.express as px
+import plotly.io as pio
+import plotly.graph_objects as go
 import sys
 from pathlib import Path
 from scripts.tk_utilities import Tk_utils 
@@ -9,6 +11,8 @@ from scripts.logger_setup import logger
 import scripts.dataio as IO
 from scripts.unit_conversion import UnitSystemConverter
 from scripts.convention_conversion import ConventionConverter
+from scripts.processing import downsample_uniform
+from plotly_resampler import FigureResampler
 
 pn.extension('tabulator','plotly')
 
@@ -91,18 +95,29 @@ class callback:
         x_channel = x_select.value
         y_channel = y_select.value
 
-        fig = px.scatter()
+        #fig = FigureResampler(go.Figure())
+        fig = px.scatter(render_mode='webgl')
 
         for name in names:
             dataset_unit = UnitSystemConverter.convert_dataset(dm.get_dataset(name),
                                                                to_system=unit_select.value)
             dataset = ConventionConverter.convert_dataset_convention(dataset_unit,
                                                                      target_convention=sign_select.value)
+            x, y = downsample_uniform(dataset.data[:, dataset.channels.index(x_channel)],
+                                      dataset.data[:, dataset.channels.index(y_channel)],
+                                      factor=downsample_slider.value)
             
-            fig.add_scatter(x=dataset.data[:, dataset.channels.index(x_channel)],
-                            y=dataset.data[:, dataset.channels.index(y_channel)],
-                            name=name,
-                            #mode='markers', # 'markers' mode seems to be memory intensive
+            ''' if name == names[0]:
+                fig.add_trace(
+                go.Scattergl(x=dataset.data[:, dataset.channels.index(x_channel)], 
+                y=dataset.data[:, dataset.channels.index(y_channel)],mode='markers',), 
+                )
+
+                fig = px.scatter(x=x, y=y, name=name, render_mode='webgl')
+            else:'''
+            fig.add_scatter(x=x, y=y, name=name,
+                            #line=dict(color="blue")
+                            mode='markers', # 'markers' mode seems to be memory intensive
                             )
             
         x_unit = dataset.units[dataset.channels.index(x_channel)]
@@ -188,10 +203,15 @@ color_select = pn.widgets.Select(name='Color', options=[],
 plot_data_button = pn.widgets.Button(name='Plot Data', button_type='primary')
 pn.bind(callback.plot_data, plot_data_button.param.clicks, watch=True)
 
+downsample_slider = pn.widgets.IntSlider(name='Downsample Rate', start=1, end=10, 
+                                         step=1, value=5, sizing_mode='stretch_width')
+
 template.main.objects = [pn.Column(plotly_pane,
                          pn.Row(pn.Column(plot_radio_group,
                          pn.Row(x_select, y_select, z_select, color_select)),
-                                plot_data_button))]
+                         pn.Column(pn.Row(pn.Row(sizing_mode='stretch_width'),
+                                   plot_data_button),
+                                   downsample_slider)))]
 
 if getattr(sys, 'frozen', False):
     # If the application is run as a bundle, the PyInstaller bootloader
