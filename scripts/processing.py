@@ -26,7 +26,7 @@ def low_pass_filter(data, cutoff_hz, fs=100, order=4):
     
     return y
 
-def downsample_uniform(x, y, factor=5):
+def downsample_uniform(x, y, z=[], c=[],factor=5):
     """
     Downsamples the input arrays uniformly by selecting every nth element.
 
@@ -39,8 +39,14 @@ def downsample_uniform(x, y, factor=5):
     Returns:
         tuple: Two arrays containing the downsampled x and y values.
     """
-
-    return x[::factor], y[::factor]
+    if (len(z) != 0) and len(c != 0):
+        return x[::factor], y[::factor], z[::factor], c[::factor]
+    elif (len(z) != 0):
+        return x[::factor], y[::factor], z[::factor]
+    elif len(c != 0):
+        return x[::factor], y[::factor], c[::factor]
+    else:   
+        return x[::factor], y[::factor]
 
 def downsample_xy(x, y, size=2000, method="random", bins=(50, 50), seed=None):
     """

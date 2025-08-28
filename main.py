@@ -104,6 +104,8 @@ class callback:
 
         x_channel = x_select.value
         y_channel = y_select.value
+        cmin = []
+        cmax = []
 
         #fig = FigureResampler(go.Figure())
         fig = px.scatter(render_mode='webgl')
@@ -113,22 +115,41 @@ class callback:
                                                                to_system=unit_select.value)
             dataset = ConventionConverter.convert_dataset_convention(dataset_unit,
                                                                      target_convention=sign_select.value)
-            x, y = downsample_uniform(dataset.data[:, dataset.channels.index(x_channel)],
-                                      dataset.data[:, dataset.channels.index(y_channel)],
-                                      factor=downsample_slider.value)
             
-            ''' if name == names[0]:
-                fig.add_trace(
-                go.Scattergl(x=dataset.data[:, dataset.channels.index(x_channel)], 
-                y=dataset.data[:, dataset.channels.index(y_channel)],mode='markers',), 
-                )
-
-                fig = px.scatter(x=x, y=y, name=name, render_mode='webgl')
-            else:'''
-            fig.add_scatter(x=x, y=y, name=name,
+            match plot_radio_group.value:
+                case "2D":
+                    x, y = downsample_uniform(x=dataset.data[:, dataset.channels.index(x_channel)],
+                                            y=dataset.data[:, dataset.channels.index(y_channel)],
+                                            factor=downsample_slider.value)
+                    fig.add_scatter(x=x, y=y, name=name,
                             line=dict(color=dm.get_dataset(name).node_color),
                             mode='markers', # 'markers' mode seems to be memory intensive
                             )
+                case "2D Color":
+                    x, y, c = downsample_uniform(dataset.data[:, dataset.channels.index(x_channel)],
+                                                dataset.data[:, dataset.channels.index(y_channel)],
+                                                c=dataset.data[:, dataset.channels.index(color_select.value)],
+                                                factor=downsample_slider.value)
+                    cmin.append(c.min())
+                    cmax.append(c.max())
+                    color_unit = dataset.units[dataset.channels.index(color_select.value)]
+                    fig.add_scatter(x=x, y=y, hovertext=[name]*len(x),
+                                    marker=dict(color=c, colorscale='Viridis', 
+                                                showscale=True, 
+                                                colorbar=dict(title=f'{color_select.value} [{color_unit}]'),),
+                            mode='markers', # 'markers' mode seems to be memory intensive
+                            )
+                case "3D":
+                    x, y, z = downsample_uniform(x=dataset.data[:, dataset.channels.index(x_channel)],
+                                                 y=dataset.data[:, dataset.channels.index(y_channel)],
+                                                 c=dataset.data[:, dataset.channels.index(z_select.value)],
+                                                 factor=downsample_slider.value)
+                case "3D Color":
+                    x, y, z, c = downsample_uniform(x=dataset.data[:, dataset.channels.index(x_channel)],
+                                                    y=dataset.data[:, dataset.channels.index(y_channel)],
+                                                    c=dataset.data[:, dataset.channels.index(z_select.value)],
+                                                    d=dataset.data[:, dataset.channels.index(color_select.value)],
+                                                    factor=downsample_slider.value)
             
         x_unit = dataset.units[dataset.channels.index(x_channel)]
         y_unit = dataset.units[dataset.channels.index(y_channel)]
@@ -143,7 +164,17 @@ class callback:
                             yaxis_title=f"{y_channel} [{y_unit}]",
                             
                             )
-        fig.update_traces(hovertemplate = f"{x_channel}: %{{x}} {x_unit}<br>{y_channel}: %{{y}} {y_unit}<extra></extra>",)
+        match plot_radio_group.value:
+            case "2D":
+                fig.update_traces(hovertemplate = f"{x_channel}: %{{x:.2f}} {x_unit}<br>{y_channel}: %{{y:.2f}} {y_unit}<extra></extra>",)
+            case "2D Color":
+                fig.update_traces(hovertemplate = f"<b>%{{hovertext}}</b><br>" +
+                                  f"{x_channel}: %{{x:.2f}} {x_unit}<br>" +
+                                  f"{y_channel}: %{{y:.2f}} {y_unit}<br>" +
+                                  f"{color_select.value}: %{{marker.color:.2f}} {color_unit}<extra></extra>",
+                                  marker=dict(cmin = min(c), cmax=max(c), colorscale='Viridis', 
+                                                showscale=True,))
+                fig.update_layout(showlegend=False)
         plotly_pane.object = fig
 
 
@@ -218,7 +249,7 @@ y_select = pn.widgets.Select(name='Y-Axis', options=[],
 z_select = pn.widgets.Select(name='Z-Axis', options=[], 
                              sizing_mode='stretch_width',
                              disabled=True)
-color_select = pn.widgets.Select(name='Color', options=[], 
+color_select = pn.widgets.Select(name='Colorbar', options=[], 
                                  sizing_mode='stretch_width',
                                  disabled=True)
 
