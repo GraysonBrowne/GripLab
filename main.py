@@ -7,6 +7,8 @@ import plotly.graph_objects as go
 import sys
 import yaml
 from pathlib import Path
+import webbrowser
+
 from scripts.tk_utilities import Tk_utils 
 from scripts.logger_setup import logger
 import scripts.dataio as IO
@@ -37,6 +39,16 @@ color = config['ploting']['colorway']
 colorway = px.colors.qualitative.__getattribute__(color) if hasattr(px.colors.qualitative, color) else px.colors.qualitative.G10
 
 class callback:
+    def help_selection(clicked):
+        logger.debug(f"Help menu clicked: {clicked}")
+        match clicked:
+            case 'signcon':
+                logger.info("Opening Sign Convention Documentation...")
+                webbrowser.open_new(str(Path('docs/Sign_Convention.pdf')))
+            case 'github':
+                logger.info("Opening GitHub Repository...")
+                webbrowser.open_new("https://github.com/GraysonBrowne/GripLab/blob/main/README.md")
+
     def import_data(clicks):
         # Open file dialog for user to select a data file
         files = Tk_utils.select_file(filetypes=[('MATLAB/ASCII Data Files',
@@ -179,7 +191,13 @@ class callback:
                 fig.update_layout(showlegend=False)
         plotly_pane.object = fig
 
+## Header widgets
+menu_items = [('GitHub Repository','github'),('Sign Convention','signcon')]
+help_menu_button = pn.widgets.MenuButton(name="Help", items=menu_items, 
+                                         button_type='primary', width=100)
+pn.bind(callback.help_selection, help_menu_button.param.clicked, watch=True)
 
+template.header.objects = [pn.Row(sizing_mode='stretch_width'),help_menu_button]
 
 ## Sidebar Widgets
 import_button = pn.widgets.Button(name='Import Data', button_type='primary')
