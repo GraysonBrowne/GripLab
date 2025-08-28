@@ -39,11 +39,11 @@ def downsample_uniform(x, y, z=[], c=[],factor=5):
     Returns:
         tuple: Two arrays containing the downsampled x and y values.
     """
-    if (len(z) != 0) and len(c != 0):
+    if (len(z) != 0) and (len(c) != 0):
         return x[::factor], y[::factor], z[::factor], c[::factor]
-    elif (len(z) != 0):
+    elif len(z) != 0:
         return x[::factor], y[::factor], z[::factor]
-    elif len(c != 0):
+    elif len(c) != 0:
         return x[::factor], y[::factor], c[::factor]
     else:   
         return x[::factor], y[::factor]
