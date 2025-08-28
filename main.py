@@ -71,7 +71,8 @@ class callback:
             dm.add_dataset(name,data)
 
             # Update the data table to reflect the newly added dataset
-            data_table.value = pd.DataFrame({'Dataset': dm.list_datasets()})
+            data_table.value = pd.DataFrame({'Dataset': dm.list_datasets(),
+                                             '': ['']*len(dm.list_datasets())})
 
             # Update channel selection options based on the imported data
             channels = dm.get_channels(dm.list_datasets())
@@ -151,13 +152,24 @@ class callback:
 import_button = pn.widgets.Button(name='Import Data', button_type='primary')
 pn.bind(callback.import_data, import_button.param.clicks, watch=True)
 
-data_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Dataset']), 
+# Function to color the dataset rows in the data table
+def cell_color(column):
+    if column.name == '':
+        background_color = dm.list_colors()
+    else:
+        background_color = [''] * len(column)
+    return [f'background-color: {color}' for color in background_color]
+
+data_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Dataset','']), 
                                   show_index=False, 
                                   configuration={'columnDefaults':{'headerSort':False}},
                                   selectable='checkbox',
                                   sizing_mode='stretch_both',
-                                  min_height=400
+                                  min_height=400,
+                                  editors={'Dataset':None,'': None},
+                                  widths={'Dataset': 230, '': 20},
                                   )
+data_table.style.apply(cell_color)
 
 unit_select = pn.widgets.Select(name='Unit System', options=['USCS', 'Metric'], value='USCS', 
                                 description="USCS: lb, ft-lb, in, psi, mph, deg F \n\r" \

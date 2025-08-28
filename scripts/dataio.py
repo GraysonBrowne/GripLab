@@ -46,6 +46,9 @@ class DataManager:
             dataset = self.get_dataset(name)
             channels.extend(dataset.channels)
         return list(dict.fromkeys(channels))  # Return unique channels
+    
+    def list_colors(self):
+        return [ds.node_color for ds in self._datasets.values()]
 
 def import_mat(filepath, file_name, node_color):
     """
