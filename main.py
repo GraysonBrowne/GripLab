@@ -121,7 +121,11 @@ class callback:
         cmax = []
 
         #fig = FigureResampler(go.Figure())
-        fig = px.scatter(render_mode='webgl')
+        if plot_radio_group.value in ['3D','3D Color']:
+            fig = px.scatter_3d()
+            z_channel = z_select.value
+        else:
+            fig = px.scatter(render_mode='webgl')
 
         for name in names:
             dataset_unit = UnitSystemConverter.convert_dataset(dm.get_dataset(name),
@@ -134,7 +138,7 @@ class callback:
                     x, y = downsample_uniform(x=dataset.data[:, dataset.channels.index(x_channel)],
                                             y=dataset.data[:, dataset.channels.index(y_channel)],
                                             factor=downsample_slider.value)
-                    fig.add_scatter(x=x, y=y, name=name,
+                    fig.add_scatter(x=x, y=y, name=name, hovertext=[name]*len(x),
                             line=dict(color=dm.get_dataset(name).node_color),
                             mode='markers', # 'markers' mode seems to be memory intensive
                             )
@@ -147,36 +151,59 @@ class callback:
                     cmax.append(c.max())
                     color_unit = dataset.units[dataset.channels.index(color_select.value)]
                     fig.add_scatter(x=x, y=y, hovertext=[name]*len(x),
-                                    marker=dict(color=c, colorscale='Viridis', 
-                                                showscale=True, 
+                                    marker=dict(color=c,
                                                 colorbar=dict(title=f'{color_select.value} [{color_unit}]'),),
                             mode='markers', # 'markers' mode seems to be memory intensive
                             )
                 case "3D":
                     x, y, z = downsample_uniform(x=dataset.data[:, dataset.channels.index(x_channel)],
                                                  y=dataset.data[:, dataset.channels.index(y_channel)],
-                                                 c=dataset.data[:, dataset.channels.index(z_select.value)],
+                                                 z=dataset.data[:, dataset.channels.index(z_channel)],
                                                  factor=downsample_slider.value)
+                    fig.add_scatter3d(x=x, y=y, z=z, name=name, hovertext=[name]*len(x),
+                            line=dict(color=dm.get_dataset(name).node_color),
+                            mode='markers', # 'markers' mode seems to be memory intensive
+                            )
                 case "3D Color":
                     x, y, z, c = downsample_uniform(x=dataset.data[:, dataset.channels.index(x_channel)],
                                                     y=dataset.data[:, dataset.channels.index(y_channel)],
-                                                    c=dataset.data[:, dataset.channels.index(z_select.value)],
-                                                    d=dataset.data[:, dataset.channels.index(color_select.value)],
+                                                    z=dataset.data[:, dataset.channels.index(z_channel)],
+                                                    c=dataset.data[:, dataset.channels.index(color_select.value)],
                                                     factor=downsample_slider.value)
+                    cmin.append(c.min())
+                    cmax.append(c.max())
+                    color_unit = dataset.units[dataset.channels.index(color_select.value)]
+                    fig.add_scatter3d(x=x, y=y, z=z, name=name, hovertext=[name]*len(x),
+                            line=dict(color=dm.get_dataset(name).node_color),
+                            marker=dict(color=c, 
+                                        colorbar=dict(title=f'{color_select.value} [{color_unit}]'),),
+                            mode='markers', # 'markers' mode seems to be memory intensive
+                            )
             
         x_unit = dataset.units[dataset.channels.index(x_channel)]
         y_unit = dataset.units[dataset.channels.index(y_channel)]
+        if plot_radio_group.value in ['3D','3D Color']:
+            z_unit = dataset.units[dataset.channels.index(z_select.value)]
 
         if len(names) == 1:
             title = name
         else:
             title = ""
-        fig.update_layout(title=f"{title} <br><sup>Plot Subtitle</sup>",
-                            #title=f"{title} <br><sup>{conditons}</sup>",
-                            xaxis_title=f"{x_channel} [{x_unit}]",
-                            yaxis_title=f"{y_channel} [{y_unit}]",
-                            
-                            )
+        
+        if plot_radio_group.value in ['3D','3D Color']:
+            fig.update_layout(title=f"{title} <br><sup>Plot Subtitle</sup>",
+                                #title=f"{title} <br><sup>{conditons}</sup>",
+                                scene_xaxis_title_text=f"{x_channel} [{x_unit}]",
+                                scene_yaxis_title_text=f"{y_channel} [{y_unit}]",
+                                scene_zaxis_title_text=f"{z_channel} [{z_unit}]",
+                                )
+        else:
+            fig.update_layout(title=f"{title} <br><sup>Plot Subtitle</sup>",
+                    #title=f"{title} <br><sup>{conditons}</sup>",
+                    xaxis_title=f"{x_channel} [{x_unit}]",
+                    yaxis_title=f"{y_channel} [{y_unit}]",
+                    
+                    )
         match plot_radio_group.value:
             case "2D":
                 fig.update_traces(hovertemplate = f"{x_channel}: %{{x:.2f}} {x_unit}<br>{y_channel}: %{{y:.2f}} {y_unit}<extra></extra>",)
@@ -189,6 +216,22 @@ class callback:
                                               colorscale=color_map.value, 
                                                 showscale=True,))
                 fig.update_layout(showlegend=False)
+            case "3D":
+                fig.update_traces(hovertemplate = f"<b>%{{hovertext}}</b><br>" +
+                                  f"{x_channel}: %{{x:.2f}} {x_unit}<br>" +
+                                  f"{y_channel}: %{{y:.2f}} {y_unit}<br>" +
+                                  f"{z_channel}: %{{z:.2f}} {z_unit}<extra></extra>",)
+            case "3D Color":
+                fig.update_traces(hovertemplate = f"<b>%{{hovertext}}</b><br>" +
+                                  f"{x_channel}: %{{x:.2f}} {x_unit}<br>" +
+                                  f"{y_channel}: %{{y:.2f}} {y_unit}<br>" +
+                                  f"{z_channel}: %{{z:.2f}} {z_unit}<br>" +
+                                  f"{color_select.value}: %{{marker.color:.2f}} {color_unit}<extra></extra>",
+                                  marker=dict(cmin = min(cmin), cmax=max(cmax), 
+                                              colorscale=color_map.value, 
+                                                showscale=True,))
+                fig.update_layout(showlegend=False)
+
         plotly_pane.object = fig
 
 ## Header widgets
