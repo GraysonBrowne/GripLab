@@ -15,7 +15,7 @@ import scripts.dataio as IO
 from scripts.unit_conversion import UnitSystemConverter
 from scripts.convention_conversion import ConventionConverter
 from scripts.processing import downsample_uniform
-from plotly_resampler import FigureResampler
+from scripts.plotting import PlottingUtils
 
 pn.extension('tabulator','plotly')
 
@@ -69,7 +69,10 @@ class callback:
             # If no file was selected, exit the function
             if str(file_path) == '.':
                 return
+            
+            # Assign a color to the dataset based on the number of existing datasets
             color = colorway[len(dm.list_datasets()) % len(colorway)]
+
             # Determine file type and import data accordingly
             if file_path.suffix.lower() == '.mat':
                 data = IO.import_mat(file_path, name, color)
@@ -104,135 +107,12 @@ class callback:
         color_select.disabled = states["c"]
         color_map.disabled = states["c"]
 
-    def plot_data(clicks):
-        selection = data_table.selection
-
-        if len(selection) == 0:
-            logger.warning("No datasets selected to plot.")
-            return
-        
-        logger.debug(f"Selected rows: {selection}")
-        names = [dm.list_datasets()[idx] for idx in selection]
-        logger.debug(f"Selected datasets: {names}")
-
-        x_channel = x_select.value
-        y_channel = y_select.value
-        cmin = []
-        cmax = []
-
-        #fig = FigureResampler(go.Figure())
-        if plot_radio_group.value in ['3D','3D Color']:
-            fig = px.scatter_3d()
-            z_channel = z_select.value
-        else:
-            fig = px.scatter(render_mode='webgl')
-
-        for name in names:
-            dataset_unit = UnitSystemConverter.convert_dataset(dm.get_dataset(name),
-                                                               to_system=unit_select.value)
-            dataset = ConventionConverter.convert_dataset_convention(dataset_unit,
-                                                                     target_convention=sign_select.value)
-            
-            match plot_radio_group.value:
-                case "2D":
-                    x, y = downsample_uniform(x=dataset.data[:, dataset.channels.index(x_channel)],
-                                            y=dataset.data[:, dataset.channels.index(y_channel)],
-                                            factor=downsample_slider.value)
-                    fig.add_scatter(x=x, y=y, name=name, hovertext=[name]*len(x),
-                            line=dict(color=dm.get_dataset(name).node_color),
-                            mode='markers', # 'markers' mode seems to be memory intensive
-                            )
-                case "2D Color":
-                    x, y, c = downsample_uniform(dataset.data[:, dataset.channels.index(x_channel)],
-                                                dataset.data[:, dataset.channels.index(y_channel)],
-                                                c=dataset.data[:, dataset.channels.index(color_select.value)],
-                                                factor=downsample_slider.value)
-                    cmin.append(c.min())
-                    cmax.append(c.max())
-                    color_unit = dataset.units[dataset.channels.index(color_select.value)]
-                    fig.add_scatter(x=x, y=y, hovertext=[name]*len(x),
-                                    marker=dict(color=c,
-                                                colorbar=dict(title=f'{color_select.value} [{color_unit}]'),),
-                            mode='markers', # 'markers' mode seems to be memory intensive
-                            )
-                case "3D":
-                    x, y, z = downsample_uniform(x=dataset.data[:, dataset.channels.index(x_channel)],
-                                                 y=dataset.data[:, dataset.channels.index(y_channel)],
-                                                 z=dataset.data[:, dataset.channels.index(z_channel)],
-                                                 factor=downsample_slider.value)
-                    fig.add_scatter3d(x=x, y=y, z=z, name=name, hovertext=[name]*len(x),
-                            line=dict(color=dm.get_dataset(name).node_color),
-                            mode='markers', # 'markers' mode seems to be memory intensive
-                            )
-                case "3D Color":
-                    x, y, z, c = downsample_uniform(x=dataset.data[:, dataset.channels.index(x_channel)],
-                                                    y=dataset.data[:, dataset.channels.index(y_channel)],
-                                                    z=dataset.data[:, dataset.channels.index(z_channel)],
-                                                    c=dataset.data[:, dataset.channels.index(color_select.value)],
-                                                    factor=downsample_slider.value)
-                    cmin.append(c.min())
-                    cmax.append(c.max())
-                    color_unit = dataset.units[dataset.channels.index(color_select.value)]
-                    fig.add_scatter3d(x=x, y=y, z=z, name=name, hovertext=[name]*len(x),
-                            line=dict(color=dm.get_dataset(name).node_color),
-                            marker=dict(color=c, 
-                                        colorbar=dict(title=f'{color_select.value} [{color_unit}]'),),
-                            mode='markers', # 'markers' mode seems to be memory intensive
-                            )
-            
-        x_unit = dataset.units[dataset.channels.index(x_channel)]
-        y_unit = dataset.units[dataset.channels.index(y_channel)]
-        if plot_radio_group.value in ['3D','3D Color']:
-            z_unit = dataset.units[dataset.channels.index(z_select.value)]
-
-        if len(names) == 1:
-            title = name
-        else:
-            title = ""
-        
-        if plot_radio_group.value in ['3D','3D Color']:
-            fig.update_layout(title=f"{title} <br><sup>Plot Subtitle</sup>",
-                                #title=f"{title} <br><sup>{conditons}</sup>",
-                                scene_xaxis_title_text=f"{x_channel} [{x_unit}]",
-                                scene_yaxis_title_text=f"{y_channel} [{y_unit}]",
-                                scene_zaxis_title_text=f"{z_channel} [{z_unit}]",
-                                )
-        else:
-            fig.update_layout(title=f"{title} <br><sup>Plot Subtitle</sup>",
-                    #title=f"{title} <br><sup>{conditons}</sup>",
-                    xaxis_title=f"{x_channel} [{x_unit}]",
-                    yaxis_title=f"{y_channel} [{y_unit}]",
-                    
-                    )
-        match plot_radio_group.value:
-            case "2D":
-                fig.update_traces(hovertemplate = f"{x_channel}: %{{x:.2f}} {x_unit}<br>{y_channel}: %{{y:.2f}} {y_unit}<extra></extra>",)
-            case "2D Color":
-                fig.update_traces(hovertemplate = f"<b>%{{hovertext}}</b><br>" +
-                                  f"{x_channel}: %{{x:.2f}} {x_unit}<br>" +
-                                  f"{y_channel}: %{{y:.2f}} {y_unit}<br>" +
-                                  f"{color_select.value}: %{{marker.color:.2f}} {color_unit}<extra></extra>",
-                                  marker=dict(cmin = min(c), cmax=max(c), 
-                                              colorscale=color_map.value, 
-                                                showscale=True,))
-                fig.update_layout(showlegend=False)
-            case "3D":
-                fig.update_traces(hovertemplate = f"<b>%{{hovertext}}</b><br>" +
-                                  f"{x_channel}: %{{x:.2f}} {x_unit}<br>" +
-                                  f"{y_channel}: %{{y:.2f}} {y_unit}<br>" +
-                                  f"{z_channel}: %{{z:.2f}} {z_unit}<extra></extra>",)
-            case "3D Color":
-                fig.update_traces(hovertemplate = f"<b>%{{hovertext}}</b><br>" +
-                                  f"{x_channel}: %{{x:.2f}} {x_unit}<br>" +
-                                  f"{y_channel}: %{{y:.2f}} {y_unit}<br>" +
-                                  f"{z_channel}: %{{z:.2f}} {z_unit}<br>" +
-                                  f"{color_select.value}: %{{marker.color:.2f}} {color_unit}<extra></extra>",
-                                  marker=dict(cmin = min(cmin), cmax=max(cmax), 
-                                              colorscale=color_map.value, 
-                                                showscale=True,))
-                fig.update_layout(showlegend=False)
-
-        plotly_pane.object = fig
+    def update_scatter_plot(clicks):
+        plotly_pane.object = PlottingUtils.plot_data(data_table,dm, x_select, 
+                                                     y_select, z_select, 
+                                                     color_select, unit_select,
+                                                     sign_select, plot_radio_group,
+                                                     color_map, downsample_slider)
 
 ## Header widgets
 menu_items = [('GitHub Repository','github'),('Sign Convention','signcon')]
@@ -322,11 +202,13 @@ color_map = pn.widgets.ColorMap(options={'Inferno':px.colors.sequential.Inferno,
                                          ncols =1,
                                          )
 
-plot_data_button = pn.widgets.Button(name='Plot Data', button_type='primary')
-pn.bind(callback.plot_data, plot_data_button.param.clicks, watch=True)
-
 downsample_slider = pn.widgets.IntSlider(name='Downsample Rate', start=1, end=10, 
                                          step=1, value=5, sizing_mode='stretch_width')
+
+plot_data_button = pn.widgets.Button(name='Plot Data', button_type='primary')
+pn.bind(callback.update_scatter_plot, plot_data_button.param.clicks, watch=True)
+
+
 
 template.main.objects = [pn.Column(plotly_pane,
                          pn.Row(pn.Column(pn.Row(plot_radio_group,color_map),
