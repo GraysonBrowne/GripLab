@@ -28,9 +28,8 @@ dm = IO.DataManager()
 template = pn.template.FastListTemplate(
     title='GripLab',
     #sidebar_width=300,
-    header_background='#2A3F5F',
-    header_color='white',
-    accent_base_color='#2A3F5F',
+    accent="#370c6b",
+    header_accent_base_color  = "#fade6e",
     theme=config['theme'],
 )
 
@@ -108,6 +107,9 @@ class callback:
         color_map.disabled = states["c"]
 
     def update_scatter_plot(clicks):
+        if data_table.selection == []:
+            logger.warning("No datasets selected to plot.")
+            return
         plotly_pane.object = PlottingUtils.plot_data(data_table,dm, x_select, 
                                                      y_select, z_select, 
                                                      color_select, unit_select,
