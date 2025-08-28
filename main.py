@@ -90,6 +90,7 @@ class callback:
         y_select.disabled = states["y"]
         z_select.disabled = states["z"]
         color_select.disabled = states["c"]
+        color_map.disabled = states["c"]
 
     def plot_data(clicks):
         selection = data_table.selection
@@ -172,7 +173,8 @@ class callback:
                                   f"{x_channel}: %{{x:.2f}} {x_unit}<br>" +
                                   f"{y_channel}: %{{y:.2f}} {y_unit}<br>" +
                                   f"{color_select.value}: %{{marker.color:.2f}} {color_unit}<extra></extra>",
-                                  marker=dict(cmin = min(c), cmax=max(c), colorscale='Viridis', 
+                                  marker=dict(cmin = min(c), cmax=max(c), 
+                                              colorscale=color_map.value, 
                                                 showscale=True,))
                 fig.update_layout(showlegend=False)
         plotly_pane.object = fig
@@ -253,6 +255,12 @@ color_select = pn.widgets.Select(name='Colorbar', options=[],
                                  sizing_mode='stretch_width',
                                  disabled=True)
 
+color_map = pn.widgets.ColorMap(options={'Inferno':px.colors.sequential.Inferno,
+                                         'Viridis':px.colors.sequential.Viridis,
+                                         'Jet':px.colors.sequential.Jet,},
+                                         ncols =1,
+                                         )
+
 plot_data_button = pn.widgets.Button(name='Plot Data', button_type='primary')
 pn.bind(callback.plot_data, plot_data_button.param.clicks, watch=True)
 
@@ -260,7 +268,7 @@ downsample_slider = pn.widgets.IntSlider(name='Downsample Rate', start=1, end=10
                                          step=1, value=5, sizing_mode='stretch_width')
 
 template.main.objects = [pn.Column(plotly_pane,
-                         pn.Row(pn.Column(plot_radio_group,
+                         pn.Row(pn.Column(pn.Row(plot_radio_group,color_map),
                          pn.Row(x_select, y_select, z_select, color_select)),
                          pn.Column(pn.Row(pn.Row(sizing_mode='stretch_width'),
                                    plot_data_button),
