@@ -17,7 +17,12 @@ from scripts.convention_conversion import ConventionConverter
 from scripts.processing import downsample_uniform
 from scripts.plotting import PlottingUtils
 
-pn.extension('tabulator','plotly')
+css = """
+#sidebar > ul
+{height: calc(100% - 2em);}
+"""
+
+pn.extension('tabulator','plotly', raw_css=[css])
 
 with open("config.yaml") as f:
     config = yaml.safe_load(f)
@@ -27,9 +32,9 @@ dm = IO.DataManager()
 # Define the main application template
 template = pn.template.FastListTemplate(
     title='GripLab',
-    #sidebar_width=300,
-    accent="#370c6b",
-    header_accent_base_color  = "#fade6e",
+    sidebar_width=400,
+    #right_sidebar_width=400,
+    accent="#2A3F5F",
     theme=config['theme'],
 )
 
@@ -122,7 +127,7 @@ help_menu_button = pn.widgets.MenuButton(name="Help", items=menu_items,
                                          button_type='primary', width=100)
 pn.bind(callback.help_selection, help_menu_button.param.clicked, watch=True)
 
-template.header.objects = [pn.Row(sizing_mode='stretch_width'),help_menu_button]
+template.header.append(pn.Row(pn.Row(sizing_mode='stretch_width'),help_menu_button))
 
 ## Sidebar Widgets
 import_button = pn.widgets.Button(name='Import Data', button_type='primary')
@@ -141,11 +146,21 @@ data_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Dataset','']),
                                   configuration={'columnDefaults':{'headerSort':False}},
                                   selectable='checkbox',
                                   sizing_mode='stretch_both',
-                                  min_height=400,
+                                  min_height=150,
                                   editors={'Dataset':None,'': None},
-                                  widths={'Dataset': 230, '': 20},
+                                  widths={'Dataset': 300, '': 20},
                                   )
 data_table.style.apply(cell_color)
+
+model_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Model','']), 
+                                  show_index=False, 
+                                  configuration={'columnDefaults':{'headerSort':False}},
+                                  selectable='checkbox',
+                                  sizing_mode='stretch_both',
+                                  min_height=150,
+                                  editors={'Model':None,'': None},
+                                  widths={'Model': 300, '': 20},
+                                  )
 
 unit_select = pn.widgets.Select(name='Unit System', options=['USCS', 'Metric'], value='USCS', 
                                 description="USCS: lb, ft-lb, in, psi, mph, deg F \n\r" \
@@ -160,16 +175,8 @@ sign_select = pn.widgets.Select(name='Sign Convention',
                                 "Adapted ISO: Used in Besselink 2000",
                                 sizing_mode='stretch_width')
 
-template.sidebar.objects = [import_button, 
-                            data_table, 
-                            pn.Row(unit_select, sign_select)]
-
-## Main pane
-# Bind the plotly theme to the panel theme
-px.defaults.template = "plotly_dark" if template.theme.name == "DarkTheme" else "plotly_white"
-
-# Initial empty figure
-plotly_pane = pn.pane.Plotly(px.scatter(), sizing_mode='stretch_both')
+plot_data_button = pn.widgets.Button(name='Plot Data', button_type='primary',sizing_mode='stretch_width')
+pn.bind(callback.update_scatter_plot, plot_data_button.param.clicks, watch=True)
 
 # plot type selection
 plot_radio_group = pn.widgets.RadioBoxGroup(name='Plot Type', 
@@ -204,20 +211,48 @@ color_map = pn.widgets.ColorMap(options={'Inferno':px.colors.sequential.Inferno,
                                          ncols =1,
                                          )
 
-downsample_slider = pn.widgets.IntSlider(name='Downsample Rate', start=1, end=10, 
-                                         step=1, value=5, sizing_mode='stretch_width')
+cmd_options = ['', 'CmdV', 'CmdP', 'CmdFZ', 'CmdIA', 'CmdSA']
+cmd_select_1 = pn.widgets.Select(name='Cmd 1', options=cmd_options, 
+                                 sizing_mode='stretch_width', min_width=80)
+cmd_select_2 = pn.widgets.Select(name='Cmd 2', options=cmd_options, 
+                                 sizing_mode='stretch_width', min_width=80)
+cmd_select_3 = pn.widgets.Select(name='Cmd 3', options=cmd_options, 
+                                 sizing_mode='stretch_width', min_width=80)
+cmd_select_4 = pn.widgets.Select(name='Cmd 4', options=cmd_options, 
+                                 sizing_mode='stretch_width', min_width=80)
 
-plot_data_button = pn.widgets.Button(name='Plot Data', button_type='primary')
-pn.bind(callback.update_scatter_plot, plot_data_button.param.clicks, watch=True)
+cmd_multi_select_1 = pn.widgets.MultiSelect(options=[], size=8, 
+                                            sizing_mode='stretch_width', height=100, min_width=80)
+cmd_multi_select_2 = pn.widgets.MultiSelect(options=[], size=8, 
+                                            sizing_mode='stretch_width', height=100, min_width=80)
+cmd_multi_select_3 = pn.widgets.MultiSelect(options=[], size=8, 
+                                            sizing_mode='stretch_width', height=100, min_width=80)
+cmd_multi_select_4 = pn.widgets.MultiSelect(options=[], size=8, 
+                                            sizing_mode='stretch_width', height=100, min_width=80)
+
+downsample_slider = pn.widgets.IntSlider(name='Down Sample Rate', start=1, end=10, 
+                                         step=1, value=5,
+                                         sizing_mode='stretch_width',)
+template.sidebar.append(pn.Column(import_button, 
+                            data_table, model_table,
+                            pn.layout.Divider(),
+                            pn.Row(plot_radio_group,plot_data_button), 
+                                  pn.Row(pn.GridBox(x_select, y_select, z_select, color_select, ncols=2,sizing_mode='stretch_width'),pn.Column(downsample_slider,color_map)),
+                                  pn.GridBox(cmd_select_1, cmd_select_2,cmd_select_3, cmd_select_4,
+                                  cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4, ncols=4),
+                                  pn.Row(unit_select, sign_select)))
+
+## Main pane
+# Bind the plotly theme to the panel theme
+px.defaults.template = "plotly_dark" if template.theme.name == "DarkTheme" else "plotly_white"
+
+# Initial empty figure
+plotly_pane = pn.pane.Plotly(px.scatter(), sizing_mode='stretch_both')
 
 
 
-template.main.objects = [pn.Column(plotly_pane,
-                         pn.Row(pn.Column(pn.Row(plot_radio_group,color_map),
-                         pn.Row(x_select, y_select, z_select, color_select)),
-                         pn.Column(pn.Row(pn.Row(sizing_mode='stretch_width'),
-                                   plot_data_button),
-                                   downsample_slider)))]
+template.main.append(pn.Column(plotly_pane))
+
 
 if getattr(sys, 'frozen', False):
     # If the application is run as a bundle, the PyInstaller bootloader
