@@ -223,8 +223,11 @@ color_select = pn.widgets.Select(name='Colorbar', options=[],
 
 color_map = pn.widgets.ColorMap(options={'Inferno':px.colors.sequential.Inferno,
                                          'Viridis':px.colors.sequential.Viridis,
-                                         'Jet':px.colors.sequential.Jet,},
-                                         ncols =1,
+                                         'Jet':['#010179','#022291','#0450b2',
+                                                 '#0aa5c1','#4ffdc8','#c8ff3a',
+                                                 '#ffaf02','#fc1d00','#c10000',
+                                                 '#810001'],},
+                                         ncols =1,width=200
                                          )
 
 
@@ -257,7 +260,7 @@ template.sidebar.append(pn.Column(import_button,
                             data_table, model_table,
                             pn.layout.Divider(),
                             pn.Row(plot_radio_group,plot_data_button), 
-                                  pn.Row(pn.GridBox(x_select, y_select, z_select, color_select, ncols=2,sizing_mode='stretch_width'),pn.Column(downsample_slider,color_map)),
+                                  pn.Row(pn.GridBox(x_select, y_select, z_select, color_select, ncols=2,sizing_mode='stretch_width'),pn.Column(downsample_slider,color_map,width=220)),
                                   pn.GridBox(cmd_select_1, cmd_select_2,cmd_select_3, cmd_select_4,
                                   cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4, ncols=4),
                                   pn.Row(unit_select, sign_select)))
