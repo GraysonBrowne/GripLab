@@ -105,7 +105,8 @@ class PlottingUtils:
                             x_unit, y_unit, z_unit, color_unit):
         """Returns a hover template string based on the plot type."""
         templates = {
-            "2D": f"{x_channel}: %{{x:.2f}} {x_unit}<br>"
+            "2D": f"<b>%{{hovertext}}</b><br>"
+                  f"{x_channel}: %{{x:.2f}} {x_unit}<br>"
                   f"{y_channel}: %{{y:.2f}} {y_unit}<extra></extra>",
 
             "2D Color": f"<b>%{{hovertext}}</b><br>"
