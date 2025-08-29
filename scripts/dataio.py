@@ -5,7 +5,7 @@ from scipy.io import loadmat
 import os
 import re
 from itertools import islice
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from .logger_setup import logger
 from .unit_conversion import UnitSystemConverter
 from .cmd_generator import CmdChannelGenerator
@@ -49,6 +49,14 @@ class DataManager:
     
     def list_colors(self):
         return [ds.node_color for ds in self._datasets.values()]
+    
+    def parse_dataset(self, dataset, channel, condition):
+        result = replace(dataset, data=dataset.data.copy())
+        ref_channel = result.channels.index(channel)
+        ref_array = result.data[:,ref_channel]
+        parse_index = np.isin(ref_array, condition)
+        result.data = result.data[parse_index,:]
+        return result
 
 def import_mat(filepath, file_name, node_color):
     """

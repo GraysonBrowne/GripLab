@@ -161,7 +161,9 @@ class PlottingUtils:
     # --- Main entry point ---
     @classmethod
     def plot_data(cls, data_table, dm,x_select, y_select, z_select, color_select,
-                  unit_select, sign_select, plot_radio_group, color_map, downsample_slider):
+                  unit_select, sign_select, plot_radio_group, color_map, downsample_slider,
+                  cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4, cmd_multi_select_1, 
+                  cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4,):
         """
         Plots selected datasets using Plotly, supporting 2D/3D and color mapping.
 
@@ -223,11 +225,19 @@ class PlottingUtils:
         # Initialize color range lists
         cmin, cmax = [], []
 
+        chan_selectors = [cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4]
+        chan_selected = [sel.value for sel in chan_selectors]
+        condition_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
+        
         for name in names:
             # Retrieve and convert dataset
             dataset = dm.get_dataset(name)
             dataset = UnitSystemConverter.convert_dataset(dataset, to_system=unit_select.value)
             dataset = ConventionConverter.convert_dataset_convention(dataset, target_convention=sign_select.value)
+            
+            # Apply command channel filtering
+            for i, chan in enumerate(chan_selected):
+                dataset = dm.parse_dataset(dataset, chan, condition_selectors[i].value) if chan else dataset
 
             # Generate and add traces based on plot type
             match plot_type:
