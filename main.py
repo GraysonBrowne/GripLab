@@ -100,11 +100,8 @@ class callback:
             z_select.options = channels
             color_select.options = channels
 
-            cmd_channels = [''] + [chan for chan in channels if chan.startswith('Cmd')]
-            cmd_select_1.options = cmd_channels
-            cmd_select_2.options = cmd_channels
-            cmd_select_3.options = cmd_channels
-            cmd_select_4.options = cmd_channels
+            # Update command channel options
+            callback.update_cmd_options(event=None)
             logger.info(f"Data imported from {file_path.name}: {data}")
 
     def update_plot_type(event):
@@ -125,6 +122,20 @@ class callback:
                                                      color_select, unit_select,
                                                      sign_select, plot_radio_group,
                                                      color_map, downsample_slider)
+        
+    def update_cmd_options(event):
+        # Update command channel options to prevent duplicate selections
+        channels = dm.get_channels(dm.list_datasets())
+        cmd_channels = [chan for chan in channels if chan.startswith('Cmd')]
+        selectors = [cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4]
+        selected = [sel.value for sel in selectors]
+
+        # Update options for each selector
+        for i, sel in enumerate(selectors):
+            excluded = set(selected) - {selected[i]}
+            sel.options = [""] + [chan for chan in cmd_channels if chan not in excluded]
+
+ 
 
 ## Header widgets
 menu_items = [('GitHub Repository','github'),('Sign Convention','signcon')]
@@ -225,6 +236,10 @@ cmd_select_3 = pn.widgets.Select(name=' ', options=[],
                                  sizing_mode='stretch_width', min_width=80, margin=(9,10,5,10))
 cmd_select_4 = pn.widgets.Select(name=' ', options=[], 
                                  sizing_mode='stretch_width', min_width=80, margin=(9,10,5,10))
+pn.bind(callback.update_cmd_options, cmd_select_1.param.value, watch=True)
+pn.bind(callback.update_cmd_options, cmd_select_2.param.value, watch=True)
+pn.bind(callback.update_cmd_options, cmd_select_3.param.value, watch=True)
+pn.bind(callback.update_cmd_options, cmd_select_4.param.value, watch=True)
 
 cmd_multi_select_1 = pn.widgets.MultiSelect(options=[], size=8, 
                                             sizing_mode='stretch_width', height=100, min_width=80)
