@@ -100,6 +100,11 @@ class callback:
             z_select.options = channels
             color_select.options = channels
 
+            cmd_channels = [''] + [chan for chan in channels if chan.startswith('Cmd')]
+            cmd_select_1.options = cmd_channels
+            cmd_select_2.options = cmd_channels
+            cmd_select_3.options = cmd_channels
+            cmd_select_4.options = cmd_channels
             logger.info(f"Data imported from {file_path.name}: {data}")
 
     def update_plot_type(event):
@@ -211,15 +216,15 @@ color_map = pn.widgets.ColorMap(options={'Inferno':px.colors.sequential.Inferno,
                                          ncols =1,
                                          )
 
-cmd_options = ['', 'CmdV', 'CmdP', 'CmdFZ', 'CmdIA', 'CmdSA']
-cmd_select_1 = pn.widgets.Select(name='Cmd 1', options=cmd_options, 
+
+cmd_select_1 = pn.widgets.Select(name='Conditional Parsing:', options=[], 
                                  sizing_mode='stretch_width', min_width=80)
-cmd_select_2 = pn.widgets.Select(name='Cmd 2', options=cmd_options, 
-                                 sizing_mode='stretch_width', min_width=80)
-cmd_select_3 = pn.widgets.Select(name='Cmd 3', options=cmd_options, 
-                                 sizing_mode='stretch_width', min_width=80)
-cmd_select_4 = pn.widgets.Select(name='Cmd 4', options=cmd_options, 
-                                 sizing_mode='stretch_width', min_width=80)
+cmd_select_2 = pn.widgets.Select(name=' ', options=[], 
+                                 sizing_mode='stretch_width', min_width=80, margin=(9,10,5,10))
+cmd_select_3 = pn.widgets.Select(name=' ', options=[], 
+                                 sizing_mode='stretch_width', min_width=80, margin=(9,10,5,10))
+cmd_select_4 = pn.widgets.Select(name=' ', options=[], 
+                                 sizing_mode='stretch_width', min_width=80, margin=(9,10,5,10))
 
 cmd_multi_select_1 = pn.widgets.MultiSelect(options=[], size=8, 
                                             sizing_mode='stretch_width', height=100, min_width=80)
