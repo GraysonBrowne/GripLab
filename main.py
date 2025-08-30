@@ -41,6 +41,13 @@ modal_close_pos = """
 }
 """
 pn.extension('tabulator','plotly', raw_css=[sidebar_height])
+if getattr(sys, 'frozen', False):
+    # If the application is run as a bundle, the PyInstaller bootloader
+    # extends the sys module by a flag frozen=True.
+    local_path = Path(sys.executable).parent
+else:
+    # If the application is run directly
+    local_path = Path(__file__).parent
 
 try:
     with open("config.yaml") as f:
@@ -51,12 +58,13 @@ except Exception as e:
         'theme': 'dark',
         'unit_system': 'USCS',
         'sign_convention': 'ISO',
-        'ploting': {
+        'demo_mode': False,
+        'plotting': {
             'colorway': 'G10',
             'colormap': 'Inferno',
         },
         'paths': {
-            'data_dir': '',
+            'data_dir': str(local_path),
         }
     }
 
@@ -73,7 +81,7 @@ template = pn.template.FastListTemplate(
 )
 
 # Define colorway for plots https://plotly.com/python/discrete-color/#color-sequences-in-plotly-express
-color = config['ploting']['colorway']
+color = config['plotting']['colorway']
 colorway = px.colors.qualitative.__getattribute__(color) if hasattr(px.colors.qualitative, color) else px.colors.qualitative.G10
 
 # ------------------------------
@@ -169,7 +177,7 @@ colorway_dict ={'G10'    :px.colors.qualitative.G10,
                 'Set1'   :px.colors.qualitative.Set1,
                 'Dark2'  :px.colors.qualitative.Dark2,}
 colorway_select = pn.widgets.ColorMap(name='Color Sequence', options= colorway_dict,
-                                      value=px.colors.qualitative.__getattribute__(config['ploting']['colorway']),
+                                      value=colorway_dict[config['plotting']['colorway']],
                                       ncols =1,width=200)
 color_map_options = {'Inferno':px.colors.sequential.Inferno,
                      'Viridis':px.colors.sequential.Viridis,
@@ -177,17 +185,19 @@ color_map_options = {'Inferno':px.colors.sequential.Inferno,
                             '#0aa5c1','#4ffdc8','#c8ff3a',
                             '#ffaf02','#fc1d00','#c10000',
                             '#810001'],}
-color_map = pn.widgets.ColorMap(name='Color Map',options=color_map_options,ncols =1,width=200,)
-demo_switch = pn.widgets.Switch(name='Demo Mode', value=False,)
+color_map = pn.widgets.ColorMap(name='Color Map',options=color_map_options,
+                                value = color_map_options[config['plotting']['colormap']],
+                                ncols =1,width=200,)
+demo_switch = pn.widgets.Switch(name='Demo Mode', value=config['demo_mode'],)
 data_dir_button = pn.widgets.Button(name='Set Directory', button_type='default', margin=(28,5,2,15))
 data_dir_input = pn.widgets.TextInput(name='Data Directory', value=config['paths']['data_dir'], sizing_mode='stretch_width')
-unit_select = pn.widgets.Select(name='Unit System', options=['USCS', 'Metric'], value='USCS', 
+unit_select = pn.widgets.Select(name='Unit System', options=['USCS', 'Metric'], value=config['unit_system'], 
                                 description="USCS: lb, ft-lb, in, psi, mph, deg F \n\r" \
                                 "Metric: N, N-m, cm, kPa, kph, deg C",
                                 sizing_mode='stretch_width')
 sign_select = pn.widgets.Select(name='Sign Convention', 
                                 options=['SAE', 'Adapted SAE', 'ISO', 'Adapted ISO'], 
-                                value='ISO',
+                                value=config['sign_convention'],
                                 description="SAE: As supplied from TTC \n\r" \
                                 "Adapted SAE: Used in Pacejka 2012 \n\r" \
                                 "ISO: Used in most commercial sim tools (ADAMS, MF-Tyre/MF-Swift, ect.) \n\r" \
@@ -239,9 +249,34 @@ pn.bind(update_theme, default_theme_select.param.value, watch=True)
 def update_colorway(event):
     selection = list(colorway_dict.keys())[list(colorway_dict.values()).index(event)]
     logger.debug(f"Colorway selection changed: {selection}")
-    config['ploting']['colorway'] = selection
+    config['plotting']['colorway'] = selection
     
 pn.bind(update_colorway, colorway_select.param.value, watch=True)
+
+def update_colormap(event):
+    selection = list(color_map_options.keys())[list(color_map_options.values()).index(event)]
+    logger.debug(f"Colormap selection changed: {selection}")
+    config['plotting']['colormap'] = selection
+
+pn.bind(update_colormap, color_map.param.value, watch=True)
+
+def update_demo_mode(event):
+    logger.debug(f"Demo mode toggled: {event}")
+    config['demo_mode'] = event
+
+pn.bind(update_demo_mode, demo_switch.param.value, watch=True)
+
+def update_unit_system(event):
+    logger.debug(f"Unit system selection changed: {event}")
+    config['unit_system'] = event
+
+pn.bind(update_unit_system, unit_select.param.value, watch=True)
+
+def update_sign_convention(event):
+    logger.debug(f"Sign convention selection changed: {event}")
+    config['sign_convention'] = event
+
+pn.bind(update_sign_convention, sign_select.param.value, watch=True)
 
 def update_data_dir(event):
     logger.debug(f"Data directory input changed: {event}")
@@ -258,6 +293,17 @@ def get_data_dir(clicks):
         logger.info(f"Data directory set to: {directory}")
 
 pn.bind(get_data_dir, data_dir_button.param.clicks, watch=True)
+
+def save_settings(clicks):
+    try:
+        with open("config.yaml", 'w') as f:
+            yaml.dump(config, f)
+        logger.info(f"Settings saved to config.yaml: {config}")
+        template.close_modal()
+    except Exception as e:
+        logger.error(f"Error saving settings: {e}", exc_info=True)
+
+pn.bind(save_settings, save_settings_button.param.clicks, watch=True)
 
 def import_data(clicks):
     # Open file dialog for user to select a data file
@@ -281,7 +327,7 @@ def import_data(clicks):
             return
         
         # Assign a color to the dataset based on the number of existing datasets
-        colorway = px.colors.qualitative.__getattribute__(config['ploting']['colorway'])
+        colorway = px.colors.qualitative.__getattribute__(config['plotting']['colorway'])
         color = colorway[len(dm.list_datasets()) % len(colorway)]
 
         # Determine file type and import data accordingly
