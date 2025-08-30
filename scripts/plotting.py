@@ -237,7 +237,8 @@ class PlottingUtils:
             
             # Apply command channel filtering
             for i, chan in enumerate(chan_selected):
-                dataset = dm.parse_dataset(dataset, chan, condition_selectors[i].value) if chan else dataset
+                keys_matching = [k for k, v in condition_selectors[i].options.items() if v in condition_selectors[i].value]
+                dataset = dm.parse_dataset(dataset, chan, keys_matching) if chan else dataset
 
             # Generate and add traces based on plot type
             match plot_type:
