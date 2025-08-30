@@ -40,7 +40,8 @@ modal_close_pos = """
     top: -17px;
 }
 """
-pn.extension('tabulator','plotly', raw_css=[sidebar_height])
+table_buttons=["https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"]
+pn.extension('tabulator','plotly', raw_css=[sidebar_height], css_files=table_buttons)
 if getattr(sys, 'frozen', False):
     # If the application is run as a bundle, the PyInstaller bootloader
     # extends the sys module by a flag frozen=True.
@@ -99,14 +100,15 @@ template.header.append(pn.Row(pn.layout.HSpacer(), settings_button, help_menu_bu
 
 ######### Sidebar #########
 import_button = pn.widgets.Button(name='Import Data', button_type='primary')
-data_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Dataset','']), 
+data_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Dataset','']),
+                                  buttons = {'trash': '<i class="fa fa-trash"></i>'},
                                   show_index=False, 
                                   configuration={'columnDefaults':{'headerSort':False}},
                                   selectable='checkbox',
                                   sizing_mode='stretch_both',
                                   min_height=150,
-                                  editors={'Dataset':None,'': None},
-                                  widths={'Dataset': 310, '': 20},
+                                  editors={'Dataset':None,'': None,'trash': None},
+                                  widths={'Dataset': 260, '': 40,'trash': 40},
                                   )
 model_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Model','']), 
                                   show_index=False, 
