@@ -1,7 +1,0 @@
-theme: dark # 'dark' or 'default'
-
-ploting:
-  colorway: G10 # https://plotly.com/python/discrete-color/#color-sequences-in-plotly-express
-
-paths:
-  data_dir: data/
