@@ -142,6 +142,20 @@ template.sidebar.append(pn.Column(import_button,
                                   ))
 
 ######### Modals #########
+default_theme_select = pn.widgets.Select(name='Default Theme', 
+                                         options={'Light':'default','Dark':'dark'}, 
+                                         value=config['theme'],
+                                         description="Sets the default theme on application start.",)
+colorway_dict ={'G10'    :px.colors.qualitative.G10,
+                'Plotly' :px.colors.qualitative.Plotly,
+                'D3'     :px.colors.qualitative.D3,
+                'T10'    :px.colors.qualitative.T10,
+                'Set1'   :px.colors.qualitative.Set1,
+                'Dark2'  :px.colors.qualitative.Dark2,}
+colorway_select = pn.widgets.ColorMap(name='Color Sequence', options= colorway_dict,
+                                      value=px.colors.qualitative.__getattribute__(config['ploting']['colorway']))
+data_dir_button = pn.widgets.Button(name='Set Directory', button_type='primary', margin=(28,5,2,15))
+data_dir_input = pn.widgets.TextInput(name='Data Directory', value=config['paths']['data_dir'], sizing_mode='stretch_width')
 unit_select = pn.widgets.Select(name='Unit System', options=['USCS', 'Metric'], value='USCS', 
                                 description="USCS: lb, ft-lb, in, psi, mph, deg F \n\r" \
                                 "Metric: N, N-m, cm, kPa, kph, deg C",
@@ -155,7 +169,11 @@ sign_select = pn.widgets.Select(name='Sign Convention',
                                 "Adapted ISO: Used in Besselink 2000",
                                 sizing_mode='stretch_width')
 # Modal layout
-template.modal.append(pn.Row(unit_select, sign_select))
+settings_layout = pn.WidgetBox('# Settings',
+                               pn.Row(default_theme_select, colorway_select),
+                               pn.Row(data_dir_button,data_dir_input),
+                               pn.Row(unit_select, sign_select))
+template.modal.append(settings_layout)
 
 ######### Main #########
 # Bind the plotly theme to the panel theme
@@ -179,6 +197,35 @@ def help_selection(clicked):
 
 pn.bind(help_selection, help_menu_button.param.clicked, watch=True)
 
+def update_theme(event):
+    logger.debug(f"Theme selection changed: {event}")
+    config['theme'] = event
+
+pn.bind(update_theme, default_theme_select.param.value, watch=True)
+
+def update_colorway(event):
+    selection = list(colorway_dict.keys())[list(colorway_dict.values()).index(event)]
+    logger.debug(f"Colorway selection changed: {selection}")
+    config['ploting']['colorway'] = selection
+    
+pn.bind(update_colorway, colorway_select.param.value, watch=True)
+
+def update_data_dir(event):
+    logger.debug(f"Data directory input changed: {event}")
+    config['paths']['data_dir'] = event
+
+pn.bind(update_data_dir, data_dir_input.param.value_input, watch=True)
+
+def get_data_dir(clicks):
+    # Open directory dialog for user to select a data directory
+    directory = Tk_utils.select_dir(initialdir=config['paths']['data_dir'],)
+    if directory:
+        data_dir_input.value = directory
+        config['paths']['data_dir'] = directory
+        logger.info(f"Data directory set to: {directory}")
+
+pn.bind(get_data_dir, data_dir_button.param.clicks, watch=True)
+
 def import_data(clicks):
     # Open file dialog for user to select a data file
     files = Tk_utils.select_file(filetypes=[('MATLAB/ASCII Data Files',
@@ -201,6 +248,7 @@ def import_data(clicks):
             return
         
         # Assign a color to the dataset based on the number of existing datasets
+        colorway = px.colors.qualitative.__getattribute__(config['ploting']['colorway'])
         color = colorway[len(dm.list_datasets()) % len(colorway)]
 
         # Determine file type and import data accordingly
