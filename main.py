@@ -90,7 +90,8 @@ colorway = px.colors.qualitative.__getattribute__(color) if hasattr(px.colors.qu
 # ------------------------------
 
 ######### Header #########
-menu_items = [('GitHub Repository','github'),('Sign Convention','signcon')]
+menu_items = [('Sign Convention','signcon'),('GitHub Repository','readme'),
+              ('Discussion Board','discuss'),('Report An Issue','issue')]
 help_menu_button = pn.widgets.MenuButton(name="Help", items=menu_items, 
                                          button_type='primary', width=100)
 settings_button = pn.widgets.Button(name="Settings", 
@@ -236,9 +237,15 @@ def help_selection(clicked):
         case 'signcon':
             logger.info("Opening Sign Convention Documentation...")
             webbrowser.open_new(str(Path('docs/Sign_Convention.pdf')))
-        case 'github':
+        case 'readme':
             logger.info("Opening GitHub Repository...")
             webbrowser.open_new("https://github.com/GraysonBrowne/GripLab/blob/main/README.md")
+        case 'discuss':
+            logger.info("Opening Discussion Board...")
+            webbrowser.open_new("https://github.com/GraysonBrowne/GripLab/discussions")
+        case 'issue':
+            logger.info("Opening Issue Reporting Page...")
+            webbrowser.open_new("https://github.com/GraysonBrowne/GripLab/issues")
 
 pn.bind(help_selection, help_menu_button.param.clicked, watch=True)
 
