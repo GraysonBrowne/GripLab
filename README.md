@@ -17,7 +17,7 @@ An open-source Python tool for FSAE/Formula Student teams to process and analyze
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/{yourusername}/GripLab.git
+git clone https://github.com/GraysonBrowne/GripLab.git
 cd GripLab
 pip install -r requirements.txt
 ```
