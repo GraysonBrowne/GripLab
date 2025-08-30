@@ -25,31 +25,54 @@ modal_width = """
 #pn-Modal {
     --dialog-width: auto;
 }"""
-modal_close_pos = """
-.pn-model-close {
+
+modal_content = """
+.pn-modal-content {
     position: relative;
-    left: calc(100% -40px);
-    top: -17px;
+    top: -30px;
 }
 """
 
-pn.extension('tabulator','plotly', raw_css=[sidebar_height, modal_width, modal_close_pos])
+modal_close_pos = """
+.pn-modal-close {
+    position: relative;
+    left: calc(100% - 40px);
+    top: -17px;
+}
+"""
+pn.extension('tabulator','plotly', raw_css=[sidebar_height])
 
-with open("config.yaml") as f:
-    config = yaml.safe_load(f)
+try:
+    with open("config.yaml") as f:
+        config = yaml.safe_load(f)
+
+except Exception as e:
+    config = {
+        'theme': 'dark',
+        'unit_system': 'USCS',
+        'sign_convention': 'ISO',
+        'ploting': {
+            'colorway': 'G10',
+            'colormap': 'Inferno',
+        },
+        'paths': {
+            'data_dir': '',
+        }
+    }
 
 dm = IO.DataManager()
 
 # Define the main application template
 template = pn.template.FastListTemplate(
     title='GripLab',
-    sidebar_width=410,
+    sidebar_width=400,
     #right_sidebar_width=400,
     accent="#2A3F5F",
     theme=config['theme'],
+    raw_css=[modal_width,modal_close_pos,modal_content],
 )
 
-# Define colorway for plots
+# Define colorway for plots https://plotly.com/python/discrete-color/#color-sequences-in-plotly-express
 color = config['ploting']['colorway']
 colorway = px.colors.qualitative.__getattribute__(color) if hasattr(px.colors.qualitative, color) else px.colors.qualitative.G10
 
@@ -102,14 +125,6 @@ z_select = pn.widgets.Select(name='Z-Axis', options=[],
 color_select = pn.widgets.Select(name='Colorbar', options=[], 
                                  sizing_mode='stretch_width',
                                  disabled=True)
-color_map = pn.widgets.ColorMap(options={'Inferno':px.colors.sequential.Inferno,
-                                         'Viridis':px.colors.sequential.Viridis,
-                                         'Jet':['#010179','#022291','#0450b2',
-                                                 '#0aa5c1','#4ffdc8','#c8ff3a',
-                                                 '#ffaf02','#fc1d00','#c10000',
-                                                 '#810001'],},
-                                         ncols =1,width=200,
-                                         )
 cmd_select_1 = pn.widgets.Select(name='Conditional Parsing', options=[], 
                                  sizing_mode='stretch_width', min_width=80)
 cmd_select_2 = pn.widgets.Select(name=' ', options=[], 
@@ -136,7 +151,7 @@ template.sidebar.append(pn.Column(import_button,
                                   pn.layout.Divider(),
                                   pn.Row(plot_radio_group,plot_data_button), 
                                   pn.Row(pn.GridBox(x_select, y_select, z_select, color_select, ncols=2,sizing_mode='stretch_width'),
-                                         pn.Column(downsample_slider,color_map,width=220)),
+                                         pn.Column(downsample_slider,width=150)),
                                   pn.GridBox(cmd_select_1, cmd_select_2,cmd_select_3, cmd_select_4,
                                   cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4, ncols=4),
                                   ))
@@ -145,7 +160,8 @@ template.sidebar.append(pn.Column(import_button,
 default_theme_select = pn.widgets.Select(name='Default Theme', 
                                          options={'Light':'default','Dark':'dark'}, 
                                          value=config['theme'],
-                                         description="Sets the default theme on application start.",)
+                                         description="Sets the default theme on application start.",
+                                         sizing_mode='stretch_width')
 colorway_dict ={'G10'    :px.colors.qualitative.G10,
                 'Plotly' :px.colors.qualitative.Plotly,
                 'D3'     :px.colors.qualitative.D3,
@@ -153,8 +169,17 @@ colorway_dict ={'G10'    :px.colors.qualitative.G10,
                 'Set1'   :px.colors.qualitative.Set1,
                 'Dark2'  :px.colors.qualitative.Dark2,}
 colorway_select = pn.widgets.ColorMap(name='Color Sequence', options= colorway_dict,
-                                      value=px.colors.qualitative.__getattribute__(config['ploting']['colorway']))
-data_dir_button = pn.widgets.Button(name='Set Directory', button_type='primary', margin=(28,5,2,15))
+                                      value=px.colors.qualitative.__getattribute__(config['ploting']['colorway']),
+                                      ncols =1,width=200)
+color_map_options = {'Inferno':px.colors.sequential.Inferno,
+                     'Viridis':px.colors.sequential.Viridis,
+                     'Jet':['#010179','#022291','#0450b2',
+                            '#0aa5c1','#4ffdc8','#c8ff3a',
+                            '#ffaf02','#fc1d00','#c10000',
+                            '#810001'],}
+color_map = pn.widgets.ColorMap(name='Color Map',options=color_map_options,ncols =1,width=200,)
+demo_switch = pn.widgets.Switch(name='Demo Mode', value=False,)
+data_dir_button = pn.widgets.Button(name='Set Directory', button_type='default', margin=(28,5,2,15))
 data_dir_input = pn.widgets.TextInput(name='Data Directory', value=config['paths']['data_dir'], sizing_mode='stretch_width')
 unit_select = pn.widgets.Select(name='Unit System', options=['USCS', 'Metric'], value='USCS', 
                                 description="USCS: lb, ft-lb, in, psi, mph, deg F \n\r" \
@@ -168,12 +193,20 @@ sign_select = pn.widgets.Select(name='Sign Convention',
                                 "ISO: Used in most commercial sim tools (ADAMS, MF-Tyre/MF-Swift, ect.) \n\r" \
                                 "Adapted ISO: Used in Besselink 2000",
                                 sizing_mode='stretch_width')
+save_settings_button = pn.widgets.Button(name='Save Settings', button_type='primary',margin=(10,15,0,15), width=200)
 # Modal layout
-settings_layout = pn.WidgetBox('# Settings',
-                               pn.Row(default_theme_select, colorway_select),
+settings_layout = pn.Column(pn.pane.HTML("""<h1>Settings</h1>""", styles={"height":"40px",
+                                                                          "line-height":"0px",
+                                                                          "margin-top":"0px",
+                                                                          "margin-bottom":"15px",}),
+                               pn.Row(default_theme_select, colorway_select, color_map, pn.Column(pn.widgets.StaticText(value="Demo Mode"),
+                                                                                                  demo_switch)),
+                               pn.Row(unit_select, sign_select),
                                pn.Row(data_dir_button,data_dir_input),
-                               pn.Row(unit_select, sign_select))
+                               pn.Row(pn.layout.HSpacer(),save_settings_button),
+                               width = 800,margin=(0,20),)
 template.modal.append(settings_layout)
+
 
 ######### Main #########
 # Bind the plotly theme to the panel theme
