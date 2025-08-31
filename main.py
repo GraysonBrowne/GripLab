@@ -333,7 +333,9 @@ def help_selection(clicked):
 
 pn.bind(help_selection, help_menu_button.param.clicked, watch=True)
 
+import_tracker = 0
 def import_data(clicks):
+    global import_tracker
     # Open file dialog for user to select a data file
     files = Tk_utils.select_file(filetypes=[('MATLAB/ASCII Data Files',
                                                 '*.mat *.dat *.txt')], 
@@ -356,7 +358,7 @@ def import_data(clicks):
         
         # Assign a color to the dataset based on the number of existing datasets
         colorway = px.colors.qualitative.__getattribute__(config['plotting']['colorway'])
-        color = colorway[len(dm.list_datasets()) % len(colorway)]
+        color = colorway[import_tracker % len(colorway)]
 
         # Determine file type and import data accordingly
         if file_path.suffix.lower() == '.mat':
@@ -383,6 +385,8 @@ def import_data(clicks):
 
         # Update command channel options
         update_cmd_options(event=None)
+
+        import_tracker += 1
         logger.info(f"Data imported from {file_path.name}: {data}")
 
 pn.bind(import_data, import_button.param.clicks, watch=True)
