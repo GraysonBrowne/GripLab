@@ -106,10 +106,18 @@ def import_mat(filepath, file_name, node_color):
         rim_width = rim_match.group() if rim_match else ''
 
         # Determine unit system
-        unit_system = 'USCS' if 'lb' in units else 'Metric'
+        if 'units' in file_data.keys():
+            unit_system = file_data['units']
+        else:
+            unit_system = 'USCS' if 'lb' in units else 'Metric'
+            logger.warning(f"No unit system specified in {file_name}, {unit_system} inferred from channel names.")
 
         # Determine sign convention
-        sign_convention = 'SAE' if 'sign' not in file_data.keys() else file_data['sign']
+        if 'sign' in file_data.keys():
+            sign_convention = file_data['sign']
+        else:
+            sign_convention = 'SAE'
+            logger.warning(f"No sign convention specified in {file_name}, defaulting to SAE.")
 
         # Create command channels if needed
         channels, units, data = CmdChannelGenerator.create_cmd_channels(channels, 
@@ -176,11 +184,20 @@ def import_dat(filepath, file_name, node_color):
         rim_width = str(int(float(rim_match.group(1)))) if rim_match else ''
 
         # Determine unit system
-        unit_system = 'USCS' if 'lb' in units else 'Metric'
+        unit_match = re.search(r'Unit_System=([^;]+)', first_three[0])
+        if unit_match:
+            unit_system = unit_match.group(1)
+        else:
+            unit_system = 'USCS' if 'lb' in units else 'Metric'
+            logger.warning(f"No unit system specified in {file_name}, {unit_system} inferred from channel names.")
 
         # Determine sign convention
         sign_match = re.search(r'Sign_Convention=([^;]+)', first_three[0])
-        sign_convention = sign_match.group(1) if sign_match else 'SAE'
+        if sign_match:
+            sign_convention = sign_match.group(1)
+        else:
+            sign_convention = 'SAE'
+            logger.warning(f"No sign convention specified in {file_name}, defaulting to SAE.")
 
         # Create command channels if needed
         channels, units, data = CmdChannelGenerator.create_cmd_channels(channels, 
