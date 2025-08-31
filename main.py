@@ -429,7 +429,6 @@ def update_plot_type(event):
     y_select.disabled = states["y"]
     z_select.disabled = states["z"]
     color_select.disabled = states["c"]
-    color_map.disabled = states["c"]
 
 pn.bind(update_plot_type, plot_radio_group.param.value, watch=True)
 
