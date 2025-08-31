@@ -387,6 +387,34 @@ def import_data(clicks):
 
 pn.bind(import_data, import_button.param.clicks, watch=True)
 
+def cancel_data_removal(clicks):
+    logger.info("Data removal cancelled by user.")
+    template.close_modal()
+
+pn.bind(cancel_data_removal, cancel_remove_button.param.clicks, watch=True)
+
+def remove_data(clicks):
+    dm.remove_dataset(channel_removal_tracker)
+    logger.debug(f"Datasets after removal: {dm.list_datasets()}")
+    # Update the data table to reflect the removed dataset
+    data_table.value = pd.DataFrame({'Dataset': dm.list_datasets(),
+                                        '': ['']*len(dm.list_datasets())})
+    logger.debug(f"Data table updated: {data_table.value}")
+    # Update channel selection options based on remaining data
+    channels = dm.get_channels(dm.list_datasets())
+    logger.debug(f"Available channels after removal: {channels}")
+    x_select.options = channels
+    y_select.options = channels
+    z_select.options = channels
+    color_select.options = channels
+    logger.debug(f"Axis selectors updated: x:{x_select.options}, y:{y_select.options}, z:{z_select.options}, color:{color_select.options}")
+    # Update command channel options
+    update_cmd_options(event=None)
+    logger.info(f"Dataset removed: {channel_removal_tracker}")
+    template.close_modal()
+
+pn.bind(remove_data, confirm_remove_button.param.clicks, watch=True)
+
 # Define plot states for enabling/disabling axis selectors
 plot_states = {
     "2D":       {"x": False, "y": False, "z": True,  "c": True},
@@ -471,10 +499,12 @@ def cell_color(column):
 data_table.style.apply(cell_color)
 
 # Function to handle row button clicks in the data table
+channel_removal_tracker = ''
 def confirm_data_removal(event):
-    selected_name = dm.list_datasets()[event.row]
+    global channel_removal_tracker
+    channel_removal_tracker = dm.list_datasets()[event.row]
     confirm_remove_data.object = f"""<p>Are you sure that you want to remove
-        <b>{selected_name}</b> from the session?</p>"""
+        <b>{channel_removal_tracker}</b> from the session?</p>"""
     modal_objects.objects = [remove_data_layout]
     template.open_modal()
 
