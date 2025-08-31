@@ -75,7 +75,6 @@ dm = IO.DataManager()
 template = pn.template.FastListTemplate(
     title='GripLab',
     sidebar_width=400,
-    #right_sidebar_width=400,
     accent="#2A3F5F",
     theme=config['theme'],
     raw_css=[modal_width,modal_close_pos,modal_content],
@@ -109,7 +108,7 @@ data_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Dataset','']),
                                   sizing_mode='stretch_both',
                                   min_height=150,
                                   editors={'Dataset':None,'': None,'trash': None},
-                                  widths={'Dataset': 260, '': 40,'trash': 40},
+                                  widths={'Dataset': 259, '': 40,'trash': 40},
                                   )
 model_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Model','']), 
                                   show_index=False, 
@@ -168,6 +167,7 @@ template.sidebar.append(pn.Column(import_button,
                                   ))
 
 ######### Modals #########
+# Settings widgets
 default_theme_select = pn.widgets.Select(name='Default Theme', 
                                          options={'Light':'default','Dark':'dark'}, 
                                          value=config['theme'],
@@ -191,7 +191,7 @@ color_map_options = {'Inferno':px.colors.sequential.Inferno,
 color_map = pn.widgets.ColorMap(name='Color Map',options=color_map_options,
                                 value = color_map_options[config['plotting']['colormap']],
                                 ncols =1,width=200,)
-demo_switch = pn.widgets.Switch(name='Demo Mode', value=config['demo_mode'],)
+demo_switch = pn.widgets.Switch(name='Demo Mode', value=config['demo_mode'])
 data_dir_button = pn.widgets.Button(name='Set Directory', button_type='default', margin=(28,5,2,15))
 data_dir_input = pn.widgets.TextInput(name='Data Directory', value=config['paths']['data_dir'], sizing_mode='stretch_width')
 unit_select = pn.widgets.Select(name='Unit System', options=['USCS', 'Metric'], value=config['unit_system'], 
@@ -207,18 +207,31 @@ sign_select = pn.widgets.Select(name='Sign Convention',
                                 "Adapted ISO: Used in Besselink 2000",
                                 sizing_mode='stretch_width')
 save_settings_button = pn.widgets.Button(name='Save Settings', button_type='primary',margin=(10,15,0,15), width=200)
-# Modal layout
+# Remove confirmation widgets
+confirm_remove_data = pn.pane.HTML("""""", styles={"font-size":"16px",}, margin=(0,15,0,15))
+cancel_remove_button = pn.widgets.Button(name='Cancel', button_type='default',margin=(10,10,0,10), width=200)
+confirm_remove_button = pn.widgets.Button(name='Remove Dataset', button_type='primary',margin=(10,10,0,10), width=200)
+# Modal layouts
 settings_layout = pn.Column(pn.pane.HTML("""<h1>Settings</h1>""", styles={"height":"40px",
                                                                           "line-height":"0px",
                                                                           "margin-top":"0px",
-                                                                          "margin-bottom":"15px",}),
+                                                                          "margin-bottom":"0px",},),
                                pn.Row(default_theme_select, colorway_select, color_map, pn.Column(pn.widgets.StaticText(value="Demo Mode"),
                                                                                                   demo_switch)),
                                pn.Row(unit_select, sign_select),
                                pn.Row(data_dir_button,data_dir_input),
                                pn.Row(pn.layout.HSpacer(),save_settings_button),
                                width = 800,margin=(0,20),)
-template.modal.append(settings_layout)
+remove_data_layout = pn.Column(pn.pane.HTML("""<h1>Remove Dataset?</h1>""", styles={"height":"40px",
+                                                                          "line-height":"0px",
+                                                                          "margin-top":"0px",
+                                                                          "margin-bottom":"0px",}),
+                               confirm_remove_data,
+                               pn.Row(pn.layout.HSpacer(),confirm_remove_button,cancel_remove_button),
+                               width = 440,
+                               margin=(0,20),)
+modal_objects = pn.Column()
+template.modal.append(modal_objects)
 
 
 ######### Main #########
@@ -231,23 +244,11 @@ template.main.append(pn.Column(plotly_pane))
 # ------------------------------
 # 2. CALLBACKS
 # ------------------------------
-def help_selection(clicked):
-    logger.debug(f"Help menu clicked: {clicked}")
-    match clicked:
-        case 'signcon':
-            logger.info("Opening Sign Convention Documentation...")
-            webbrowser.open_new(str(Path('docs/Sign_Convention.pdf')))
-        case 'readme':
-            logger.info("Opening GitHub Repository...")
-            webbrowser.open_new("https://github.com/GraysonBrowne/GripLab/blob/main/README.md")
-        case 'discuss':
-            logger.info("Opening Discussion Board...")
-            webbrowser.open_new("https://github.com/GraysonBrowne/GripLab/discussions")
-        case 'issue':
-            logger.info("Opening Issue Reporting Page...")
-            webbrowser.open_new("https://github.com/GraysonBrowne/GripLab/issues")
+def settings_menu(event):
+    modal_objects.objects = [settings_layout]
+    template.open_modal()
 
-pn.bind(help_selection, help_menu_button.param.clicked, watch=True)
+pn.bind(settings_menu, settings_button.param.clicks, watch=True)
 
 def update_theme(event):
     logger.debug(f"Theme selection changed: {event}")
@@ -313,6 +314,24 @@ def save_settings(clicks):
         logger.error(f"Error saving settings: {e}", exc_info=True)
 
 pn.bind(save_settings, save_settings_button.param.clicks, watch=True)
+
+def help_selection(clicked):
+    logger.debug(f"Help menu clicked: {clicked}")
+    match clicked:
+        case 'signcon':
+            logger.info("Opening Sign Convention Documentation...")
+            webbrowser.open_new(str(Path('docs/Sign_Convention.pdf')))
+        case 'readme':
+            logger.info("Opening GitHub Repository...")
+            webbrowser.open_new("https://github.com/GraysonBrowne/GripLab/blob/main/README.md")
+        case 'discuss':
+            logger.info("Opening Discussion Board...")
+            webbrowser.open_new("https://github.com/GraysonBrowne/GripLab/discussions")
+        case 'issue':
+            logger.info("Opening Issue Reporting Page...")
+            webbrowser.open_new("https://github.com/GraysonBrowne/GripLab/issues")
+
+pn.bind(help_selection, help_menu_button.param.clicked, watch=True)
 
 def import_data(clicks):
     # Open file dialog for user to select a data file
@@ -438,10 +457,7 @@ pn.bind(update_cmd_options, cmd_select_4.param.value, watch=True)
 pn.bind(update_cmd_options, unit_select.param.value, watch=True)
 pn.bind(update_cmd_options, sign_select.param.value, watch=True)
 
-def settings_menu(event):
-    template.open_modal()
 
-pn.bind(settings_menu, settings_button.param.clicks, watch=True)
 
 ###### Tabulator functions #########
  # Function to color the dataset rows in the data table
@@ -453,6 +469,16 @@ def cell_color(column):
     return [f'background-color: {color}' for color in background_color]
 
 data_table.style.apply(cell_color)
+
+# Function to handle row button clicks in the data table
+def confirm_data_removal(event):
+    selected_name = dm.list_datasets()[event.row]
+    confirm_remove_data.object = f"""<p>Are you sure that you want to remove
+        <b>{selected_name}</b> from the session?</p>"""
+    modal_objects.objects = [remove_data_layout]
+    template.open_modal()
+
+data_table.on_click(confirm_data_removal, column='trash')
 
 # ------------------------------
 # 3. SERVE
