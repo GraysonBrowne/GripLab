@@ -614,7 +614,7 @@ def update_data_info(clicks):
 pn.bind(update_data_info, update_data_button.param.clicks, watch=True)
 
 ###### Tabulator functions #########
- # Function to color the dataset rows in the data table
+ # Color the dataset rows in the data table
 def cell_color(column):
     if column.name == '':
         background_color = dm.list_colors()
@@ -624,7 +624,7 @@ def cell_color(column):
 
 data_table.style.apply(cell_color)
 
-# Function to handle row button clicks in the data table
+# Handle row button clicks in the data table
 channel_removal_tracker = ''
 def confirm_data_removal(event):
     global channel_removal_tracker
@@ -635,6 +635,13 @@ def confirm_data_removal(event):
     template.open_modal()
 
 data_table.on_click(confirm_data_removal, column='trash')
+
+# Open data info layout on color cell slection
+def open_data_info(event):
+    info_tab.active = 1
+    data_select.value = dm.list_datasets()[event.row]
+
+data_table.on_click(open_data_info, column='')
 
 # ------------------------------
 # 3. SERVE
