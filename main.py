@@ -155,20 +155,33 @@ downsample_slider = pn.widgets.IntSlider(name='Down Sample Rate', start=1, end=1
                                          step=1, value=5,
                                          sizing_mode='stretch_width',)
 # data info widgets
-data_select = pn.widgets.Select(name='Dataset', options=[])
-data_name_text_input = pn.widgets.TextInput(name='Name',)
-nod_color_picker = pn.widgets.ColorPicker(name='Node Color')
-tire_id_text_input = pn.widgets.TextInput(name='Tire ID',)
-rim_width_text_input = pn.widgets.IntInput(name='Rim Width',)
-update_data_button = pn.widgets.Button(name='Update Dataset', button_type='primary',sizing_mode='stretch_width')
+data_select = pn.widgets.Select(name='Dataset', options=[],sizing_mode='stretch_width',
+                                disabled=True)
+data_name_text_input = pn.widgets.TextInput(name='Name',sizing_mode='stretch_width',
+                                            disabled=True)
+node_color_picker = pn.widgets.ColorPicker(name='Color', disabled=True)
+tire_id_text_input = pn.widgets.TextInput(name='Tire ID',sizing_mode='stretch_width',
+                                          disabled=True)
+rim_width_text_input = pn.widgets.IntInput(name='Rim Width',sizing_mode='stretch_width',
+                                           disabled=True)
+notes_area_input = pn.widgets.TextAreaInput(name='Notes',sizing_mode='stretch_width',
+                                            disabled=True)
+update_data_button = pn.widgets.Button(name='Update Dataset', button_type='primary',
+                                       sizing_mode='stretch_width',disabled=True)
+
+# Sidebar layout
 plot_data_tab = pn.Column(pn.Row(plot_radio_group,plot_data_button), 
                                   pn.Row(pn.GridBox(x_select, y_select, z_select, color_select, ncols=2,sizing_mode='stretch_width'),
                                          pn.Column(downsample_slider,width=150)),
                                   pn.GridBox(cmd_select_1, cmd_select_2,cmd_select_3, cmd_select_4,
                                   cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4, ncols=4),
-                                  name = "Data Plot",)
-data_info_tab = pn.Column(name = 'Data Info',)
-# Sidebar layout
+                                  name = "PLot Data",)
+data_info_tab = pn.Column(data_select, 
+                          pn.Row(data_name_text_input, node_color_picker,),
+                          pn.Row(tire_id_text_input, rim_width_text_input,),
+                          notes_area_input,
+                          update_data_button,
+                          name = 'Data Info',)
 info_tab = pn.layout.Tabs(plot_data_tab,data_info_tab,sizing_mode='stretch_width')
 template.sidebar.append(pn.Column(import_button,
                                   data_table,
