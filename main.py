@@ -154,16 +154,27 @@ cmd_multi_select_4 = pn.widgets.MultiSelect(options=[], size=8,
 downsample_slider = pn.widgets.IntSlider(name='Down Sample Rate', start=1, end=10, 
                                          step=1, value=5,
                                          sizing_mode='stretch_width',)
-# Sidebar layout
-template.sidebar.append(pn.Column(import_button,
-                                  data_table,
-                                  #model_table,
-                                  pn.layout.Divider(),
-                                  pn.Row(plot_radio_group,plot_data_button), 
+# data info widgets
+data_select = pn.widgets.Select(name='Dataset', options=[])
+data_name_text_input = pn.widgets.TextInput(name='Name',)
+nod_color_picker = pn.widgets.ColorPicker(name='Node Color')
+tire_id_text_input = pn.widgets.TextInput(name='Tire ID',)
+rim_width_text_input = pn.widgets.IntInput(name='Rim Width',)
+update_data_button = pn.widgets.Button(name='Update Dataset', button_type='primary',sizing_mode='stretch_width')
+plot_data_tab = pn.Column(pn.Row(plot_radio_group,plot_data_button), 
                                   pn.Row(pn.GridBox(x_select, y_select, z_select, color_select, ncols=2,sizing_mode='stretch_width'),
                                          pn.Column(downsample_slider,width=150)),
                                   pn.GridBox(cmd_select_1, cmd_select_2,cmd_select_3, cmd_select_4,
                                   cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4, ncols=4),
+                                  name = "Data Plot",)
+data_info_tab = pn.Column(name = 'Data Info',)
+# Sidebar layout
+info_tab = pn.layout.Tabs(plot_data_tab,data_info_tab,sizing_mode='stretch_width')
+template.sidebar.append(pn.Column(import_button,
+                                  data_table,
+                                  #model_table,
+                                  pn.layout.Divider(),
+                                  info_tab
                                   ))
 
 ######### Modals #########
