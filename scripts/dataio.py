@@ -23,6 +23,7 @@ class dataset:
     unit_system: str
     sign_convention: str
     node_color: str
+    notes: str
 
 class DataManager:
     def __init__(self):
@@ -77,6 +78,8 @@ def import_mat(filepath, file_name, node_color):
             - rim_width (str): Rim width extracted from the tire ID string.
             - unit_system (str): 'USCS' if units are in pounds, otherwise 'Metric'.
             - sign_convention (str): Extracted sign convention, defaults to 'SAE' if not found.
+            - node_color (str): Hex code that determines plotting color.
+            - notes (str): String of notes associated with the dataset.
 
     Raises:
         Exception: Logs and handles any errors encountered during file import.
@@ -128,12 +131,20 @@ def import_mat(filepath, file_name, node_color):
         
         # Map channels to unit types
         unit_types = UnitSystemConverter.map_channels_to_types(channels)
+
+        # Extract notes
+        if 'notes' in file_data.keys():
+            notes = file_data['notes']
+        else:
+            notes = ''
+            logger.warning(f"Notes string not found in {file_name}.")
         
         logger.info(f"{file_name} successfully imported.")
     except Exception as e:
-        logger.error(f"Error importing .MAT file {e}")
+        logger.error(f"Error importing .MAT file {e}", exc_info=True)
     return (dataset(filepath, file_name, channels, units, unit_types, data,
-                   tire_id, rim_width, unit_system, sign_convention, node_color))
+                   tire_id, rim_width, unit_system, sign_convention, node_color,
+                   notes))
 
 def import_dat(filepath, file_name, node_color):
     """
@@ -154,6 +165,8 @@ def import_dat(filepath, file_name, node_color):
             - rim_width (str): Rim width extracted from the tire ID string.
             - unit_system (str): 'USCS' if units are in pounds, otherwise 'Metric'.
             - sign_convention (str): Extracted sign convention, defaults to 'SAE' if not found.
+            - node_color (str): Hex code that determines plotting color.
+            - notes (str): String of notes associated with the dataset.
 
     Raises:
         Exception: Logs and handles any errors encountered during file import.
@@ -208,9 +221,18 @@ def import_dat(filepath, file_name, node_color):
         
         # Map channels to unit types
         unit_types = UnitSystemConverter.map_channels_to_types(channels)
+
+        # Extract notes
+        notes_match = re.search(r'Notes=([^;]+)', first_three[0])
+        if notes_match:
+            notes = sign_match.group(1)
+        else:
+            notes = ''
+            logger.warning(f"Notes string not found in {file_name}.")
             
         logger.info(f"{file_name} successfully imported.")
     except Exception as e:
-        logger.error(f"Error importing .DAT/.TXT file {e}")
+        logger.error(f"Error importing .DAT/.TXT file {e}", exc_info=True)
     return (dataset(filepath, file_name, channels, units, unit_types, data,
-                   tire_id, rim_width, unit_system, sign_convention, node_color))
+                   tire_id, rim_width, unit_system, sign_convention, node_color,
+                   notes))
