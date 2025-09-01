@@ -386,6 +386,13 @@ def import_data(clicks):
         # Update the data table to reflect the newly added dataset
         data_table.value = pd.DataFrame({'Dataset': dm.list_datasets(),
                                             '': ['']*len(dm.list_datasets())})
+        
+        # Select the newly added dataset in the data table
+        selected = data_table.selection
+        if selected == []:
+            data_table.selection = [data_table.value.index[-1]]
+        else:
+            data_table.selection = selected + [data_table.value.index[-1]]
 
         # Update channel selection options based on the imported data
         channels = dm.get_channels(dm.list_datasets())
