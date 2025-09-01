@@ -488,6 +488,7 @@ def update_scatter_plot(clicks):
                                                     cmd_multi_select_3, cmd_multi_select_4,)
     
 pn.bind(update_scatter_plot, plot_data_button.param.clicks, watch=True)
+
     
 def update_cmd_options(event):
     # Update command channel options to prevent duplicate selections
@@ -556,7 +557,6 @@ def unpack_data_info(event):
         logger.info("Populating data info widgets for dataset: %s", event)
 
         for attr, widget, _ in widget_map.values():
-            time.sleep(0.5)
             widget.value = getattr(dataset, attr)
             widget.disabled = False
 
@@ -571,6 +571,47 @@ def unpack_data_info(event):
         update_data_button.disabled = True
 
 pn.bind(unpack_data_info, data_select.param.value, watch=True)
+
+def update_data_info(clicks):
+    """
+    Update dataset attributes based on widget values and refresh the data table.
+
+    Parameters
+    ----------
+    clicks : int
+        Number of times the update button was clicked (unused, but required by callback signature).
+    """
+
+    try:
+        dataset = dm.get_dataset(data_select.value)
+        og_name = dataset.name
+        # Map dataset attributes to widgets
+        widget_map = {
+            "name": data_name_text_input,
+            "node_color": node_color_picker,
+            "tire_id": tire_id_text_input,
+            "rim_width": rim_width_text_input,
+            "notes": notes_area_input,
+        }
+        logger.debug(f"node color:{widget_map['node_color'].value}")
+        for attr, widget in widget_map.items():
+            setattr(dataset, attr, widget.value)
+
+        logger.info("Updated dataset '%s' with new widget values.", dataset.name)
+        dm.update_dataset(og_name, dataset.name)
+        logger.debug(f"datasets: {dm._datasets}")
+        # Refresh the data table
+        datasets = dm.list_datasets()
+        data_table.value = pd.DataFrame({
+            "Dataset": datasets,
+            "": ["" for _ in datasets]
+        })
+        logger.debug("Data table refreshed with %d datasets.", len(datasets))
+
+    except Exception as e:
+        logger.error("Failed to update dataset '%s': %s", data_select.value, e, exc_info=True)
+    
+pn.bind(update_data_info, update_data_button.param.clicks, watch=True)
 
 ###### Tabulator functions #########
  # Function to color the dataset rows in the data table
