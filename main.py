@@ -41,7 +41,7 @@ modal_close_pos = """
 }
 """
 table_buttons=["https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"]
-pn.extension('tabulator','plotly', raw_css=[sidebar_height], css_files=table_buttons)
+pn.extension('tabulator','plotly', raw_css=[sidebar_height], css_files=table_buttons, notifications=True)
 if getattr(sys, 'frozen', False):
     # If the application is run as a bundle, the PyInstaller bootloader
     # extends the sys module by a flag frozen=True.
@@ -457,6 +457,7 @@ pn.bind(update_plot_type, plot_radio_group.param.value, watch=True)
 def update_scatter_plot(clicks):
     if data_table.selection == []:
         logger.warning("No datasets selected to plot.")
+        pn.state.notifications.warning('Select a dataset to plot.', duration=4000)
         return
     plotly_pane.object = PlottingUtils.plot_data(data_table,dm, x_select, 
                                                     y_select, z_select, 
