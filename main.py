@@ -1,5 +1,6 @@
 # main.py
 import panel as pn
+from panel.io import hold
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -155,14 +156,13 @@ downsample_slider = pn.widgets.IntSlider(name='Down Sample Rate', start=1, end=1
                                          step=1, value=5,
                                          sizing_mode='stretch_width',)
 # data info widgets
-data_select = pn.widgets.Select(name='Dataset', options=[],sizing_mode='stretch_width',
-                                disabled=True)
+data_select = pn.widgets.Select(name='Dataset', options=[],sizing_mode='stretch_width',)
 data_name_text_input = pn.widgets.TextInput(name='Name',sizing_mode='stretch_width',
                                             disabled=True)
 node_color_picker = pn.widgets.ColorPicker(name='Color', disabled=True)
 tire_id_text_input = pn.widgets.TextInput(name='Tire ID',sizing_mode='stretch_width',
                                           disabled=True)
-rim_width_text_input = pn.widgets.IntInput(name='Rim Width',sizing_mode='stretch_width',
+rim_width_text_input = pn.widgets.IntInput(name='Rim Width [in]', width=100,
                                            disabled=True)
 notes_area_input = pn.widgets.TextAreaInput(name='Notes',sizing_mode='stretch_width',
                                             disabled=True)
@@ -171,7 +171,9 @@ update_data_button = pn.widgets.Button(name='Update Dataset', button_type='prima
 
 # Sidebar layout
 plot_data_tab = pn.Column(pn.Row(plot_radio_group,plot_data_button), 
-                                  pn.Row(pn.GridBox(x_select, y_select, z_select, color_select, ncols=2,sizing_mode='stretch_width'),
+                                  pn.Row(pn.GridBox(x_select, y_select, z_select, 
+                                                    color_select, ncols=2, 
+                                                    sizing_mode='stretch_width'),
                                          pn.Column(downsample_slider,width=150)),
                                   pn.GridBox(cmd_select_1, cmd_select_2,cmd_select_3, cmd_select_4,
                                   cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4, ncols=4),
@@ -417,14 +419,8 @@ def import_data(clicks):
         # Update command channel options
         update_cmd_options(event=None)
 
-        # Enable data info widgets
-        data_select.disabled = False
-        data_name_text_input.disabled = False
-        node_color_picker.disabled = False
-        tire_id_text_input.disabled = False
-        rim_width_text_input.disabled = False
-        notes_area_input.disabled = False
-        update_data_button.disabled = False
+        # Update data info options
+        data_select.options = [''] + dm.list_datasets()
 
         import_tracker += 1
         logger.info(f"Data imported from {file_path.name}: {data}")
@@ -529,7 +525,52 @@ pn.bind(update_cmd_options, cmd_select_4.param.value, watch=True)
 pn.bind(update_cmd_options, unit_select.param.value, watch=True)
 pn.bind(update_cmd_options, sign_select.param.value, watch=True)
 
+@hold()
+def unpack_data_info(event):
+    """
+    Populate or reset the data info widgets when a dataset is selected.
 
+    Parameters
+    ----------
+    event : str
+        The dataset identifier (empty string means reset).
+    """
+    widget_map = {
+        "data_name_text_input": ("name", data_name_text_input, ""),
+        "node_color_picker": ("node_color", node_color_picker, "#000000"),
+        "tire_id_text_input": ("tire_id", tire_id_text_input, ""),
+        "rim_width_text_input": ("rim_width", rim_width_text_input, 0),
+        "notes_area_input": ("notes", notes_area_input, ""),
+    }
+
+    if not event:
+        logger.info("Resetting data info widgets (no dataset selected).")
+        for _, widget, default in widget_map.values():
+            widget.value = default
+            widget.disabled = True
+        update_data_button.disabled = True
+        return
+
+    try:
+        dataset = dm.get_dataset(event)
+        logger.info("Populating data info widgets for dataset: %s", event)
+
+        for attr, widget, _ in widget_map.values():
+            time.sleep(0.5)
+            widget.value = getattr(dataset, attr)
+            widget.disabled = False
+
+        update_data_button.disabled = False
+
+    except Exception as e:
+        logger.error("Failed to unpack dataset '%s': %s", event, e, exc_info=True)
+        # fallback: reset to safe state
+        for _, widget, default in widget_map.values():
+            widget.value = default
+            widget.disabled = True
+        update_data_button.disabled = True
+
+pn.bind(unpack_data_info, data_select.param.value, watch=True)
 
 ###### Tabulator functions #########
  # Function to color the dataset rows in the data table
