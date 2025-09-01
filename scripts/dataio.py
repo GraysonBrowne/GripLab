@@ -19,7 +19,7 @@ class dataset:
     unit_types: list
     data: NDArray[np.float64]
     tire_id: str
-    rim_width: str
+    rim_width: int
     unit_system: str
     sign_convention: str
     node_color: str
@@ -75,7 +75,7 @@ def import_mat(filepath, file_name, node_color):
             - unit_types (list): List of unit types corresponding to each channel.
             - data (np.ndarray): 2D array of channel data.
             - tire_id (str): Tire identifier extracted from the file.
-            - rim_width (str): Rim width extracted from the tire ID string.
+            - rim_width (int): Rim width extracted from the tire ID string.
             - unit_system (str): 'USCS' if units are in pounds, otherwise 'Metric'.
             - sign_convention (str): Extracted sign convention, defaults to 'SAE' if not found.
             - node_color (str): Hex code that determines plotting color.
@@ -106,7 +106,7 @@ def import_mat(filepath, file_name, node_color):
         tire_id = tire_info[0]
 
         rim_match = re.search(r"\d+", tire_info[1])
-        rim_width = rim_match.group() if rim_match else ''
+        rim_width = int(rim_match.group()) if rim_match else 0
 
         # Determine unit system
         if 'units' in file_data.keys():
@@ -162,7 +162,7 @@ def import_dat(filepath, file_name, node_color):
             - unit_types (list): List of unit types corresponding to each channel.
             - data (np.ndarray): 2D array of channel data.
             - tire_id (str): Tire identifier extracted from the file.
-            - rim_width (str): Rim width extracted from the tire ID string.
+            - rim_width (int): Rim width extracted from the tire ID string.
             - unit_system (str): 'USCS' if units are in pounds, otherwise 'Metric'.
             - sign_convention (str): Extracted sign convention, defaults to 'SAE' if not found.
             - node_color (str): Hex code that determines plotting color.
@@ -194,7 +194,7 @@ def import_dat(filepath, file_name, node_color):
         tire_id = tire_match.group(1) if tire_match else ''
 
         rim_match = re.search(r'Rim_Width=([^;]+)', first_three[0])
-        rim_width = str(int(float(rim_match.group(1)))) if rim_match else ''
+        rim_width = int(float(rim_match.group(1))) if rim_match else 0
 
         # Determine unit system
         unit_match = re.search(r'Unit_System=([^;]+)', first_three[0])
