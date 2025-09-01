@@ -572,6 +572,7 @@ def unpack_data_info(event):
 
 pn.bind(unpack_data_info, data_select.param.value, watch=True)
 
+@hold()
 def update_data_info(clicks):
     """
     Update dataset attributes based on widget values and refresh the data table.
@@ -597,9 +598,10 @@ def update_data_info(clicks):
         for attr, widget in widget_map.items():
             setattr(dataset, attr, widget.value)
 
-        logger.info("Updated dataset '%s' with new widget values.", dataset.name)
+        # Update data manager
         dm.update_dataset(og_name, dataset.name)
-        logger.debug(f"datasets: {dm._datasets}")
+        logger.info("Updated dataset '%s' with new widget values.", dataset.name)
+        
         # Refresh the data table
         datasets = dm.list_datasets()
         data_table.value = pd.DataFrame({
@@ -607,6 +609,10 @@ def update_data_info(clicks):
             "": ["" for _ in datasets]
         })
         logger.debug("Data table refreshed with %d datasets.", len(datasets))
+
+        # Update data_select widget
+        data_select.options = [""] + datasets
+        data_select.value = dataset.name
 
     except Exception as e:
         logger.error("Failed to update dataset '%s': %s", data_select.value, e, exc_info=True)
