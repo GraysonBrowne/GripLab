@@ -108,7 +108,7 @@ data_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Dataset','']),
                                   selectable='checkbox',
                                   sizing_mode='stretch_both',
                                   min_height=150,
-                                  editors={'Dataset':None,'': None,'trash': None},
+                                  editors={'': None,'trash': None},
                                   widths={'Dataset': 259, '': 40,'trash': 40},
                                   )
 model_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Model','']), 
@@ -649,6 +649,14 @@ def open_data_info(event):
 
 data_table.on_click(open_data_info, column='')
 
+# Edit dataset name from data table
+@hold()
+def edit_data_name(event):
+    data_select.value = dm.list_datasets()[event.row]
+    data_name_text_input.value = event.value
+    update_data_info(clicks=None)
+
+data_table.on_edit(edit_data_name)
 # ------------------------------
 # 3. SERVE
 # ------------------------------
