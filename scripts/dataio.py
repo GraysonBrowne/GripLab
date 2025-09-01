@@ -58,6 +58,15 @@ class DataManager:
         parse_index = np.isin(ref_array, condition)
         result.data = result.data[parse_index,:]
         return result
+    
+    def update_dataset(self, old_name, new_name):
+        updated_dict = {}
+        for k, v in self._datasets.items():
+            if k == old_name:
+                updated_dict[new_name] = self._datasets[old_name]
+            else:
+                updated_dict[k] = v
+        self._datasets = updated_dict
 
 def import_mat(filepath, file_name, node_color):
     """
