@@ -1,6 +1,8 @@
 # modules/processing.py
 import numpy as np
+import panel as pn
 from scipy.signal import butter, filtfilt
+from .logger_setup import logger
 
 def low_pass_filter(data, cutoff_hz, fs=100, order=4):
     """
@@ -33,20 +35,23 @@ def downsample_uniform(x, y, z=[], c=[],factor=5):
     Parameters:
         x (array-like): The input array of x-values.
         y (array-like): The input array of y-values.
+        z (array-like): The input array of z-values.
+        c (array-like): The input array of c-values.
         factor (int, optional): The downsampling factor. Every 'factor'-th 
             element is selected. Default is 5.
 
     Returns:
         tuple: Two arrays containing the downsampled x and y values.
     """
-    if (len(z) != 0) and (len(c) != 0):
-        return x[::factor], y[::factor], z[::factor], c[::factor]
-    elif len(z) != 0:
-        return x[::factor], y[::factor], z[::factor]
-    elif len(c) != 0:
-        return x[::factor], y[::factor], c[::factor]
-    else:   
-        return x[::factor], y[::factor]
+    try:
+        if len(x) == 0:
+            logger.warning("Nothing to plot under selected conditons.")
+            pn.state.notifications.warning('Nothing to plot under selected conditons.', duration=4000)
+            return x, y, z, c
+        else:   
+            return x[::factor], y[::factor], z[::factor], c[::factor]
+    except Exception as e:
+        logger.error(f"Error down sampling data: {e}", exc_info=True)
 
 def downsample_xy(x, y, size=2000, method="random", bins=(50, 50), seed=None):
     """

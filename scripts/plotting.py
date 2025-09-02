@@ -23,7 +23,7 @@ class PlottingUtils:
     @classmethod
     def _plot_2d(cls, dataset, x_channel, y_channel, downsample_factor, name):
         """Generates a 2D scatter plot dictionary for the given dataset and channels."""
-        x, y = downsample_uniform(
+        x, y, z, c = downsample_uniform(
             cls._get_channel_data(dataset, x_channel),
             cls._get_channel_data(dataset, y_channel),
             factor=downsample_factor
@@ -42,7 +42,7 @@ class PlottingUtils:
                        downsample_factor, name):
         """Generates a 2D scatter plot dictionary with color mapping for the 
             given dataset and channels."""
-        x, y, c = downsample_uniform(
+        x, y, z, c = downsample_uniform(
             cls._get_channel_data(dataset, x_channel),
             cls._get_channel_data(dataset, y_channel),
             c=cls._get_channel_data(dataset, color_channel),
@@ -61,7 +61,7 @@ class PlottingUtils:
     def _plot_3d(cls, dataset, x_channel, y_channel, z_channel, downsample_factor, name):
         """Generates a 3D scatter plot dictionary for the given dataset and channels."""
         # Downsample the data
-        x, y, z = downsample_uniform(
+        x, y, z, c = downsample_uniform(
             cls._get_channel_data(dataset, x_channel),
             cls._get_channel_data(dataset, y_channel),
             cls._get_channel_data(dataset, z_channel),
@@ -248,7 +248,8 @@ class PlottingUtils:
 
                 case "2D Color":
                     trace, c = cls._plot_2d_color(dataset, x_channel, y_channel, color_channel, downsample_slider.value, name)
-                    cmin.append(c.min()); cmax.append(c.max())
+                    if len(c) > 0:
+                        cmin.append(c.min()); cmax.append(c.max())
                     fig.add_scatter(**trace)
 
                 case "3D":
@@ -257,7 +258,8 @@ class PlottingUtils:
 
                 case "3D Color":
                     trace, c = cls._plot_3d_color(dataset, x_channel, y_channel, z_channel, color_channel, downsample_slider.value, name)
-                    cmin.append(c.min()); cmax.append(c.max())
+                    if len(c) > 0:
+                        cmin.append(c.min()); cmax.append(c.max())
                     fig.add_scatter3d(**trace)
 
                 case _:

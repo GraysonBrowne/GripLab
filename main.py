@@ -489,7 +489,6 @@ def update_scatter_plot(clicks):
     
 pn.bind(update_scatter_plot, plot_data_button.param.clicks, watch=True)
 
-    
 def update_cmd_options(event):
     # Update command channel options to prevent duplicate selections
     channels = dm.get_channels(dm.list_datasets())
