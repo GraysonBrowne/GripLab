@@ -1,0 +1,7 @@
+numpy
+scipy
+panel
+rich
+watchfiles
+pandas
+plotly
