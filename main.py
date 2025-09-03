@@ -561,6 +561,15 @@ def update_scatter_plot(clicks):
         logger.warning("No datasets selected to plot.")
         pn.state.notifications.warning('Select a dataset to plot.', duration=4000)
         return
+    pn.state.cache['channel_values'] = [x_select.value, y_select.value, z_select.value, color_select.value]
+    pn.state.cache['downsample_rate'] = downsample_slider.value
+    multi_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
+
+    for i, multi in enumerate(multi_selectors):
+        logger.debug(f"Multi-selector {i} options: {multi.options}")
+        pn.state.cache['multiselect_cmd_options'][i] = multi.options
+        pn.state.cache['multiselect_cmd_values'][i] = multi.value
+        
     plotly_pane.object = PlottingUtils.plot_data(data_table.selection,dm, x_select.value, 
                                                     y_select.value, z_select.value, 
                                                     color_select.value, unit_select.value,
@@ -573,14 +582,6 @@ def update_scatter_plot(clicks):
                                                     multiselect_cmd_options)
     logger.debug(plotly_pane.object)
     pn.state.cache['plot'] = plotly_pane.object
-    pn.state.cache['channel_values'] = [x_select.value, y_select.value, z_select.value, color_select.value]
-    pn.state.cache['downsample_rate'] = downsample_slider.value
-    multi_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
-
-    for i, multi in enumerate(multi_selectors):
-        logger.debug(f"Multi-selector {i} options: {multi.options}")
-        pn.state.cache['multiselect_cmd_options'][i] = multi.options
-        pn.state.cache['multiselect_cmd_values'][i] = multi.value
 
 pn.bind(update_scatter_plot, plot_data_button.param.clicks, watch=True)
 
