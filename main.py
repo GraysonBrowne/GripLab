@@ -80,19 +80,23 @@ if len(pn.state.cache) == 0:
     df_data = pd.DataFrame(columns=['Dataset',''])
     channels = []
     data_selection = []
+    plot_type = '2D'
     pn.state.cache['data_selection'] = data_selection
+    pn.state.cache['plot_type'] = plot_type
 elif len(pn.state.cache['data'].list_datasets()) == 0:
     # Populate empty DataManager on reload
     dm = pn.state.cache['data']
     df_data = pd.DataFrame(columns=['Dataset',''])
     channels = []
     data_selection = pn.state.cache['data_selection']
+    plot_type = pn.state.cache['plot_type']
 else:
     # Populate DataManager on reload
     dm = pn.state.cache['data']
     df_data = pd.DataFrame({'Dataset':dm.list_datasets(),'':['']*len(dm.list_datasets())})
     channels = dm.get_channels(dm.list_datasets())
     data_selection = pn.state.cache['data_selection']
+    plot_type = pn.state.cache['plot_type']
     # keep channels updated
     """
     # Update command channel options
@@ -149,7 +153,8 @@ model_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Model','']),
                                   )
 plot_data_button = pn.widgets.Button(name='Plot Data', button_type='primary',sizing_mode='stretch_width')
 plot_radio_group = pn.widgets.RadioBoxGroup(name='Plot Type', 
-                                       options=['2D', '2D Color', '3D', '3D Color'], 
+                                       options=['2D', '2D Color', '3D', '3D Color'],
+                                       value = plot_type, 
                                        inline=True)
 x_select = pn.widgets.Select(name='X-Axis', options=channels, 
                              sizing_mode='stretch_width',
@@ -489,6 +494,7 @@ plot_states = {
     "3D":       {"x": False, "y": False, "z": False, "c": True},
     "3D Color": {"x": False, "y": False, "z": False, "c": False},
 }
+@hold()
 def update_plot_type(event):
     # Enable/disable axis selectors based on the selected plot type
     states = plot_states.get(event)
@@ -496,6 +502,7 @@ def update_plot_type(event):
     y_select.disabled = states["y"]
     z_select.disabled = states["z"]
     color_select.disabled = states["c"]
+    pn.state.cache['plot_type'] = event
 
 pn.bind(update_plot_type, plot_radio_group.param.value, watch=True)
 
