@@ -374,7 +374,7 @@ def help_selection(clicked):
 
 pn.bind(help_selection, help_menu_button.param.clicked, watch=True)
 
-import_tracker = 0
+import_tracker = len(dm.list_datasets())
 def import_data(clicks):
     global import_tracker
     # Open file dialog for user to select a data file
