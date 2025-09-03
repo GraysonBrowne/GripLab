@@ -79,37 +79,46 @@ if len(pn.state.cache) == 0:
     pn.state.cache['data'] = dm
     df_data = pd.DataFrame(columns=['Dataset',''])
     channels = []
+    cmd_channels = [""]
+    selected_cmd_channels = [None]*4
+    multiselect_cmd_options = [[]]*4
+    multiselect_cmd_values = [[]]*4
     data_selection = []
     plot_type = '2D'
     pn.state.cache['data_selection'] = data_selection
     pn.state.cache['plot_type'] = plot_type
+    pn.state.cache['selected_cmd_channels'] = selected_cmd_channels
+    pn.state.cache['multiselect_cmd_options'] = multiselect_cmd_options
+    pn.state.cache['multiselect_cmd_values'] = multiselect_cmd_values
 elif len(pn.state.cache['data'].list_datasets()) == 0:
     # Populate empty DataManager on reload
     dm = pn.state.cache['data']
     df_data = pd.DataFrame(columns=['Dataset',''])
     channels = []
+    cmd_channels = [""]
     data_selection = pn.state.cache['data_selection']
     plot_type = pn.state.cache['plot_type']
+    
+
+    selected_cmd_channels = pn.state.cache['selected_cmd_channels']
+    multiselect_cmd_options = pn.state.cache['multiselect_cmd_options']
+    multiselect_cmd_values = pn.state.cache['multiselect_cmd_values']
 else:
     # Populate DataManager on reload
     dm = pn.state.cache['data']
     df_data = pd.DataFrame({'Dataset':dm.list_datasets(),'':['']*len(dm.list_datasets())})
     channels = dm.get_channels(dm.list_datasets())
+    cmd_channels = [""] + [chan for chan in channels if chan.startswith('Cmd')]
     data_selection = pn.state.cache['data_selection']
     plot_type = pn.state.cache['plot_type']
+
+    selected_cmd_channels = pn.state.cache['selected_cmd_channels']
+    multiselect_cmd_options = pn.state.cache['multiselect_cmd_options']
+    multiselect_cmd_values = pn.state.cache['multiselect_cmd_values']
     # keep channels updated
     """
     # Update command channel options
     update_cmd_options(event=None)"""
-
-# Define the main application template
-template = pn.template.FastListTemplate(
-    title='GripLab',
-    sidebar_width=400,
-    accent="#2A3F5F",
-    theme=config['theme'],
-    raw_css=[modal_width,modal_close_pos,modal_content],
-)
 
 # Define colorway for plots https://plotly.com/python/discrete-color/#color-sequences-in-plotly-express
 color = config['plotting']['colorway']
@@ -164,25 +173,30 @@ y_select = pn.widgets.Select(name='Y-Axis', options=channels,
                              disabled=False)
 z_select = pn.widgets.Select(name='Z-Axis', options=channels, 
                              sizing_mode='stretch_width',
-                             disabled=True)
+                             disabled=False)
 color_select = pn.widgets.Select(name='Colorbar', options=channels, 
                                  sizing_mode='stretch_width',
-                                 disabled=True)
-cmd_select_1 = pn.widgets.Select(name='Conditional Parsing', options=[], 
+                                 disabled=False)
+
+cmd_select_1 = pn.widgets.Select(name='Conditional Parsing', options=cmd_channels, 
+                                 value=selected_cmd_channels[0],
                                  sizing_mode='stretch_width', min_width=80)
-cmd_select_2 = pn.widgets.Select(name=' ', options=[], 
+cmd_select_2 = pn.widgets.Select(name=' ', options=cmd_channels, 
+                                 value=selected_cmd_channels[1],
                                  sizing_mode='stretch_width', min_width=80, margin=(9,10,5,10))
-cmd_select_3 = pn.widgets.Select(name=' ', options=[], 
+cmd_select_3 = pn.widgets.Select(name=' ', options=cmd_channels, 
+                                 value=selected_cmd_channels[2],
                                  sizing_mode='stretch_width', min_width=80, margin=(9,10,5,10))
-cmd_select_4 = pn.widgets.Select(name=' ', options=[], 
+cmd_select_4 = pn.widgets.Select(name=' ', options=cmd_channels, 
+                                 value=selected_cmd_channels[3],
                                  sizing_mode='stretch_width', min_width=80, margin=(9,10,5,10))
-cmd_multi_select_1 = pn.widgets.MultiSelect(options=[], size=8, 
+cmd_multi_select_1 = pn.widgets.MultiSelect(options=multiselect_cmd_options[0], value=multiselect_cmd_values[0], 
                                             sizing_mode='stretch_width', height=100, min_width=80)
-cmd_multi_select_2 = pn.widgets.MultiSelect(options=[], size=8, 
+cmd_multi_select_2 = pn.widgets.MultiSelect(options=multiselect_cmd_options[1], value=multiselect_cmd_values[1], 
                                             sizing_mode='stretch_width', height=100, min_width=80)
-cmd_multi_select_3 = pn.widgets.MultiSelect(options=[], size=8, 
+cmd_multi_select_3 = pn.widgets.MultiSelect(options=multiselect_cmd_options[2], value=multiselect_cmd_values[2], 
                                             sizing_mode='stretch_width', height=100, min_width=80)
-cmd_multi_select_4 = pn.widgets.MultiSelect(options=[], size=8, 
+cmd_multi_select_4 = pn.widgets.MultiSelect(options=multiselect_cmd_options[3], value=multiselect_cmd_values[3], 
                                             sizing_mode='stretch_width', height=100, min_width=80)
 downsample_slider = pn.widgets.IntSlider(name='Down Sample Rate', start=1, end=10, 
                                          step=1, value=5,
@@ -520,7 +534,12 @@ def update_scatter_plot(clicks):
                                                     cmd_select_3, cmd_select_4,
                                                     cmd_multi_select_1, cmd_multi_select_2,
                                                     cmd_multi_select_3, cmd_multi_select_4,)
-    
+    multi_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
+
+    for i, multi in enumerate(multi_selectors):
+        pn.state.cache['multiselect_cmd_options'][i] = multi.options
+        pn.state.cache['multiselect_cmd_values'][i] = multi.value
+
 pn.bind(update_scatter_plot, plot_data_button.param.clicks, watch=True)
 
 def update_cmd_options(event):
@@ -529,7 +548,7 @@ def update_cmd_options(event):
     cmd_channels = [chan for chan in channels if chan.startswith('Cmd')]
     selectors = [cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4]
     selected = [sel.value for sel in selectors]
-
+    pn.state.cache['selected_cmd_channels'] = selected
     multi_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
     data_selection = data_table.selection
     names = [dm.list_datasets()[idx] for idx in data_selection]
