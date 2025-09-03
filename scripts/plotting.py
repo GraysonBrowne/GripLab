@@ -204,81 +204,84 @@ class PlottingUtils:
         - Updates axis labels, hover templates, and colorbars according to selections.
         - Logs warnings if no datasets are selected or if an unknown plot type is specified.
         """
+        try:
+            selection = data_table.selection
+            if not selection:
+                logger.warning("No datasets selected to plot.")
+                return
 
-        selection = data_table.selection
-        if not selection:
-            logger.warning("No datasets selected to plot.")
-            return
+            # Get selected dataset names and plot type
+            names = [dm.list_datasets()[idx] for idx in selection]
+            plot_type = plot_radio_group.value
+            logger.debug(f"Selected datasets: {names}, plot_type={plot_type}")
 
-        # Get selected dataset names and plot type
-        names = [dm.list_datasets()[idx] for idx in selection]
-        plot_type = plot_radio_group.value
-        logger.debug(f"Selected datasets: {names}, plot_type={plot_type}")
+            # Get selected channels
+            x_channel, y_channel = x_select.value, y_select.value
+            z_channel = z_select.value if "3D" in plot_type else None
+            color_channel = color_select.value if "Color" in plot_type else None
 
-        # Get selected channels
-        x_channel, y_channel = x_select.value, y_select.value
-        z_channel = z_select.value if "3D" in plot_type else None
-        color_channel = color_select.value if "Color" in plot_type else None
+            # Initialize figure
+            fig = px.scatter_3d() if "3D" in plot_type else px.scatter(render_mode="webgl")
+            # Initialize color range lists
+            cmin, cmax = [], []
 
-        # Initialize figure
-        fig = px.scatter_3d() if "3D" in plot_type else px.scatter(render_mode="webgl")
-        # Initialize color range lists
-        cmin, cmax = [], []
-
-        chan_selectors = [cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4]
-        chan_selected = [sel.value for sel in chan_selectors]
-        condition_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
-        
-        for name in names:
-            # Retrieve and convert dataset
-            dataset = dm.get_dataset(name)
-            dataset = UnitSystemConverter.convert_dataset(dataset, to_system=unit_select.value)
-            dataset = ConventionConverter.convert_dataset_convention(dataset, target_convention=sign_select.value)
+            chan_selectors = [cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4]
+            chan_selected = [sel.value for sel in chan_selectors]
+            condition_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
             
-            # Apply command channel filtering
-            for i, chan in enumerate(chan_selected):
-                keys_matching = [k for k, v in condition_selectors[i].options.items() if v in condition_selectors[i].value]
-                dataset = dm.parse_dataset(dataset, chan, keys_matching) if chan else dataset
+            for name in names:
+                # Retrieve and convert dataset
+                dataset = dm.get_dataset(name)
+                dataset = UnitSystemConverter.convert_dataset(dataset, to_system=unit_select.value)
+                dataset = ConventionConverter.convert_dataset_convention(dataset, target_convention=sign_select.value)
+                
+                # Apply command channel filtering
+                for i, chan in enumerate(chan_selected):
+                    keys_matching = [k for k, v in condition_selectors[i].options.items() if v in condition_selectors[i].value]
+                    dataset = dm.parse_dataset(dataset, chan, keys_matching) if chan else dataset
 
-            # Generate and add traces based on plot type
-            match plot_type:
-                case "2D":
-                    trace = cls._plot_2d(dataset, x_channel, y_channel, downsample_slider.value, name)
-                    fig.add_scatter(**trace)
+                # Generate and add traces based on plot type
+                match plot_type:
+                    case "2D":
+                        trace = cls._plot_2d(dataset, x_channel, y_channel, downsample_slider.value, name)
+                        fig.add_scatter(**trace)
 
-                case "2D Color":
-                    trace, c = cls._plot_2d_color(dataset, x_channel, y_channel, color_channel, downsample_slider.value, name)
-                    if len(c) > 0:
-                        cmin.append(c.min()); cmax.append(c.max())
-                    fig.add_scatter(**trace)
+                    case "2D Color":
+                        trace, c = cls._plot_2d_color(dataset, x_channel, y_channel, color_channel, downsample_slider.value, name)
+                        if len(c) > 0:
+                            cmin.append(c.min()); cmax.append(c.max())
+                        fig.add_scatter(**trace)
 
-                case "3D":
-                    trace = cls._plot_3d(dataset, x_channel, y_channel, z_channel, downsample_slider.value, name)
-                    fig.add_scatter3d(**trace)
+                    case "3D":
+                        trace = cls._plot_3d(dataset, x_channel, y_channel, z_channel, downsample_slider.value, name)
+                        fig.add_scatter3d(**trace)
 
-                case "3D Color":
-                    trace, c = cls._plot_3d_color(dataset, x_channel, y_channel, z_channel, color_channel, downsample_slider.value, name)
-                    if len(c) > 0:
-                        cmin.append(c.min()); cmax.append(c.max())
-                    fig.add_scatter3d(**trace)
+                    case "3D Color":
+                        trace, c = cls._plot_3d_color(dataset, x_channel, y_channel, z_channel, color_channel, downsample_slider.value, name)
+                        if len(c) > 0:
+                            cmin.append(c.min()); cmax.append(c.max())
+                        fig.add_scatter3d(**trace)
 
-                case _:
-                    logger.warning(f"Unknown plot type: {plot_type}")
+                    case _:
+                        logger.warning(f"Unknown plot type: {plot_type}")
 
-        # Axis labels
-        x_unit = cls._get_unit(dataset, x_channel)
-        y_unit = cls._get_unit(dataset, y_channel)
-        z_unit = cls._get_unit(dataset, z_channel)
-        color_unit = cls._get_unit(dataset, color_channel)
-        cls._update_axis_labels(fig, plot_type, names, x_channel, y_channel, 
-                                z_channel, x_unit, y_unit, z_unit)
+            # Axis labels
+            x_unit = cls._get_unit(dataset, x_channel)
+            y_unit = cls._get_unit(dataset, y_channel)
+            z_unit = cls._get_unit(dataset, z_channel)
+            color_unit = cls._get_unit(dataset, color_channel)
+            cls._update_axis_labels(fig, plot_type, names, x_channel, y_channel, 
+                                    z_channel, x_unit, y_unit, z_unit)
 
-        # Hover template
-        hover_template = cls._get_hover_template(plot_type, x_channel, y_channel, z_channel, color_channel,
-                                                 x_unit, y_unit, z_unit, color_unit)
-        fig.update_traces(hovertemplate=hover_template)
+            # Hover template
+            hover_template = cls._get_hover_template(plot_type, x_channel, y_channel, z_channel, color_channel,
+                                                    x_unit, y_unit, z_unit, color_unit)
+            fig.update_traces(hovertemplate=hover_template)
 
-        # Colorbar
-        cls._update_colorbar(fig, plot_type, cmin, cmax, color_map)
-
-        return fig
+            # Colorbar
+            cls._update_colorbar(fig, plot_type, cmin, cmax, color_map)
+            
+            return fig
+        except Exception as e:
+            logger.error(f"Error generating plot: {e}", exc_info=True)
+            return px.scatter()
