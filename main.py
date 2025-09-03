@@ -78,14 +78,27 @@ if len(pn.state.cache) == 0:
     dm = IO.DataManager()
     pn.state.cache['data'] = dm
     df_data = pd.DataFrame(columns=['Dataset',''])
+
+    channels = []
 elif len(pn.state.cache['data'].list_datasets()) == 0:
     # Populate empty DataManager on reload
     dm = pn.state.cache['data']
     df_data = pd.DataFrame(columns=['Dataset',''])
+
+    channels = []
 else:
     # Populate DataManager on reload
     dm = pn.state.cache['data']
     df_data = pd.DataFrame({'Dataset':dm.list_datasets(),'':['']*len(dm.list_datasets())})
+    channels = dm.get_channels(dm.list_datasets())
+    # keep channels updated... cache this too?
+    """x_select.options = channels
+    y_select.options = channels
+    z_select.options = channels
+    color_select.options = channels
+
+    # Update command channel options
+    update_cmd_options(event=None)"""
 
 # Define the main application template
 template = pn.template.FastListTemplate(
@@ -139,16 +152,16 @@ plot_data_button = pn.widgets.Button(name='Plot Data', button_type='primary',siz
 plot_radio_group = pn.widgets.RadioBoxGroup(name='Plot Type', 
                                        options=['2D', '2D Color', '3D', '3D Color'], 
                                        inline=True)
-x_select = pn.widgets.Select(name='X-Axis', options=[], 
+x_select = pn.widgets.Select(name='X-Axis', options=channels, 
                              sizing_mode='stretch_width',
                              disabled=False)
-y_select = pn.widgets.Select(name='Y-Axis', options=[], 
+y_select = pn.widgets.Select(name='Y-Axis', options=channels, 
                              sizing_mode='stretch_width',
                              disabled=False)
-z_select = pn.widgets.Select(name='Z-Axis', options=[], 
+z_select = pn.widgets.Select(name='Z-Axis', options=channels, 
                              sizing_mode='stretch_width',
                              disabled=True)
-color_select = pn.widgets.Select(name='Colorbar', options=[], 
+color_select = pn.widgets.Select(name='Colorbar', options=channels, 
                                  sizing_mode='stretch_width',
                                  disabled=True)
 cmd_select_1 = pn.widgets.Select(name='Conditional Parsing', options=[], 
