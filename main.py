@@ -73,6 +73,17 @@ except Exception as e:
         }
     }
 
+# Define the main application template
+template = pn.template.FastListTemplate(
+    title='GripLab',
+    sidebar_width=400,
+    accent="#2A3F5F",
+    theme=config['theme'],
+    raw_css=[modal_width,modal_close_pos,modal_content],
+)
+
+px.defaults.template = "plotly_dark" if template.theme.name == "DarkTheme" else "plotly_white"
+
 if len(pn.state.cache) == 0:
     # Setup DataManager on app initialization
     dm = IO.DataManager()
@@ -85,8 +96,10 @@ if len(pn.state.cache) == 0:
     multiselect_cmd_values = [[]]*4
     data_selection = []
     plot_type = '2D'
+    plot = px.scatter()
     pn.state.cache['data_selection'] = data_selection
     pn.state.cache['plot_type'] = plot_type
+    pn.state.cache['plot'] = plot
     pn.state.cache['selected_cmd_channels'] = selected_cmd_channels
     pn.state.cache['multiselect_cmd_options'] = multiselect_cmd_options
     pn.state.cache['multiselect_cmd_values'] = multiselect_cmd_values
@@ -99,6 +112,8 @@ elif len(pn.state.cache['data'].list_datasets()) == 0:
     data_selection = pn.state.cache['data_selection']
     plot_type = pn.state.cache['plot_type']
     
+    plot = pn.state.cache['plot']
+    plot.layout.template = px.defaults.template
 
     selected_cmd_channels = pn.state.cache['selected_cmd_channels']
     multiselect_cmd_options = pn.state.cache['multiselect_cmd_options']
@@ -111,6 +126,8 @@ else:
     cmd_channels = [""] + [chan for chan in channels if chan.startswith('Cmd')]
     data_selection = pn.state.cache['data_selection']
     plot_type = pn.state.cache['plot_type']
+    plot = pn.state.cache['plot']
+    plot.layout.template = px.defaults.template
 
     selected_cmd_channels = pn.state.cache['selected_cmd_channels']
     multiselect_cmd_options = pn.state.cache['multiselect_cmd_options']
@@ -308,8 +325,7 @@ template.modal.append(modal_objects)
 
 ######### Main #########
 # Bind the plotly theme to the panel theme
-px.defaults.template = "plotly_dark" if template.theme.name == "DarkTheme" else "plotly_white"
-plotly_pane = pn.pane.Plotly(px.scatter(), sizing_mode='stretch_both')
+plotly_pane = pn.pane.Plotly(plot, sizing_mode='stretch_both')
 # Main layout
 template.main.append(pn.Column(plotly_pane))
 
@@ -534,6 +550,8 @@ def update_scatter_plot(clicks):
                                                     cmd_select_3, cmd_select_4,
                                                     cmd_multi_select_1, cmd_multi_select_2,
                                                     cmd_multi_select_3, cmd_multi_select_4,)
+    logger.debug(plotly_pane.object)
+    pn.state.cache['plot'] = plotly_pane.object
     multi_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
 
     for i, multi in enumerate(multi_selectors):
