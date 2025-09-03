@@ -90,6 +90,7 @@ if len(pn.state.cache) == 0:
     pn.state.cache['data'] = dm
     df_data = pd.DataFrame(columns=['Dataset',''])
     channels = []
+    channel_values = [[]]*4
     cmd_channels = [""]
     selected_cmd_channels = [None]*4
     multiselect_cmd_options = [[]]*4
@@ -100,6 +101,7 @@ if len(pn.state.cache) == 0:
     pn.state.cache['data_selection'] = data_selection
     pn.state.cache['plot_type'] = plot_type
     pn.state.cache['plot'] = plot
+    pn.state.cache['channel_values'] = channel_values
     pn.state.cache['selected_cmd_channels'] = selected_cmd_channels
     pn.state.cache['multiselect_cmd_options'] = multiselect_cmd_options
     pn.state.cache['multiselect_cmd_values'] = multiselect_cmd_values
@@ -108,6 +110,7 @@ elif len(pn.state.cache['data'].list_datasets()) == 0:
     dm = pn.state.cache['data']
     df_data = pd.DataFrame(columns=['Dataset',''])
     channels = []
+    channel_values = pn.state.cache['channel_values']
     cmd_channels = [""]
     data_selection = pn.state.cache['data_selection']
     plot_type = pn.state.cache['plot_type']
@@ -123,6 +126,7 @@ else:
     dm = pn.state.cache['data']
     df_data = pd.DataFrame({'Dataset':dm.list_datasets(),'':['']*len(dm.list_datasets())})
     channels = dm.get_channels(dm.list_datasets())
+    channel_values = pn.state.cache['channel_values']
     cmd_channels = [""] + [chan for chan in channels if chan.startswith('Cmd')]
     data_selection = pn.state.cache['data_selection']
     plot_type = pn.state.cache['plot_type']
@@ -183,16 +187,16 @@ plot_radio_group = pn.widgets.RadioBoxGroup(name='Plot Type',
                                        options=['2D', '2D Color', '3D', '3D Color'],
                                        value = plot_type, 
                                        inline=True)
-x_select = pn.widgets.Select(name='X-Axis', options=channels, 
+x_select = pn.widgets.Select(name='X-Axis', options=channels, value=channel_values[0],
                              sizing_mode='stretch_width',
                              disabled=False)
-y_select = pn.widgets.Select(name='Y-Axis', options=channels, 
+y_select = pn.widgets.Select(name='Y-Axis', options=channels, value=channel_values[1],
                              sizing_mode='stretch_width',
                              disabled=False)
-z_select = pn.widgets.Select(name='Z-Axis', options=channels, 
+z_select = pn.widgets.Select(name='Z-Axis', options=channels, value=channel_values[2],
                              sizing_mode='stretch_width',
                              disabled=False)
-color_select = pn.widgets.Select(name='Colorbar', options=channels, 
+color_select = pn.widgets.Select(name='Colorbar', options=channels, value=channel_values[3],
                                  sizing_mode='stretch_width',
                                  disabled=False)
 
@@ -553,6 +557,8 @@ def update_scatter_plot(clicks):
                                                     cmd_multi_select_3, cmd_multi_select_4,)
     logger.debug(plotly_pane.object)
     pn.state.cache['plot'] = plotly_pane.object
+    pn.state.cache['channel_values'] = [x_select.value, y_select.value, z_select.value, color_select.value]
+
     multi_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
 
     for i, multi in enumerate(multi_selectors):
