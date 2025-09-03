@@ -78,25 +78,23 @@ if len(pn.state.cache) == 0:
     dm = IO.DataManager()
     pn.state.cache['data'] = dm
     df_data = pd.DataFrame(columns=['Dataset',''])
-
     channels = []
+    data_selection = []
+    pn.state.cache['data_selection'] = data_selection
 elif len(pn.state.cache['data'].list_datasets()) == 0:
     # Populate empty DataManager on reload
     dm = pn.state.cache['data']
     df_data = pd.DataFrame(columns=['Dataset',''])
-
     channels = []
+    data_selection = pn.state.cache['data_selection']
 else:
     # Populate DataManager on reload
     dm = pn.state.cache['data']
     df_data = pd.DataFrame({'Dataset':dm.list_datasets(),'':['']*len(dm.list_datasets())})
     channels = dm.get_channels(dm.list_datasets())
-    # keep channels updated... cache this too?
-    """x_select.options = channels
-    y_select.options = channels
-    z_select.options = channels
-    color_select.options = channels
-
+    data_selection = pn.state.cache['data_selection']
+    # keep channels updated
+    """
     # Update command channel options
     update_cmd_options(event=None)"""
 
@@ -130,6 +128,7 @@ template.header.append(pn.Row(pn.layout.HSpacer(), settings_button, help_menu_bu
 ######### Sidebar #########
 import_button = pn.widgets.Button(name='Import Data', button_type='primary')
 data_table = pn.widgets.Tabulator(df_data,
+                                  selection = data_selection,
                                   buttons = {'trash': '<i class="fa fa-trash"></i>'},
                                   show_index=False, 
                                   configuration={'columnDefaults':{'headerSort':False}},
@@ -684,6 +683,12 @@ def edit_data_name(event):
     update_data_info(clicks=None)
 
 data_table.on_edit(edit_data_name)
+
+def cache_selection(event):
+    pn.state.cache['data_selection'] = data_table.selection
+
+pn.bind(cache_selection, data_table.param.selection, watch=True)
+
 # ------------------------------
 # 3. SERVE
 # ------------------------------
