@@ -97,6 +97,7 @@ if len(pn.state.cache) == 0:
     multiselect_cmd_values = [[]]*4
     data_selection = []
     plot_type = '2D'
+    downsample_rate = 5
     plot = px.scatter()
     pn.state.cache['data_selection'] = data_selection
     pn.state.cache['plot_type'] = plot_type
@@ -105,6 +106,7 @@ if len(pn.state.cache) == 0:
     pn.state.cache['selected_cmd_channels'] = selected_cmd_channels
     pn.state.cache['multiselect_cmd_options'] = multiselect_cmd_options
     pn.state.cache['multiselect_cmd_values'] = multiselect_cmd_values
+    pn.state.cache['downsample_rate'] = downsample_rate
 elif len(pn.state.cache['data'].list_datasets()) == 0:
     # Populate empty DataManager on reload
     dm = pn.state.cache['data']
@@ -121,6 +123,7 @@ elif len(pn.state.cache['data'].list_datasets()) == 0:
     selected_cmd_channels = pn.state.cache['selected_cmd_channels']
     multiselect_cmd_options = pn.state.cache['multiselect_cmd_options']
     multiselect_cmd_values = pn.state.cache['multiselect_cmd_values']
+    downsample_rate = pn.state.cache['downsample_rate']
 else:
     # Populate DataManager on reload
     dm = pn.state.cache['data']
@@ -136,6 +139,7 @@ else:
     selected_cmd_channels = pn.state.cache['selected_cmd_channels']
     multiselect_cmd_options = pn.state.cache['multiselect_cmd_options']
     multiselect_cmd_values = pn.state.cache['multiselect_cmd_values']
+    downsample_rate = pn.state.cache['downsample_rate']
     # keep channels updated
     """
     # Update command channel options
@@ -221,7 +225,7 @@ cmd_multi_select_3 = pn.widgets.MultiSelect(options=multiselect_cmd_options[2], 
 cmd_multi_select_4 = pn.widgets.MultiSelect(options=multiselect_cmd_options[3], value=multiselect_cmd_values[3], 
                                             sizing_mode='stretch_width', height=100, min_width=80)
 downsample_slider = pn.widgets.IntSlider(name='Down Sample Rate', start=1, end=10, 
-                                         step=1, value=5,
+                                         step=1, value=downsample_rate,
                                          sizing_mode='stretch_width',)
 # data info widgets
 data_select = pn.widgets.Select(name='Dataset', options=data_info_select,sizing_mode='stretch_width',)
@@ -558,7 +562,7 @@ def update_scatter_plot(clicks):
     logger.debug(plotly_pane.object)
     pn.state.cache['plot'] = plotly_pane.object
     pn.state.cache['channel_values'] = [x_select.value, y_select.value, z_select.value, color_select.value]
-
+    pn.state.cache['downsample_rate'] = downsample_slider.value
     multi_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
 
     for i, multi in enumerate(multi_selectors):
