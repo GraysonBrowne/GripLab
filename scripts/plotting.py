@@ -155,15 +155,15 @@ class PlottingUtils:
         if "Color" in plot_type and cmin and cmax:
             fig.update_traces(marker=dict(
                 cmin=min(cmin), cmax=max(cmax),
-                colorscale=color_map.value, showscale=True))
+                colorscale=color_map, showscale=True))
             fig.update_layout(showlegend=False)
 
     # --- Main entry point ---
     @classmethod
-    def plot_data(cls, data_table, dm,x_select, y_select, z_select, color_select,
+    def plot_data(cls, selection, dm,x_select, y_select, z_select, color_select,
                   unit_select, sign_select, plot_radio_group, color_map, downsample_slider,
                   cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4, cmd_multi_select_1, 
-                  cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4,):
+                  cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4,multiselect_cmd_options):
         """
         Plots selected datasets using Plotly, supporting 2D/3D and color mapping.
 
@@ -205,20 +205,19 @@ class PlottingUtils:
         - Logs warnings if no datasets are selected or if an unknown plot type is specified.
         """
         try:
-            selection = data_table.selection
             if not selection:
                 logger.warning("No datasets selected to plot.")
                 return
 
             # Get selected dataset names and plot type
             names = [dm.list_datasets()[idx] for idx in selection]
-            plot_type = plot_radio_group.value
+            plot_type = plot_radio_group
             logger.debug(f"Selected datasets: {names}, plot_type={plot_type}")
 
             # Get selected channels
-            x_channel, y_channel = x_select.value, y_select.value
-            z_channel = z_select.value if "3D" in plot_type else None
-            color_channel = color_select.value if "Color" in plot_type else None
+            x_channel, y_channel = x_select, y_select
+            z_channel = z_select if "3D" in plot_type else None
+            color_channel = color_select if "Color" in plot_type else None
 
             # Initialize figure
             fig = px.scatter_3d() if "3D" in plot_type else px.scatter(render_mode="webgl")
@@ -226,38 +225,38 @@ class PlottingUtils:
             cmin, cmax = [], []
 
             chan_selectors = [cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4]
-            chan_selected = [sel.value for sel in chan_selectors]
+            chan_selected = [sel for sel in chan_selectors]
             condition_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
             
             for name in names:
                 # Retrieve and convert dataset
                 dataset = dm.get_dataset(name)
-                dataset = UnitSystemConverter.convert_dataset(dataset, to_system=unit_select.value)
-                dataset = ConventionConverter.convert_dataset_convention(dataset, target_convention=sign_select.value)
+                dataset = UnitSystemConverter.convert_dataset(dataset, to_system=unit_select)
+                dataset = ConventionConverter.convert_dataset_convention(dataset, target_convention=sign_select)
                 
                 # Apply command channel filtering
                 for i, chan in enumerate(chan_selected):
-                    keys_matching = [k for k, v in condition_selectors[i].options.items() if v in condition_selectors[i].value]
+                    keys_matching = [k for k, v in multiselect_cmd_options[i].items() if v in condition_selectors[i]]
                     dataset = dm.parse_dataset(dataset, chan, keys_matching) if chan else dataset
 
                 # Generate and add traces based on plot type
                 match plot_type:
                     case "2D":
-                        trace = cls._plot_2d(dataset, x_channel, y_channel, downsample_slider.value, name)
+                        trace = cls._plot_2d(dataset, x_channel, y_channel, downsample_slider, name)
                         fig.add_scatter(**trace)
 
                     case "2D Color":
-                        trace, c = cls._plot_2d_color(dataset, x_channel, y_channel, color_channel, downsample_slider.value, name)
+                        trace, c = cls._plot_2d_color(dataset, x_channel, y_channel, color_channel, downsample_slider, name)
                         if len(c) > 0:
                             cmin.append(c.min()); cmax.append(c.max())
                         fig.add_scatter(**trace)
 
                     case "3D":
-                        trace = cls._plot_3d(dataset, x_channel, y_channel, z_channel, downsample_slider.value, name)
+                        trace = cls._plot_3d(dataset, x_channel, y_channel, z_channel, downsample_slider, name)
                         fig.add_scatter3d(**trace)
 
                     case "3D Color":
-                        trace, c = cls._plot_3d_color(dataset, x_channel, y_channel, z_channel, color_channel, downsample_slider.value, name)
+                        trace, c = cls._plot_3d_color(dataset, x_channel, y_channel, z_channel, color_channel, downsample_slider, name)
                         if len(c) > 0:
                             cmin.append(c.min()); cmax.append(c.max())
                         fig.add_scatter3d(**trace)

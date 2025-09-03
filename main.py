@@ -93,7 +93,7 @@ if len(pn.state.cache) == 0:
     channel_values = [[]]*4
     cmd_channels = [""]
     selected_cmd_channels = [None]*4
-    multiselect_cmd_options = [[]]*4
+    multiselect_cmd_options = [{}]*4
     multiselect_cmd_values = [[]]*4
     data_selection = []
     plot_type = '2D'
@@ -132,14 +132,25 @@ else:
     channel_values = pn.state.cache['channel_values']
     cmd_channels = [""] + [chan for chan in channels if chan.startswith('Cmd')]
     data_selection = pn.state.cache['data_selection']
-    plot_type = pn.state.cache['plot_type']
-    plot = pn.state.cache['plot']
-    plot.layout.template = px.defaults.template
-
     selected_cmd_channels = pn.state.cache['selected_cmd_channels']
     multiselect_cmd_options = pn.state.cache['multiselect_cmd_options']
     multiselect_cmd_values = pn.state.cache['multiselect_cmd_values']
     downsample_rate = pn.state.cache['downsample_rate']
+    plot_type = pn.state.cache['plot_type']
+    # Try recreating the plot
+    plot = PlottingUtils.plot_data(data_selection,dm, channel_values[0],
+                                   channel_values[1], channel_values[2],
+                                   channel_values[3], config['unit_system'],
+                                   config['sign_convention'], plot_type,
+                                   config['plotting']['colormap'], downsample_rate,
+                                   selected_cmd_channels[0], selected_cmd_channels[1],
+                                   selected_cmd_channels[2], selected_cmd_channels[3],
+                                   multiselect_cmd_values[0], multiselect_cmd_values[1],
+                                   multiselect_cmd_values[2], multiselect_cmd_values[3],
+                                   multiselect_cmd_options)
+    plot.layout.template = px.defaults.template
+
+
     # keep channels updated
     """
     # Update command channel options
@@ -550,15 +561,16 @@ def update_scatter_plot(clicks):
         logger.warning("No datasets selected to plot.")
         pn.state.notifications.warning('Select a dataset to plot.', duration=4000)
         return
-    plotly_pane.object = PlottingUtils.plot_data(data_table,dm, x_select, 
-                                                    y_select, z_select, 
-                                                    color_select, unit_select,
-                                                    sign_select, plot_radio_group,
-                                                    color_map, downsample_slider,
-                                                    cmd_select_1, cmd_select_2,
-                                                    cmd_select_3, cmd_select_4,
-                                                    cmd_multi_select_1, cmd_multi_select_2,
-                                                    cmd_multi_select_3, cmd_multi_select_4,)
+    plotly_pane.object = PlottingUtils.plot_data(data_table.selection,dm, x_select.value, 
+                                                    y_select.value, z_select.value, 
+                                                    color_select.value, unit_select.value,
+                                                    sign_select.value, plot_radio_group.value,
+                                                    color_map.value, downsample_slider.value,
+                                                    cmd_select_1.value, cmd_select_2.value,
+                                                    cmd_select_3.value, cmd_select_4.value,
+                                                    cmd_multi_select_1.value, cmd_multi_select_2.value,
+                                                    cmd_multi_select_3.value, cmd_multi_select_4.value,
+                                                    multiselect_cmd_options)
     logger.debug(plotly_pane.object)
     pn.state.cache['plot'] = plotly_pane.object
     pn.state.cache['channel_values'] = [x_select.value, y_select.value, z_select.value, color_select.value]
@@ -566,6 +578,7 @@ def update_scatter_plot(clicks):
     multi_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
 
     for i, multi in enumerate(multi_selectors):
+        logger.debug(f"Multi-selector {i} options: {multi.options}")
         pn.state.cache['multiselect_cmd_options'][i] = multi.options
         pn.state.cache['multiselect_cmd_values'][i] = multi.value
 
