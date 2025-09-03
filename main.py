@@ -137,6 +137,7 @@ else:
     # Update command channel options
     update_cmd_options(event=None)"""
 
+data_info_select = [''] + dm.list_datasets()
 # Define colorway for plots https://plotly.com/python/discrete-color/#color-sequences-in-plotly-express
 color = config['plotting']['colorway']
 colorway = px.colors.qualitative.__getattribute__(color) if hasattr(px.colors.qualitative, color) else px.colors.qualitative.G10
@@ -219,7 +220,7 @@ downsample_slider = pn.widgets.IntSlider(name='Down Sample Rate', start=1, end=1
                                          step=1, value=5,
                                          sizing_mode='stretch_width',)
 # data info widgets
-data_select = pn.widgets.Select(name='Dataset', options=[],sizing_mode='stretch_width',)
+data_select = pn.widgets.Select(name='Dataset', options=data_info_select,sizing_mode='stretch_width',)
 data_name_text_input = pn.widgets.TextInput(name='Name',sizing_mode='stretch_width',
                                             disabled=True)
 node_color_picker = pn.widgets.ColorPicker(name='Color', disabled=True)
