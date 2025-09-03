@@ -150,11 +150,13 @@ else:
                                    multiselect_cmd_options)
     plot.layout.template = px.defaults.template
 
-
-    # keep channels updated
-    """
-    # Update command channel options
-    update_cmd_options(event=None)"""
+# Define plot states for enabling/disabling axis selectors
+plot_states = {
+    "2D":       {"x": False, "y": False, "z": True,  "c": True},
+    "2D Color": {"x": False, "y": False, "z": True,  "c": False},
+    "3D":       {"x": False, "y": False, "z": False, "c": True},
+    "3D Color": {"x": False, "y": False, "z": False, "c": False},
+}
 
 data_info_select = [''] + dm.list_datasets()
 # Define colorway for plots https://plotly.com/python/discrete-color/#color-sequences-in-plotly-express
@@ -204,16 +206,16 @@ plot_radio_group = pn.widgets.RadioBoxGroup(name='Plot Type',
                                        inline=True)
 x_select = pn.widgets.Select(name='X-Axis', options=channels, value=channel_values[0],
                              sizing_mode='stretch_width',
-                             disabled=False)
+                             disabled=plot_states[plot_type]['x'])
 y_select = pn.widgets.Select(name='Y-Axis', options=channels, value=channel_values[1],
                              sizing_mode='stretch_width',
-                             disabled=False)
+                             disabled=plot_states[plot_type]['y'])
 z_select = pn.widgets.Select(name='Z-Axis', options=channels, value=channel_values[2],
                              sizing_mode='stretch_width',
-                             disabled=False)
+                             disabled=plot_states[plot_type]['z'])
 color_select = pn.widgets.Select(name='Colorbar', options=channels, value=channel_values[3],
                                  sizing_mode='stretch_width',
-                                 disabled=False)
+                                 disabled=plot_states[plot_type]['c'])
 
 cmd_select_1 = pn.widgets.Select(name='Conditional Parsing', options=cmd_channels, 
                                  value=selected_cmd_channels[0],
@@ -537,13 +539,6 @@ def remove_data(clicks):
 
 pn.bind(remove_data, confirm_remove_button.param.clicks, watch=True)
 
-# Define plot states for enabling/disabling axis selectors
-plot_states = {
-    "2D":       {"x": False, "y": False, "z": True,  "c": True},
-    "2D Color": {"x": False, "y": False, "z": True,  "c": False},
-    "3D":       {"x": False, "y": False, "z": False, "c": True},
-    "3D Color": {"x": False, "y": False, "z": False, "c": False},
-}
 @hold()
 def update_plot_type(event):
     # Enable/disable axis selectors based on the selected plot type
