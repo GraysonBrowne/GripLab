@@ -43,6 +43,9 @@ modal_close_pos = """
 """
 table_buttons=["https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"]
 pn.extension('tabulator','plotly', raw_css=[sidebar_height], css_files=table_buttons, notifications=True)
+
+logger.debug(f"Cache: {pn.state.cache}")
+
 if getattr(sys, 'frozen', False):
     # If the application is run as a bundle, the PyInstaller bootloader
     # extends the sys module by a flag frozen=True.
@@ -70,7 +73,19 @@ except Exception as e:
         }
     }
 
-dm = IO.DataManager()
+if len(pn.state.cache) == 0:
+    # Setup DataManager on app initialization
+    dm = IO.DataManager()
+    pn.state.cache['data'] = dm
+    df_data = pd.DataFrame(columns=['Dataset',''])
+elif len(pn.state.cache['data'].list_datasets()) == 0:
+    # Populate empty DataManager on reload
+    dm = pn.state.cache['data']
+    df_data = pd.DataFrame(columns=['Dataset',''])
+else:
+    # Populate DataManager on reload
+    dm = pn.state.cache['data']
+    df_data = pd.DataFrame({'Dataset':dm.list_datasets(),'':['']*len(dm.list_datasets())})
 
 # Define the main application template
 template = pn.template.FastListTemplate(
@@ -101,7 +116,7 @@ template.header.append(pn.Row(pn.layout.HSpacer(), settings_button, help_menu_bu
 
 ######### Sidebar #########
 import_button = pn.widgets.Button(name='Import Data', button_type='primary')
-data_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Dataset','']),
+data_table = pn.widgets.Tabulator(df_data,
                                   buttons = {'trash': '<i class="fa fa-trash"></i>'},
                                   show_index=False, 
                                   configuration={'columnDefaults':{'headerSort':False}},
@@ -421,7 +436,7 @@ def import_data(clicks):
 
         # Update data info options
         data_select.options = [''] + dm.list_datasets()
-
+        
         import_tracker += 1
         logger.info(f"Data imported from {file_path.name}: {data}")
 
