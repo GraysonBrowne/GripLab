@@ -485,7 +485,8 @@ def update_scatter_plot(clicks):
                                                     cmd_select_1, cmd_select_2,
                                                     cmd_select_3, cmd_select_4,
                                                     cmd_multi_select_1, cmd_multi_select_2,
-                                                    cmd_multi_select_3, cmd_multi_select_4,)
+                                                    cmd_multi_select_3, cmd_multi_select_4,
+                                                    config['demo_mode'])
     
 pn.bind(update_scatter_plot, plot_data_button.param.clicks, watch=True)
 

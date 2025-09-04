@@ -54,7 +54,7 @@ class PlottingUtils:
             x=x, y=y,
             hovertext=[name] * len(x),
             marker=dict(color=c, colorbar=dict(title=f"{color_channel} [{color_unit}]",
-                                               showticklabels=axis_visibility)),
+                                               showticklabels=(not axis_visibility))),
             mode="markers"
         ), c
 
@@ -97,14 +97,14 @@ class PlottingUtils:
             hovertext=[name] * len(x),
             line=dict(color=dataset.node_color),
             marker=dict(color=c, colorbar=dict(title=f"{color_channel} [{color_unit}]",
-                                               showticklabels=axis_visibility)),
+                                               showticklabels=(not axis_visibility))),
             mode="markers"
         ), c
 
     # --- Hover template helper ---
     @staticmethod
     def _get_hover_template(plot_type, x_channel, y_channel, z_channel, color_channel,
-                            x_unit, y_unit, z_unit, color_unit):
+                            x_unit, y_unit, z_unit, color_unit,):
         """Returns a hover template string based on the plot type."""
         templates = {
             "2D": f"<b>%{{hovertext}}</b><br>"
@@ -143,17 +143,17 @@ class PlottingUtils:
                 scene_xaxis_title_text=f"{x_channel} [{x_unit}]",
                 scene_yaxis_title_text=f"{y_channel} [{y_unit}]",
                 scene_zaxis_title_text=f"{z_channel} [{z_unit}]",
-                xaxis=dict(showticklabels=axis_visibility),
-                yaxis=dict(showticklabels=axis_visibility),
-                zaxis=dict(showticklabels=axis_visibility)
+                scene_xaxis=dict(showticklabels=(not axis_visibility)),
+                scene_yaxis=dict(showticklabels=(not axis_visibility)),
+                scene_zaxis=dict(showticklabels=(not axis_visibility))
             )
         else:
             fig.update_layout(
                 title=title,
                 xaxis_title=f"{x_channel} [{x_unit}]",
                 yaxis_title=f"{y_channel} [{y_unit}]",
-                xaxis=dict(showticklabels=axis_visibility), 
-                yaxis=dict(showticklabels=axis_visibility)
+                xaxis=dict(showticklabels=(not axis_visibility)),
+                yaxis=dict(showticklabels=(not axis_visibility))
             )
 
     # --- Colorbar helper ---
@@ -291,7 +291,10 @@ class PlottingUtils:
         # Hover template
         hover_template = cls._get_hover_template(plot_type, x_channel, y_channel, z_channel, color_channel,
                                                  x_unit, y_unit, z_unit, color_unit)
-        fig.update_traces(hovertemplate=hover_template)
+        if axis_visibility:
+            fig.update_traces(hovertemplate=f"<b>%{{hovertext}}</b><br>") 
+        else:
+            fig.update_traces(hovertemplate=hover_template)
 
         # Colorbar
         cls._update_colorbar(fig, plot_type, cmin, cmax, color_map)
