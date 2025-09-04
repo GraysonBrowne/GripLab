@@ -383,7 +383,15 @@ def import_data(clicks):
                 og_name = name
             copy += 1
             name = f"{og_name} ({copy})"
-        
+
+        demo_copy = 0
+        demo_name = 'Demo data'
+        while demo_name in dm.list_demo_names():
+            if demo_copy == 0:
+                demo_name = 'Demo data'
+            demo_copy += 1
+            demo_name = f"{'Demo data'} ({demo_copy})"
+
         # If no file was selected, exit the function
         if str(file_path) == '.':
             return
@@ -394,9 +402,9 @@ def import_data(clicks):
 
         # Determine file type and import data accordingly
         if file_path.suffix.lower() == '.mat':
-            data = IO.import_mat(file_path, name, color)
+            data = IO.import_mat(file_path, name, color, demo_name)
         elif file_path.suffix.lower() in ['.dat', '.txt']:
-            data = IO.import_dat(file_path, name, color)
+            data = IO.import_dat(file_path, name, color, demo_name)
         else:
             logger.error("Unsupported file type selected.")
             return
