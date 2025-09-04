@@ -301,9 +301,11 @@ def update_demo_mode(event):
     if event:
         data_table.value = pd.DataFrame({'Dataset': dm.list_demo_names(),
                                             '': ['']*len(dm.list_demo_names())})
+        data_select.options = [''] + dm.list_demo_names()
     else:
         data_table.value = pd.DataFrame({'Dataset': dm.list_datasets(),
                                            '': ['']*len(dm.list_datasets())})
+        data_select.options = [''] + dm.list_datasets()
     config['demo_mode'] = event
 
 pn.bind(update_demo_mode, demo_switch.param.value, watch=True)
@@ -438,7 +440,10 @@ def import_data(clicks):
         update_cmd_options(event=None)
 
         # Update data info options
-        data_select.options = [''] + dm.list_datasets()
+        if demo_switch.value:
+            data_select.options = [''] + dm.list_demo_names()
+        else:
+            data_select.options = [''] + dm.list_datasets()
 
         import_tracker += 1
         logger.info(f"Data imported from {file_path.name}: {data}")
@@ -554,13 +559,22 @@ def unpack_data_info(event):
     event : str
         The dataset identifier (empty string means reset).
     """
-    widget_map = {
-        "data_name_text_input": ("name", data_name_text_input, ""),
-        "node_color_picker": ("node_color", node_color_picker, "#000000"),
-        "tire_id_text_input": ("tire_id", tire_id_text_input, ""),
-        "rim_width_text_input": ("rim_width", rim_width_text_input, 0),
-        "notes_area_input": ("notes", notes_area_input, ""),
-    }
+    if demo_switch.value:
+        widget_map = {
+            "data_name_text_input": ("demo_name", data_name_text_input, ""),
+            "node_color_picker": ("node_color", node_color_picker, "#000000"),
+            "tire_id_text_input": ("demo_tire_id", tire_id_text_input, ""),
+            "rim_width_text_input": ("demo_rim_width", rim_width_text_input, 0),
+            "notes_area_input": ("demo_notes", notes_area_input, ""),
+        }
+    else:
+        widget_map = {
+            "data_name_text_input": ("name", data_name_text_input, ""),
+            "node_color_picker": ("node_color", node_color_picker, "#000000"),
+            "tire_id_text_input": ("tire_id", tire_id_text_input, ""),
+            "rim_width_text_input": ("rim_width", rim_width_text_input, 0),
+            "notes_area_input": ("notes", notes_area_input, ""),
+        }
 
     if not event:
         logger.info("Resetting data info widgets (no dataset selected).")
@@ -571,7 +585,12 @@ def unpack_data_info(event):
         return
 
     try:
-        dataset = dm.get_dataset(event)
+        if demo_switch.value:
+            idx = dm.list_demo_names().index(event)
+            name = dm.list_datasets()[idx]
+            dataset = dm.get_dataset(name)
+        else:
+            dataset = dm.get_dataset(event)
         logger.info("Populating data info widgets for dataset: %s", event)
 
         for attr, widget, _ in widget_map.values():
@@ -602,35 +621,64 @@ def update_data_info(clicks):
     """
 
     try:
-        dataset = dm.get_dataset(data_select.value)
-        og_name = dataset.name
+        
         # Map dataset attributes to widgets
-        widget_map = {
-            "name": data_name_text_input,
-            "node_color": node_color_picker,
-            "tire_id": tire_id_text_input,
-            "rim_width": rim_width_text_input,
-            "notes": notes_area_input,
-        }
+        if demo_switch.value:
+            idx = dm.list_demo_names().index(data_select.value)
+            name = dm.list_datasets()[idx]
+            dataset = dm.get_dataset(name)
+            og_name = dataset.demo_name
+            widget_map = {
+                "demo_name": data_name_text_input,
+                "node_color": node_color_picker,
+                "demo_id": tire_id_text_input,
+                "demo_rim_width": rim_width_text_input,
+                "demo_notes": notes_area_input,
+            }
+        else:
+            dataset = dm.get_dataset(data_select.value)
+            og_name = dataset.name
+            widget_map = {
+                "name": data_name_text_input,
+                "node_color": node_color_picker,
+                "tire_id": tire_id_text_input,
+                "rim_width": rim_width_text_input,
+                "notes": notes_area_input,
+            }
         logger.debug(f"node color:{widget_map['node_color'].value}")
         for attr, widget in widget_map.items():
             setattr(dataset, attr, widget.value)
 
-        # Update data manager
-        dm.update_dataset(og_name, dataset.name)
-        logger.info("Updated dataset '%s' with new widget values.", dataset.name)
-        
-        # Refresh the data table
-        datasets = dm.list_datasets()
-        data_table.value = pd.DataFrame({
-            "Dataset": datasets,
-            "": ["" for _ in datasets]
-        })
+        if demo_switch.value:
+            # Update data manager
+            dm.update_demo_name(og_name, dataset.demo_name)
+            logger.info("Updated dataset '%s' with new widget values.", dataset.demo_name)
+
+            # Refresh the data table
+            datasets = dm.list_demo_names()
+            data_table.value = pd.DataFrame({
+                "Dataset": datasets,
+                "": ["" for _ in datasets]
+            })
+        else:
+            # Update data manager
+            dm.update_dataset(og_name, dataset.name)
+            logger.info("Updated dataset '%s' with new widget values.", dataset.name)
+            
+            # Refresh the data table
+            datasets = dm.list_datasets()
+            data_table.value = pd.DataFrame({
+                "Dataset": datasets,
+                "": ["" for _ in datasets]
+            })
         logger.debug("Data table refreshed with %d datasets.", len(datasets))
 
         # Update data_select widget
         data_select.options = [""] + datasets
-        data_select.value = dataset.name
+        if demo_switch.value:
+            data_select.value = dataset.demo_name
+        else:
+            data_select.value = dataset.name
 
     except Exception as e:
         logger.error("Failed to update dataset '%s': %s", data_select.value, e, exc_info=True)
@@ -663,7 +711,10 @@ data_table.on_click(confirm_data_removal, column='trash')
 # Open data info layout on color cell slection
 def open_data_info(event):
     info_tab.active = 1
-    data_select.value = dm.list_datasets()[event.row]
+    if demo_switch.value:
+        data_select.value = dm.list_demo_names()[event.row]
+    else:
+        data_select.value = dm.list_datasets()[event.row]
 
 data_table.on_click(open_data_info, column='')
 
