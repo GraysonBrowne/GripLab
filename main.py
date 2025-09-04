@@ -298,6 +298,12 @@ pn.bind(update_colormap, color_map.param.value, watch=True)
 
 def update_demo_mode(event):
     logger.debug(f"Demo mode toggled: {event}")
+    if event:
+        data_table.value = pd.DataFrame({'Dataset': dm.list_demo_names(),
+                                            '': ['']*len(dm.list_demo_names())})
+    else:
+        data_table.value = pd.DataFrame({'Dataset': dm.list_datasets(),
+                                           '': ['']*len(dm.list_datasets())})
     config['demo_mode'] = event
 
 pn.bind(update_demo_mode, demo_switch.param.value, watch=True)
@@ -399,9 +405,13 @@ def import_data(clicks):
         dm.add_dataset(name,data)
 
         # Update the data table to reflect the newly added dataset
-        data_table.value = pd.DataFrame({'Dataset': dm.list_datasets(),
-                                            '': ['']*len(dm.list_datasets())})
-        
+        if config['demo_mode']:
+            data_table.value = pd.DataFrame({'Dataset': dm.list_demo_names(),
+                                               '': ['']*len(dm.list_demo_names())})
+        else:
+            data_table.value = pd.DataFrame({'Dataset': dm.list_datasets(),
+                                               '': ['']*len(dm.list_datasets())})
+
         # Select the newly added dataset in the data table
         selected = data_table.selection
         if selected == []:
