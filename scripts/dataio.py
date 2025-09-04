@@ -24,6 +24,10 @@ class dataset:
     sign_convention: str
     node_color: str
     notes: str
+    demo_name: str
+    demo_tire_id: str = "Brand, Compound, Size"
+    demo_rim_width: int = 0
+    demo_notes: str = ""
 
 class DataManager:
     def __init__(self):
@@ -68,7 +72,20 @@ class DataManager:
                 updated_dict[k] = v
         self._datasets = updated_dict
 
-def import_mat(filepath, file_name, node_color):
+    def list_demo_names(self):
+        return [ds.demo_name for ds in self._datasets.values()]
+
+    def update_demo_name(self, old_name, new_name):
+        updated_dict = {}
+        for k, v in self._datasets.items():
+            if k == old_name:
+                updated_dict[k] = replace(v, demo_name=new_name)
+            else:
+                updated_dict[k] = v
+        self._datasets = updated_dict
+
+
+def import_mat(filepath, file_name, node_color, demo_name):
     """
     Imports data from a MATLAB .mat file and constructs a dataset object with relevant metadata.
 
@@ -153,9 +170,9 @@ def import_mat(filepath, file_name, node_color):
         logger.error(f"Error importing .MAT file {e}", exc_info=True)
     return (dataset(filepath, file_name, channels, units, unit_types, data,
                    tire_id, rim_width, unit_system, sign_convention, node_color,
-                   notes))
+                   notes, demo_name))
 
-def import_dat(filepath, file_name, node_color):
+def import_dat(filepath, file_name, node_color, demo_name):
     """
     Imports data from a .dat/.txt file and constructs a dataset object with relevant metadata.
 
@@ -244,4 +261,4 @@ def import_dat(filepath, file_name, node_color):
         logger.error(f"Error importing .DAT/.TXT file {e}", exc_info=True)
     return (dataset(filepath, file_name, channels, units, unit_types, data,
                    tire_id, rim_width, unit_system, sign_convention, node_color,
-                   notes))
+                   notes, demo_name))

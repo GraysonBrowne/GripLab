@@ -39,7 +39,7 @@ class PlottingUtils:
 
     @classmethod
     def _plot_2d_color(cls, dataset, x_channel, y_channel, color_channel, 
-                       downsample_factor, name):
+                       downsample_factor, name, axis_visibility):
         """Generates a 2D scatter plot dictionary with color mapping for the 
             given dataset and channels."""
         x, y, z, c = downsample_uniform(
@@ -53,7 +53,8 @@ class PlottingUtils:
             type="scatter",
             x=x, y=y,
             hovertext=[name] * len(x),
-            marker=dict(color=c, colorbar=dict(title=f"{color_channel} [{color_unit}]")),
+            marker=dict(color=c, colorbar=dict(title=f"{color_channel} [{color_unit}]",
+                                               showticklabels=(not axis_visibility))),
             mode="markers"
         ), c
 
@@ -78,7 +79,7 @@ class PlottingUtils:
 
     @classmethod
     def _plot_3d_color(cls, dataset, x_channel, y_channel, z_channel, color_channel, 
-                       downsample_factor, name):
+                       downsample_factor, name, axis_visibility):
         """Generates a 3D scatter plot dictionary with color mapping for the 
             given dataset and channels."""
         x, y, z, c = downsample_uniform(
@@ -95,14 +96,15 @@ class PlottingUtils:
             name=name,
             hovertext=[name] * len(x),
             line=dict(color=dataset.node_color),
-            marker=dict(color=c, colorbar=dict(title=f"{color_channel} [{color_unit}]")),
+            marker=dict(color=c, colorbar=dict(title=f"{color_channel} [{color_unit}]",
+                                               showticklabels=(not axis_visibility))),
             mode="markers"
         ), c
 
     # --- Hover template helper ---
     @staticmethod
     def _get_hover_template(plot_type, x_channel, y_channel, z_channel, color_channel,
-                            x_unit, y_unit, z_unit, color_unit):
+                            x_unit, y_unit, z_unit, color_unit,):
         """Returns a hover template string based on the plot type."""
         templates = {
             "2D": f"<b>%{{hovertext}}</b><br>"
@@ -129,23 +131,36 @@ class PlottingUtils:
 
     # --- Axis label helper ---
     @classmethod
-    def _update_axis_labels(cls, fig, plot_type, names,
-                            x_channel, y_channel, z_channel, x_unit, y_unit, z_unit):
+    def _update_axis_labels(cls, fig, plot_type, names, demo_names,
+                            x_channel, y_channel, z_channel, x_unit, y_unit, z_unit,
+                            axis_visibility):
         """Updates axis titles based on the plot type and channel names and units."""
-        title = names[0] if len(names) == 1 else ""
+ 
+        if len(names) == 1:
+            if axis_visibility:
+                title = demo_names[0]
+            else:
+                title = names[0]
+        else:
+            title = ""
 
         if "3D" in plot_type:
             fig.update_layout(
                 title=title,
                 scene_xaxis_title_text=f"{x_channel} [{x_unit}]",
                 scene_yaxis_title_text=f"{y_channel} [{y_unit}]",
-                scene_zaxis_title_text=f"{z_channel} [{z_unit}]"
+                scene_zaxis_title_text=f"{z_channel} [{z_unit}]",
+                scene_xaxis=dict(showticklabels=(not axis_visibility)),
+                scene_yaxis=dict(showticklabels=(not axis_visibility)),
+                scene_zaxis=dict(showticklabels=(not axis_visibility))
             )
         else:
             fig.update_layout(
                 title=title,
                 xaxis_title=f"{x_channel} [{x_unit}]",
-                yaxis_title=f"{y_channel} [{y_unit}]"
+                yaxis_title=f"{y_channel} [{y_unit}]",
+                xaxis=dict(showticklabels=(not axis_visibility)),
+                yaxis=dict(showticklabels=(not axis_visibility))
             )
 
     # --- Colorbar helper ---
@@ -160,10 +175,10 @@ class PlottingUtils:
 
     # --- Main entry point ---
     @classmethod
-    def plot_data(cls, data_table, dm,x_select, y_select, z_select, color_select,
+    def plot_data(cls, data_table, dm, x_select, y_select, z_select, color_select,
                   unit_select, sign_select, plot_radio_group, color_map, downsample_slider,
                   cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4, cmd_multi_select_1, 
-                  cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4,):
+                  cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4, axis_visibility):
         """
         Plots selected datasets using Plotly, supporting 2D/3D and color mapping.
 
@@ -212,6 +227,7 @@ class PlottingUtils:
 
         # Get selected dataset names and plot type
         names = [dm.list_datasets()[idx] for idx in selection]
+        demo_names = dm.list_demo_names()
         plot_type = plot_radio_group.value
         logger.debug(f"Selected datasets: {names}, plot_type={plot_type}")
 
@@ -228,13 +244,16 @@ class PlottingUtils:
         chan_selectors = [cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4]
         chan_selected = [sel.value for sel in chan_selectors]
         condition_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
-        
-        for name in names:
+
+        for i, name in enumerate(names):
             # Retrieve and convert dataset
             dataset = dm.get_dataset(name)
             dataset = UnitSystemConverter.convert_dataset(dataset, to_system=unit_select.value)
             dataset = ConventionConverter.convert_dataset_convention(dataset, target_convention=sign_select.value)
             
+            # Update name for demo mode
+            name = demo_names[i] if axis_visibility else name
+
             # Apply command channel filtering
             for i, chan in enumerate(chan_selected):
                 keys_matching = [k for k, v in condition_selectors[i].options.items() if v in condition_selectors[i].value]
@@ -243,21 +262,28 @@ class PlottingUtils:
             # Generate and add traces based on plot type
             match plot_type:
                 case "2D":
-                    trace = cls._plot_2d(dataset, x_channel, y_channel, downsample_slider.value, name)
+                    trace = cls._plot_2d(dataset, x_channel, y_channel, 
+                                         downsample_slider.value, name)
                     fig.add_scatter(**trace)
 
                 case "2D Color":
-                    trace, c = cls._plot_2d_color(dataset, x_channel, y_channel, color_channel, downsample_slider.value, name)
+                    trace, c = cls._plot_2d_color(dataset, x_channel, y_channel, 
+                                                  color_channel, downsample_slider.value, 
+                                                  name, axis_visibility)
                     if len(c) > 0:
                         cmin.append(c.min()); cmax.append(c.max())
                     fig.add_scatter(**trace)
 
                 case "3D":
-                    trace = cls._plot_3d(dataset, x_channel, y_channel, z_channel, downsample_slider.value, name)
+                    trace = cls._plot_3d(dataset, x_channel, y_channel, z_channel, 
+                                         downsample_slider.value, name)
                     fig.add_scatter3d(**trace)
 
                 case "3D Color":
-                    trace, c = cls._plot_3d_color(dataset, x_channel, y_channel, z_channel, color_channel, downsample_slider.value, name)
+                    trace, c = cls._plot_3d_color(dataset, x_channel, y_channel, 
+                                                  z_channel, color_channel, 
+                                                  downsample_slider.value, name,
+                                                  axis_visibility)
                     if len(c) > 0:
                         cmin.append(c.min()); cmax.append(c.max())
                     fig.add_scatter3d(**trace)
@@ -270,13 +296,16 @@ class PlottingUtils:
         y_unit = cls._get_unit(dataset, y_channel)
         z_unit = cls._get_unit(dataset, z_channel)
         color_unit = cls._get_unit(dataset, color_channel)
-        cls._update_axis_labels(fig, plot_type, names, x_channel, y_channel, 
-                                z_channel, x_unit, y_unit, z_unit)
+        cls._update_axis_labels(fig, plot_type, names, demo_names, x_channel, y_channel,
+                                z_channel, x_unit, y_unit, z_unit, axis_visibility,)
 
         # Hover template
         hover_template = cls._get_hover_template(plot_type, x_channel, y_channel, z_channel, color_channel,
                                                  x_unit, y_unit, z_unit, color_unit)
-        fig.update_traces(hovertemplate=hover_template)
+        if axis_visibility:
+            fig.update_traces(hovertemplate=f"<b>%{{hovertext}}</b><br><extra></extra>") 
+        else:
+            fig.update_traces(hovertemplate=hover_template)
 
         # Colorbar
         cls._update_colorbar(fig, plot_type, cmin, cmax, color_map)
