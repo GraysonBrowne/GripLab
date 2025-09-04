@@ -68,6 +68,16 @@ class DataManager:
                 updated_dict[k] = v
         self._datasets = updated_dict
 
+    def list_demo_names(self):
+        demo_names = []
+        for i in range(len(list(self._datasets.keys()))):
+            if i == 0:
+                demo_names.append('Demo data')
+            else:
+                demo_names.append(f"Demo data ({i})")
+        return demo_names
+
+
 def import_mat(filepath, file_name, node_color):
     """
     Imports data from a MATLAB .mat file and constructs a dataset object with relevant metadata.
