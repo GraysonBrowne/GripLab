@@ -126,18 +126,23 @@ plot_data_button = pn.widgets.Button(name='Plot Data', button_type='primary',siz
 plot_radio_group = pn.widgets.RadioBoxGroup(name='Plot Type', 
                                        options=['2D', '2D Color', '3D', '3D Color'], 
                                        inline=True)
+# Define plot states for enabling/disabling axis selectors
+plot_states = {
+    "2D":       {"z": True,  "c": True},
+    "2D Color": {"z": True,  "c": False},
+    "3D":       {"z": False, "c": True},
+    "3D Color": {"z": False, "c": False},
+}
 x_select = pn.widgets.Select(name='X-Axis', options=[], 
-                             sizing_mode='stretch_width',
-                             disabled=False)
+                             sizing_mode='stretch_width')
 y_select = pn.widgets.Select(name='Y-Axis', options=[], 
-                             sizing_mode='stretch_width',
-                             disabled=False)
+                             sizing_mode='stretch_width')
 z_select = pn.widgets.Select(name='Z-Axis', options=[], 
                              sizing_mode='stretch_width',
-                             disabled=True)
+                             disabled=plot_states[plot_radio_group.value]["z"])
 color_select = pn.widgets.Select(name='Colorbar', options=[], 
                                  sizing_mode='stretch_width',
-                                 disabled=True)
+                                 disabled=plot_states[plot_radio_group.value]["c"])
 cmd_select_1 = pn.widgets.Select(name='Conditional Parsing', options=[], 
                                  sizing_mode='stretch_width', min_width=80)
 cmd_select_2 = pn.widgets.Select(name=' ', options=[], 
@@ -236,14 +241,14 @@ title_text_input = pn.widgets.TextInput(name='Title', value='', sizing_mode='str
 subtitle_text_input = pn.widgets.TextInput(name='Subtitle', value='', sizing_mode='stretch_width')
 x_label_text_input = pn.widgets.TextInput(name='X-Axis Label', value='', sizing_mode='stretch_width')
 y_label_text_input = pn.widgets.TextInput(name='Y-Axis Label', value='', sizing_mode='stretch_width')
-z_label_text_input = pn.widgets.TextInput(name='Z-Axis Label', value='', sizing_mode='stretch_width')
-c_label_text_input = pn.widgets.TextInput(name='Colorbar Label', value='', sizing_mode='stretch_width')
-font_size_input = pn.widgets.IntSlider(name='Font Size', value=18, start=4, end=32, 
+z_label_text_input = pn.widgets.TextInput(name='Z-Axis Label', value='', sizing_mode='stretch_width',
+                                          disabled=plot_states[plot_radio_group.value]["z"])
+c_label_text_input = pn.widgets.TextInput(name='Colorbar Label', value='', sizing_mode='stretch_width',
+                                          disabled=plot_states[plot_radio_group.value]["c"])
+font_size_input = pn.widgets.IntSlider(name='Font Size', value=18, start=4, end=32,
                                          step=1, sizing_mode='stretch_width')
 marker_size_input = pn.widgets.IntSlider(name='Marker Size', value=6, start=2, end=10, 
-                                         step=1, sizing_mode='stretch_width',
-                                         #margin=(10,15,30,15),
-                                         )
+                                         step=1, sizing_mode='stretch_width')
 color_map_options = {'Jet':['#010179','#022291','#0450b2',
                             '#0aa5c1','#4ffdc8','#c8ff3a',
                             '#ffaf02','#fc1d00','#c10000',
@@ -505,20 +510,14 @@ def remove_data(clicks):
 
 pn.bind(remove_data, confirm_remove_button.param.clicks, watch=True)
 
-# Define plot states for enabling/disabling axis selectors
-plot_states = {
-    "2D":       {"x": False, "y": False, "z": True,  "c": True},
-    "2D Color": {"x": False, "y": False, "z": True,  "c": False},
-    "3D":       {"x": False, "y": False, "z": False, "c": True},
-    "3D Color": {"x": False, "y": False, "z": False, "c": False},
-}
+@hold()
 def update_plot_type(event):
     # Enable/disable axis selectors based on the selected plot type
     states = plot_states.get(event)
-    x_select.disabled = states["x"]
-    y_select.disabled = states["y"]
     z_select.disabled = states["z"]
     color_select.disabled = states["c"]
+    z_label_text_input.disabled = states["z"]
+    c_label_text_input.disabled = states["c"]
 
 pn.bind(update_plot_type, plot_radio_group.param.value, watch=True)
 
