@@ -237,13 +237,14 @@ confirm_remove_data = pn.pane.HTML("""""", styles={"font-size":"16px",}, margin=
 cancel_remove_button = pn.widgets.Button(name='Cancel', button_type='default',margin=(10,10,0,10), width=200)
 confirm_remove_button = pn.widgets.Button(name='Remove Dataset', button_type='primary',margin=(10,10,0,10), width=200)
 # Plot settings widgets
-title_text_input = pn.widgets.TextInput(name='Title', value='', sizing_mode='stretch_width')
-subtitle_text_input = pn.widgets.TextInput(name='Subtitle', value='', sizing_mode='stretch_width')
-x_label_text_input = pn.widgets.TextInput(name='X-Axis Label', value='', sizing_mode='stretch_width')
-y_label_text_input = pn.widgets.TextInput(name='Y-Axis Label', value='', sizing_mode='stretch_width')
-z_label_text_input = pn.widgets.TextInput(name='Z-Axis Label', value='', sizing_mode='stretch_width',
+title_text_input = pn.widgets.TextInput(name='Title', value='', placeholder='Tire ID',sizing_mode='stretch_width')
+subtitle_text_input = pn.widgets.TextInput(name='Subtitle', value='', placeholder='SA:() | SR:() | IA:() | FZ:() | P:() | V:() | Rim Width:()',
+                                           sizing_mode='stretch_width')
+x_label_text_input = pn.widgets.TextInput(name='X-Axis Label', value='', placeholder='Channel [unit]',sizing_mode='stretch_width')
+y_label_text_input = pn.widgets.TextInput(name='Y-Axis Label', value='', placeholder='Channel [unit]',sizing_mode='stretch_width')
+z_label_text_input = pn.widgets.TextInput(name='Z-Axis Label', value='', placeholder='Channel [unit]',sizing_mode='stretch_width',
                                           disabled=plot_states[plot_radio_group.value]["z"])
-c_label_text_input = pn.widgets.TextInput(name='Colorbar Label', value='', sizing_mode='stretch_width',
+c_label_text_input = pn.widgets.TextInput(name='Colorbar Label', value='', placeholder='Channel [unit]',sizing_mode='stretch_width',
                                           disabled=plot_states[plot_radio_group.value]["c"])
 font_size_input = pn.widgets.IntSlider(name='Font Size', value=18, start=4, end=32,
                                          step=1, sizing_mode='stretch_width')
