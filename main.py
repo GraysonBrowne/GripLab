@@ -665,7 +665,7 @@ def update_data_info(clicks):
             widget_map = {
                 "demo_name": data_name_text_input,
                 "node_color": node_color_picker,
-                "demo_id": tire_id_text_input,
+                "demo_tire_id": tire_id_text_input,
                 "demo_rim_width": rim_width_text_input,
                 "demo_notes": notes_area_input,
             }
@@ -755,7 +755,10 @@ data_table.on_click(open_data_info, column='')
 # Edit dataset name from data table
 @hold()
 def edit_data_name(event):
-    data_select.value = dm.list_datasets()[event.row]
+    if demo_switch.value:
+        data_select.value = dm.list_demo_names()[event.row]
+    else:
+        data_select.value = dm.list_datasets()[event.row]
     data_name_text_input.value = event.value
     update_data_info(clicks=None)
 

@@ -52,6 +52,9 @@ class DataManager:
             channels.extend(dataset.channels)
         return list(dict.fromkeys(channels))  # Return unique channels
     
+    def list_tire_ids(self):
+        return [ds.tire_id for ds in self._datasets.values()]
+
     def list_colors(self):
         return [ds.node_color for ds in self._datasets.values()]
     
@@ -83,6 +86,9 @@ class DataManager:
             else:
                 updated_dict[k] = v
         self._datasets = updated_dict
+
+    def list_demo_tire_ids(self):
+        return [ds.demo_tire_id for ds in self._datasets.values()]
 
 
 def import_mat(filepath, file_name, node_color, demo_name):

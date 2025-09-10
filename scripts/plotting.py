@@ -133,14 +133,12 @@ class PlottingUtils:
     @classmethod
     def _update_axis_labels(cls, fig, plot_type, names, demo_names,
                             x_channel, y_channel, z_channel, x_unit, y_unit, z_unit,
-                            axis_visibility):
+                            axis_visibility, tire_ids, demo_tire_ids):
         """Updates axis titles based on the plot type and channel names and units."""
- 
-        if len(names) == 1:
-            if axis_visibility:
-                title = demo_names[0]
-            else:
-                title = names[0]
+        if axis_visibility and len(list(set(demo_tire_ids))) == 1:
+            title = demo_tire_ids[0]
+        elif not axis_visibility and len(list(set(tire_ids))) == 1:
+            title = tire_ids[0]
         else:
             title = ""
 
@@ -231,6 +229,9 @@ class PlottingUtils:
         plot_type = plot_radio_group.value
         logger.debug(f"Selected datasets: {names}, plot_type={plot_type}")
 
+        tire_ids = [dm.list_tire_ids()[idx] for idx in selection]
+        demo_tire_ids = [dm.list_demo_tire_ids()[idx] for idx in selection]
+
         # Get selected channels
         x_channel, y_channel = x_select.value, y_select.value
         z_channel = z_select.value if "3D" in plot_type else None
@@ -297,7 +298,8 @@ class PlottingUtils:
         z_unit = cls._get_unit(dataset, z_channel)
         color_unit = cls._get_unit(dataset, color_channel)
         cls._update_axis_labels(fig, plot_type, names, demo_names, x_channel, y_channel,
-                                z_channel, x_unit, y_unit, z_unit, axis_visibility,)
+                                z_channel, x_unit, y_unit, z_unit, axis_visibility,
+                                tire_ids, demo_tire_ids)
 
         # Hover template
         hover_template = cls._get_hover_template(plot_type, x_channel, y_channel, z_channel, color_channel,
