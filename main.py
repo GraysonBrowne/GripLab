@@ -522,6 +522,13 @@ def update_plot_type(event):
 
 pn.bind(update_plot_type, plot_radio_group.param.value, watch=True)
 
+def open_plot_settings(event):
+    logger.info("Opening plot settings.")
+    modal_objects.objects = [plot_settings_layout]
+    template.open_modal()
+
+pn.bind(open_plot_settings, plot_settings_button.param.clicks, watch=True)
+
 def update_scatter_plot(clicks):
     if data_table.selection == []:
         logger.warning("No datasets selected to plot.")
