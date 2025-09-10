@@ -210,15 +210,7 @@ colorway_dict ={'G10'    :px.colors.qualitative.G10,
 colorway_select = pn.widgets.ColorMap(name='Color Sequence', options= colorway_dict,
                                       value=colorway_dict[config['plotting']['colorway']],
                                       ncols =1,width=200)
-color_map_options = {'Inferno':px.colors.sequential.Inferno,
-                     'Viridis':px.colors.sequential.Viridis,
-                     'Jet':['#010179','#022291','#0450b2',
-                            '#0aa5c1','#4ffdc8','#c8ff3a',
-                            '#ffaf02','#fc1d00','#c10000',
-                            '#810001'],}
-color_map = pn.widgets.ColorMap(name='Color Map',options=color_map_options,
-                                value = color_map_options[config['plotting']['colormap']],
-                                ncols =1,width=200,)
+
 demo_switch = pn.widgets.Switch(name='Demo Mode', value=config['demo_mode'])
 data_dir_button = pn.widgets.Button(name='Set Directory', button_type='default', margin=(28,5,2,15))
 data_dir_input = pn.widgets.TextInput(name='Data Directory', value=config['paths']['data_dir'], sizing_mode='stretch_width')
@@ -239,12 +231,35 @@ save_settings_button = pn.widgets.Button(name='Save Settings', button_type='prim
 confirm_remove_data = pn.pane.HTML("""""", styles={"font-size":"16px",}, margin=(0,15,0,15))
 cancel_remove_button = pn.widgets.Button(name='Cancel', button_type='default',margin=(10,10,0,10), width=200)
 confirm_remove_button = pn.widgets.Button(name='Remove Dataset', button_type='primary',margin=(10,10,0,10), width=200)
+# Plot settings widgets
+title_text_input = pn.widgets.TextInput(name='Title', value='', sizing_mode='stretch_width')
+subtitle_text_input = pn.widgets.TextInput(name='Subtitle', value='', sizing_mode='stretch_width')
+x_label_text_input = pn.widgets.TextInput(name='X-Axis Label', value='', sizing_mode='stretch_width')
+y_label_text_input = pn.widgets.TextInput(name='Y-Axis Label', value='', sizing_mode='stretch_width')
+z_label_text_input = pn.widgets.TextInput(name='Z-Axis Label', value='', sizing_mode='stretch_width')
+c_label_text_input = pn.widgets.TextInput(name='Colorbar Label', value='', sizing_mode='stretch_width')
+font_size_input = pn.widgets.IntSlider(name='Font Size', value=18, start=4, end=32, 
+                                         step=1, sizing_mode='stretch_width')
+marker_size_input = pn.widgets.IntSlider(name='Marker Size', value=6, start=2, end=10, 
+                                         step=1, sizing_mode='stretch_width',
+                                         #margin=(10,15,30,15),
+                                         )
+color_map_options = {'Jet':['#010179','#022291','#0450b2',
+                            '#0aa5c1','#4ffdc8','#c8ff3a',
+                            '#ffaf02','#fc1d00','#c10000',
+                            '#810001'],
+                     'Inferno':px.colors.sequential.Inferno,
+                     'Viridis':px.colors.sequential.Viridis,
+                     }
+color_map = pn.widgets.ColorMap(name='Color Map',options=color_map_options,
+                                value = color_map_options[config['plotting']['colormap']],
+                                ncols =1,width=200,)
 # Modal layouts
 settings_layout = pn.Column(pn.pane.HTML("""<h1>Settings</h1>""", styles={"height":"40px",
                                                                           "line-height":"0px",
                                                                           "margin-top":"0px",
                                                                           "margin-bottom":"0px",},),
-                               pn.Row(default_theme_select, colorway_select, color_map, pn.Column(pn.widgets.StaticText(value="Demo Mode"),
+                               pn.Row(default_theme_select, colorway_select, pn.Column(pn.widgets.StaticText(value="Demo Mode"),
                                                                                                   demo_switch)),
                                pn.Row(unit_select, sign_select),
                                pn.Row(data_dir_button,data_dir_input),
@@ -258,6 +273,16 @@ remove_data_layout = pn.Column(pn.pane.HTML("""<h1>Remove Dataset?</h1>""", styl
                                pn.Row(pn.layout.HSpacer(),confirm_remove_button,cancel_remove_button),
                                width = 440,
                                margin=(0,20),)
+plot_settings_layout = pn.Column(pn.pane.HTML("""<h1>Plot Settings</h1>""", styles={"height":"40px",
+                                                                          "line-height":"0px",
+                                                                          "margin-top":"0px",
+                                                                          "margin-bottom":"0px",}),
+                                 title_text_input, subtitle_text_input, 
+                                 x_label_text_input,  y_label_text_input, 
+                                 z_label_text_input,  
+                                 c_label_text_input, color_map, font_size_input, marker_size_input,
+                                 width = 450,
+                                 margin=(0,20,0,20),)
 modal_objects = pn.Column()
 template.modal.append(modal_objects)
 
