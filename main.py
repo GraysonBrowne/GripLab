@@ -75,7 +75,7 @@ dm = IO.DataManager()
 # Define the main application template
 template = pn.template.FastListTemplate(
     title='GripLab',
-    sidebar_width=400,
+    sidebar_width=420,
     accent="#2A3F5F",
     theme=config['theme'],
     raw_css=[modal_width,modal_close_pos,modal_content],
@@ -109,7 +109,7 @@ data_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Dataset','']),
                                   sizing_mode='stretch_both',
                                   min_height=150,
                                   editors={'': None,'trash': None},
-                                  widths={'Dataset': 259, '': 40,'trash': 40},
+                                  widths={'Dataset': 279, '': 40,'trash': 40},
                                   )
 model_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Model','']), 
                                   show_index=False, 
@@ -120,7 +120,9 @@ model_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Model','']),
                                   editors={'Model':None,'': None},
                                   widths={'Model': 300, '': 20},
                                   )
-plot_data_button = pn.widgets.Button(name='Plot Data', button_type='primary',sizing_mode='stretch_width')
+plot_settings_button = pn.widgets.Button(name='⚙️', button_type='default', width=43, margin=(5,0,5,15))
+plot_data_button = pn.widgets.Button(name='Plot Data', button_type='primary',sizing_mode='stretch_width', 
+                                     margin=(5,10,5,7))
 plot_radio_group = pn.widgets.RadioBoxGroup(name='Plot Type', 
                                        options=['2D', '2D Color', '3D', '3D Color'], 
                                        inline=True)
@@ -170,7 +172,7 @@ update_data_button = pn.widgets.Button(name='Update Dataset', button_type='prima
                                        sizing_mode='stretch_width',disabled=True)
 
 # Sidebar layout
-plot_data_tab = pn.Column(pn.Row(plot_radio_group,plot_data_button), 
+plot_data_tab = pn.Column(pn.Row(plot_radio_group,plot_settings_button,plot_data_button), 
                                   pn.Row(pn.GridBox(x_select, y_select, z_select, 
                                                     color_select, ncols=2, 
                                                     sizing_mode='stretch_width'),
