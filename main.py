@@ -248,7 +248,7 @@ c_label_text_input = pn.widgets.TextInput(name='Colorbar Label', value='', place
                                           disabled=plot_states[plot_radio_group.value]["c"])
 font_size_input = pn.widgets.IntSlider(name='Font Size', value=18, start=4, end=32,
                                          step=1, sizing_mode='stretch_width')
-marker_size_input = pn.widgets.IntSlider(name='Marker Size', value=6, start=2, end=10, 
+marker_size_input = pn.widgets.IntSlider(name='Marker Size', value=10, start=2, end=18, 
                                          step=1, sizing_mode='stretch_width')
 color_map_options = {'Jet':['#010179','#022291','#0450b2',
                             '#0aa5c1','#4ffdc8','#c8ff3a',
@@ -543,7 +543,7 @@ def update_scatter_plot(clicks):
                                                     cmd_select_3, cmd_select_4,
                                                     cmd_multi_select_1, cmd_multi_select_2,
                                                     cmd_multi_select_3, cmd_multi_select_4,
-                                                    config['demo_mode'])
+                                                    config['demo_mode'],marker_size_input.value)
     
 pn.bind(update_scatter_plot, plot_data_button.param.clicks, watch=True)
 

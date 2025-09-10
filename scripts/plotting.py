@@ -21,7 +21,7 @@ class PlottingUtils:
 
     # --- Plot helpers ---
     @classmethod
-    def _plot_2d(cls, dataset, x_channel, y_channel, downsample_factor, name):
+    def _plot_2d(cls, dataset, x_channel, y_channel, downsample_factor, name, marker_size):
         """Generates a 2D scatter plot dictionary for the given dataset and channels."""
         x, y, z, c = downsample_uniform(
             cls._get_channel_data(dataset, x_channel),
@@ -34,12 +34,14 @@ class PlottingUtils:
             name=name,
             hovertext=[name] * len(x),
             line=dict(color=dataset.node_color),
-            mode="markers"
+            mode="markers",
+            marker=dict(size=marker_size),
+            opacity=1
         )
 
     @classmethod
     def _plot_2d_color(cls, dataset, x_channel, y_channel, color_channel, 
-                       downsample_factor, name, axis_visibility):
+                       downsample_factor, name, axis_visibility, marker_size):
         """Generates a 2D scatter plot dictionary with color mapping for the 
             given dataset and channels."""
         x, y, z, c = downsample_uniform(
@@ -53,13 +55,14 @@ class PlottingUtils:
             type="scatter",
             x=x, y=y,
             hovertext=[name] * len(x),
-            marker=dict(color=c, colorbar=dict(title=f"{color_channel} [{color_unit}]",
+            marker=dict(color=c, size=marker_size, colorbar=dict(title=f"{color_channel} [{color_unit}]",
                                                showticklabels=(not axis_visibility))),
-            mode="markers"
+            mode="markers",
+            opacity=1.0
         ), c
 
     @classmethod
-    def _plot_3d(cls, dataset, x_channel, y_channel, z_channel, downsample_factor, name):
+    def _plot_3d(cls, dataset, x_channel, y_channel, z_channel, downsample_factor, name, marker_size):
         """Generates a 3D scatter plot dictionary for the given dataset and channels."""
         # Downsample the data
         x, y, z, c = downsample_uniform(
@@ -74,12 +77,14 @@ class PlottingUtils:
             name=name,
             hovertext=[name] * len(x),
             line=dict(color=dataset.node_color),
-            mode="markers"
+            mode="markers",
+            marker=dict(size=marker_size),
+            opacity=1.0
         )
 
     @classmethod
     def _plot_3d_color(cls, dataset, x_channel, y_channel, z_channel, color_channel, 
-                       downsample_factor, name, axis_visibility):
+                       downsample_factor, name, axis_visibility, marker_size):
         """Generates a 3D scatter plot dictionary with color mapping for the 
             given dataset and channels."""
         x, y, z, c = downsample_uniform(
@@ -96,9 +101,10 @@ class PlottingUtils:
             name=name,
             hovertext=[name] * len(x),
             line=dict(color=dataset.node_color),
-            marker=dict(color=c, colorbar=dict(title=f"{color_channel} [{color_unit}]",
+            marker=dict(color=c, size=marker_size, colorbar=dict(title=f"{color_channel} [{color_unit}]",
                                                showticklabels=(not axis_visibility))),
-            mode="markers"
+            mode="markers",
+            opacity=1
         ), c
 
     # --- Hover template helper ---
@@ -148,9 +154,14 @@ class PlottingUtils:
                 scene_xaxis_title_text=f"{x_channel} [{x_unit}]",
                 scene_yaxis_title_text=f"{y_channel} [{y_unit}]",
                 scene_zaxis_title_text=f"{z_channel} [{z_unit}]",
-                scene_xaxis=dict(showticklabels=(not axis_visibility)),
-                scene_yaxis=dict(showticklabels=(not axis_visibility)),
-                scene_zaxis=dict(showticklabels=(not axis_visibility))
+                scene_xaxis=dict(showticklabels=(not axis_visibility),
+                                 tickfont_size=15),
+                scene_yaxis=dict(showticklabels=(not axis_visibility),
+                                 tickfont_size=15),
+                scene_zaxis=dict(showticklabels=(not axis_visibility),
+                                 tickfont_size=15),
+                font=dict(size=18),
+                
             )
         else:
             fig.update_layout(
@@ -158,7 +169,8 @@ class PlottingUtils:
                 xaxis_title=f"{x_channel} [{x_unit}]",
                 yaxis_title=f"{y_channel} [{y_unit}]",
                 xaxis=dict(showticklabels=(not axis_visibility)),
-                yaxis=dict(showticklabels=(not axis_visibility))
+                yaxis=dict(showticklabels=(not axis_visibility)),
+                font=dict(size=18),
             )
 
     # --- Colorbar helper ---
@@ -176,7 +188,8 @@ class PlottingUtils:
     def plot_data(cls, data_table, dm, x_select, y_select, z_select, color_select,
                   unit_select, sign_select, plot_radio_group, color_map, downsample_slider,
                   cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4, cmd_multi_select_1, 
-                  cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4, axis_visibility):
+                  cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4, axis_visibility,
+                  marker_size):
         """
         Plots selected datasets using Plotly, supporting 2D/3D and color mapping.
 
@@ -264,27 +277,27 @@ class PlottingUtils:
             match plot_type:
                 case "2D":
                     trace = cls._plot_2d(dataset, x_channel, y_channel, 
-                                         downsample_slider.value, name)
+                                         downsample_slider.value, name, marker_size)
                     fig.add_scatter(**trace)
 
                 case "2D Color":
                     trace, c = cls._plot_2d_color(dataset, x_channel, y_channel, 
                                                   color_channel, downsample_slider.value, 
-                                                  name, axis_visibility)
+                                                  name, axis_visibility, marker_size)
                     if len(c) > 0:
                         cmin.append(c.min()); cmax.append(c.max())
                     fig.add_scatter(**trace)
 
                 case "3D":
                     trace = cls._plot_3d(dataset, x_channel, y_channel, z_channel, 
-                                         downsample_slider.value, name)
+                                         downsample_slider.value, name, marker_size)
                     fig.add_scatter3d(**trace)
 
                 case "3D Color":
                     trace, c = cls._plot_3d_color(dataset, x_channel, y_channel, 
                                                   z_channel, color_channel, 
                                                   downsample_slider.value, name,
-                                                  axis_visibility)
+                                                  axis_visibility, marker_size)
                     if len(c) > 0:
                         cmin.append(c.min()); cmax.append(c.max())
                     fig.add_scatter3d(**trace)
