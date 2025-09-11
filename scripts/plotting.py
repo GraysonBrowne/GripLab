@@ -36,7 +36,6 @@ class PlottingUtils:
             line=dict(color=dataset.node_color),
             mode="markers",
             marker=dict(size=marker_size),
-            opacity=1
         )
 
     @classmethod
@@ -58,7 +57,6 @@ class PlottingUtils:
             marker=dict(color=c, size=marker_size, colorbar=dict(title=f"{color_channel} [{color_unit}]",
                                                showticklabels=(not axis_visibility))),
             mode="markers",
-            opacity=1.0
         ), c
 
     @classmethod
@@ -79,7 +77,6 @@ class PlottingUtils:
             line=dict(color=dataset.node_color),
             mode="markers",
             marker=dict(size=marker_size),
-            opacity=1.0
         )
 
     @classmethod
@@ -104,7 +101,6 @@ class PlottingUtils:
             marker=dict(color=c, size=marker_size, colorbar=dict(title=f"{color_channel} [{color_unit}]",
                                                showticklabels=(not axis_visibility))),
             mode="markers",
-            opacity=1
         ), c
 
     # --- Hover template helper ---
@@ -139,9 +135,11 @@ class PlottingUtils:
     @classmethod
     def _update_axis_labels(cls, fig, plot_type, names, demo_names,
                             x_channel, y_channel, z_channel, x_unit, y_unit, z_unit,
-                            axis_visibility, tire_ids, demo_tire_ids):
+                            axis_visibility, tire_ids, demo_tire_ids,title_text):
         """Updates axis titles based on the plot type and channel names and units."""
-        if axis_visibility and len(list(set(demo_tire_ids))) == 1:
+        if title_text:
+            title = title_text
+        elif axis_visibility and len(list(set(demo_tire_ids))) == 1:
             title = demo_tire_ids[0]
         elif not axis_visibility and len(list(set(tire_ids))) == 1:
             title = tire_ids[0]
@@ -189,7 +187,7 @@ class PlottingUtils:
                   unit_select, sign_select, plot_radio_group, color_map, downsample_slider,
                   cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4, cmd_multi_select_1, 
                   cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4, axis_visibility,
-                  marker_size):
+                  title_text, marker_size):
         """
         Plots selected datasets using Plotly, supporting 2D/3D and color mapping.
 
@@ -312,7 +310,7 @@ class PlottingUtils:
         color_unit = cls._get_unit(dataset, color_channel)
         cls._update_axis_labels(fig, plot_type, names, demo_names, x_channel, y_channel,
                                 z_channel, x_unit, y_unit, z_unit, axis_visibility,
-                                tire_ids, demo_tire_ids)
+                                tire_ids, demo_tire_ids, title_text)
 
         # Hover template
         hover_template = cls._get_hover_template(plot_type, x_channel, y_channel, z_channel, color_channel,
