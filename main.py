@@ -75,7 +75,7 @@ dm = IO.DataManager()
 # Define the main application template
 template = pn.template.FastListTemplate(
     title='GripLab',
-    sidebar_width=400,
+    sidebar_width=420,
     accent="#2A3F5F",
     theme=config['theme'],
     raw_css=[modal_width,modal_close_pos,modal_content],
@@ -109,7 +109,7 @@ data_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Dataset','']),
                                   sizing_mode='stretch_both',
                                   min_height=150,
                                   editors={'': None,'trash': None},
-                                  widths={'Dataset': 259, '': 40,'trash': 40},
+                                  widths={'Dataset': 279, '': 40,'trash': 40},
                                   )
 model_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Model','']), 
                                   show_index=False, 
@@ -120,22 +120,29 @@ model_table = pn.widgets.Tabulator(pd.DataFrame(columns=['Model','']),
                                   editors={'Model':None,'': None},
                                   widths={'Model': 300, '': 20},
                                   )
-plot_data_button = pn.widgets.Button(name='Plot Data', button_type='primary',sizing_mode='stretch_width')
+plot_settings_button = pn.widgets.Button(name='⚙️', button_type='default', width=43, margin=(5,0,5,15))
+plot_data_button = pn.widgets.Button(name='Plot Data', button_type='primary',sizing_mode='stretch_width', 
+                                     margin=(5,10,5,7))
 plot_radio_group = pn.widgets.RadioBoxGroup(name='Plot Type', 
                                        options=['2D', '2D Color', '3D', '3D Color'], 
                                        inline=True)
+# Define plot states for enabling/disabling axis selectors
+plot_states = {
+    "2D":       {"z": True,  "c": True},
+    "2D Color": {"z": True,  "c": False},
+    "3D":       {"z": False, "c": True},
+    "3D Color": {"z": False, "c": False},
+}
 x_select = pn.widgets.Select(name='X-Axis', options=[], 
-                             sizing_mode='stretch_width',
-                             disabled=False)
+                             sizing_mode='stretch_width')
 y_select = pn.widgets.Select(name='Y-Axis', options=[], 
-                             sizing_mode='stretch_width',
-                             disabled=False)
+                             sizing_mode='stretch_width')
 z_select = pn.widgets.Select(name='Z-Axis', options=[], 
                              sizing_mode='stretch_width',
-                             disabled=True)
+                             disabled=plot_states[plot_radio_group.value]["z"])
 color_select = pn.widgets.Select(name='Colorbar', options=[], 
                                  sizing_mode='stretch_width',
-                                 disabled=True)
+                                 disabled=plot_states[plot_radio_group.value]["c"])
 cmd_select_1 = pn.widgets.Select(name='Conditional Parsing', options=[], 
                                  sizing_mode='stretch_width', min_width=80)
 cmd_select_2 = pn.widgets.Select(name=' ', options=[], 
@@ -170,7 +177,7 @@ update_data_button = pn.widgets.Button(name='Update Dataset', button_type='prima
                                        sizing_mode='stretch_width',disabled=True)
 
 # Sidebar layout
-plot_data_tab = pn.Column(pn.Row(plot_radio_group,plot_data_button), 
+plot_data_tab = pn.Column(pn.Row(plot_radio_group,plot_settings_button,plot_data_button), 
                                   pn.Row(pn.GridBox(x_select, y_select, z_select, 
                                                     color_select, ncols=2, 
                                                     sizing_mode='stretch_width'),
@@ -208,15 +215,7 @@ colorway_dict ={'G10'    :px.colors.qualitative.G10,
 colorway_select = pn.widgets.ColorMap(name='Color Sequence', options= colorway_dict,
                                       value=colorway_dict[config['plotting']['colorway']],
                                       ncols =1,width=200)
-color_map_options = {'Inferno':px.colors.sequential.Inferno,
-                     'Viridis':px.colors.sequential.Viridis,
-                     'Jet':['#010179','#022291','#0450b2',
-                            '#0aa5c1','#4ffdc8','#c8ff3a',
-                            '#ffaf02','#fc1d00','#c10000',
-                            '#810001'],}
-color_map = pn.widgets.ColorMap(name='Color Map',options=color_map_options,
-                                value = color_map_options[config['plotting']['colormap']],
-                                ncols =1,width=200,)
+
 demo_switch = pn.widgets.Switch(name='Demo Mode', value=config['demo_mode'])
 data_dir_button = pn.widgets.Button(name='Set Directory', button_type='default', margin=(28,5,2,15))
 data_dir_input = pn.widgets.TextInput(name='Data Directory', value=config['paths']['data_dir'], sizing_mode='stretch_width')
@@ -237,12 +236,36 @@ save_settings_button = pn.widgets.Button(name='Save Settings', button_type='prim
 confirm_remove_data = pn.pane.HTML("""""", styles={"font-size":"16px",}, margin=(0,15,0,15))
 cancel_remove_button = pn.widgets.Button(name='Cancel', button_type='default',margin=(10,10,0,10), width=200)
 confirm_remove_button = pn.widgets.Button(name='Remove Dataset', button_type='primary',margin=(10,10,0,10), width=200)
+# Plot settings widgets
+title_text_input = pn.widgets.TextInput(name='Title', value='', placeholder='Tire ID',sizing_mode='stretch_width')
+subtitle_text_input = pn.widgets.TextInput(name='Subtitle', value='', placeholder='SA:() | SR:() | IA:() | FZ:() | P:() | V:() | Rim Width:()',
+                                           sizing_mode='stretch_width')
+x_label_text_input = pn.widgets.TextInput(name='X-Axis Label', value='', placeholder='Channel [unit]',sizing_mode='stretch_width')
+y_label_text_input = pn.widgets.TextInput(name='Y-Axis Label', value='', placeholder='Channel [unit]',sizing_mode='stretch_width')
+z_label_text_input = pn.widgets.TextInput(name='Z-Axis Label', value='', placeholder='Channel [unit]',sizing_mode='stretch_width',
+                                          disabled=plot_states[plot_radio_group.value]["z"])
+c_label_text_input = pn.widgets.TextInput(name='Colorbar Label', value='', placeholder='Channel [unit]',sizing_mode='stretch_width',
+                                          disabled=plot_states[plot_radio_group.value]["c"])
+font_size_input = pn.widgets.IntSlider(name='Font Size', value=18, start=4, end=32,
+                                         step=1, sizing_mode='stretch_width')
+marker_size_input = pn.widgets.IntSlider(name='Marker Size', value=10, start=2, end=18, 
+                                         step=1, sizing_mode='stretch_width')
+color_map_options = {'Jet':['#010179','#022291','#0450b2',
+                            '#0aa5c1','#4ffdc8','#c8ff3a',
+                            '#ffaf02','#fc1d00','#c10000',
+                            '#810001'],
+                     'Inferno':px.colors.sequential.Inferno,
+                     'Viridis':px.colors.sequential.Viridis,
+                     }
+color_map = pn.widgets.ColorMap(name='Color Map',options=color_map_options,
+                                value = color_map_options[config['plotting']['colormap']],
+                                ncols =1,width=200,)
 # Modal layouts
 settings_layout = pn.Column(pn.pane.HTML("""<h1>Settings</h1>""", styles={"height":"40px",
                                                                           "line-height":"0px",
                                                                           "margin-top":"0px",
                                                                           "margin-bottom":"0px",},),
-                               pn.Row(default_theme_select, colorway_select, color_map, pn.Column(pn.widgets.StaticText(value="Demo Mode"),
+                               pn.Row(default_theme_select, colorway_select, pn.Column(pn.widgets.StaticText(value="Demo Mode"),
                                                                                                   demo_switch)),
                                pn.Row(unit_select, sign_select),
                                pn.Row(data_dir_button,data_dir_input),
@@ -256,6 +279,16 @@ remove_data_layout = pn.Column(pn.pane.HTML("""<h1>Remove Dataset?</h1>""", styl
                                pn.Row(pn.layout.HSpacer(),confirm_remove_button,cancel_remove_button),
                                width = 440,
                                margin=(0,20),)
+plot_settings_layout = pn.Column(pn.pane.HTML("""<h1>Plot Settings</h1>""", styles={"height":"40px",
+                                                                          "line-height":"0px",
+                                                                          "margin-top":"0px",
+                                                                          "margin-bottom":"0px",}),
+                                 title_text_input, subtitle_text_input, 
+                                 x_label_text_input,  y_label_text_input, 
+                                 z_label_text_input,  
+                                 c_label_text_input, color_map, font_size_input, marker_size_input,
+                                 width = 450,
+                                 margin=(0,20,0,20),)
 modal_objects = pn.Column()
 template.modal.append(modal_objects)
 
@@ -298,6 +331,14 @@ pn.bind(update_colormap, color_map.param.value, watch=True)
 
 def update_demo_mode(event):
     logger.debug(f"Demo mode toggled: {event}")
+    if event:
+        data_table.value = pd.DataFrame({'Dataset': dm.list_demo_names(),
+                                            '': ['']*len(dm.list_demo_names())})
+        data_select.options = [''] + dm.list_demo_names()
+    else:
+        data_table.value = pd.DataFrame({'Dataset': dm.list_datasets(),
+                                           '': ['']*len(dm.list_datasets())})
+        data_select.options = [''] + dm.list_datasets()
     config['demo_mode'] = event
 
 pn.bind(update_demo_mode, demo_switch.param.value, watch=True)
@@ -377,7 +418,15 @@ def import_data(clicks):
                 og_name = name
             copy += 1
             name = f"{og_name} ({copy})"
-        
+
+        demo_copy = 0
+        demo_name = 'Demo data'
+        while demo_name in dm.list_demo_names():
+            if demo_copy == 0:
+                demo_name = 'Demo data'
+            demo_copy += 1
+            demo_name = f"{'Demo data'} ({demo_copy})"
+
         # If no file was selected, exit the function
         if str(file_path) == '.':
             return
@@ -388,9 +437,9 @@ def import_data(clicks):
 
         # Determine file type and import data accordingly
         if file_path.suffix.lower() == '.mat':
-            data = IO.import_mat(file_path, name, color)
+            data = IO.import_mat(file_path, name, color, demo_name)
         elif file_path.suffix.lower() in ['.dat', '.txt']:
-            data = IO.import_dat(file_path, name, color)
+            data = IO.import_dat(file_path, name, color, demo_name)
         else:
             logger.error("Unsupported file type selected.")
             return
@@ -399,9 +448,13 @@ def import_data(clicks):
         dm.add_dataset(name,data)
 
         # Update the data table to reflect the newly added dataset
-        data_table.value = pd.DataFrame({'Dataset': dm.list_datasets(),
-                                            '': ['']*len(dm.list_datasets())})
-        
+        if config['demo_mode']:
+            data_table.value = pd.DataFrame({'Dataset': dm.list_demo_names(),
+                                               '': ['']*len(dm.list_demo_names())})
+        else:
+            data_table.value = pd.DataFrame({'Dataset': dm.list_datasets(),
+                                               '': ['']*len(dm.list_datasets())})
+
         # Select the newly added dataset in the data table
         selected = data_table.selection
         if selected == []:
@@ -420,7 +473,10 @@ def import_data(clicks):
         update_cmd_options(event=None)
 
         # Update data info options
-        data_select.options = [''] + dm.list_datasets()
+        if demo_switch.value:
+            data_select.options = [''] + dm.list_demo_names()
+        else:
+            data_select.options = [''] + dm.list_datasets()
 
         import_tracker += 1
         logger.info(f"Data imported from {file_path.name}: {data}")
@@ -455,22 +511,23 @@ def remove_data(clicks):
 
 pn.bind(remove_data, confirm_remove_button.param.clicks, watch=True)
 
-# Define plot states for enabling/disabling axis selectors
-plot_states = {
-    "2D":       {"x": False, "y": False, "z": True,  "c": True},
-    "2D Color": {"x": False, "y": False, "z": True,  "c": False},
-    "3D":       {"x": False, "y": False, "z": False, "c": True},
-    "3D Color": {"x": False, "y": False, "z": False, "c": False},
-}
+@hold()
 def update_plot_type(event):
     # Enable/disable axis selectors based on the selected plot type
     states = plot_states.get(event)
-    x_select.disabled = states["x"]
-    y_select.disabled = states["y"]
     z_select.disabled = states["z"]
     color_select.disabled = states["c"]
+    z_label_text_input.disabled = states["z"]
+    c_label_text_input.disabled = states["c"]
 
 pn.bind(update_plot_type, plot_radio_group.param.value, watch=True)
+
+def open_plot_settings(event):
+    logger.info("Opening plot settings.")
+    modal_objects.objects = [plot_settings_layout]
+    template.open_modal()
+
+pn.bind(open_plot_settings, plot_settings_button.param.clicks, watch=True)
 
 def update_scatter_plot(clicks):
     if data_table.selection == []:
@@ -485,8 +542,16 @@ def update_scatter_plot(clicks):
                                                     cmd_select_1, cmd_select_2,
                                                     cmd_select_3, cmd_select_4,
                                                     cmd_multi_select_1, cmd_multi_select_2,
-                                                    cmd_multi_select_3, cmd_multi_select_4,)
-    
+                                                    cmd_multi_select_3, cmd_multi_select_4,
+                                                    config['demo_mode'], title_text_input.value,
+                                                    subtitle_text_input.value,
+                                                    x_label_text_input.value,
+                                                    y_label_text_input.value,
+                                                    z_label_text_input.value,
+                                                    c_label_text_input.value,
+                                                    font_size_input.value,
+                                                    marker_size_input.value)
+
 pn.bind(update_scatter_plot, plot_data_button.param.clicks, watch=True)
 
 def update_cmd_options(event):
@@ -535,13 +600,22 @@ def unpack_data_info(event):
     event : str
         The dataset identifier (empty string means reset).
     """
-    widget_map = {
-        "data_name_text_input": ("name", data_name_text_input, ""),
-        "node_color_picker": ("node_color", node_color_picker, "#000000"),
-        "tire_id_text_input": ("tire_id", tire_id_text_input, ""),
-        "rim_width_text_input": ("rim_width", rim_width_text_input, 0),
-        "notes_area_input": ("notes", notes_area_input, ""),
-    }
+    if demo_switch.value:
+        widget_map = {
+            "data_name_text_input": ("demo_name", data_name_text_input, ""),
+            "node_color_picker": ("node_color", node_color_picker, "#000000"),
+            "tire_id_text_input": ("demo_tire_id", tire_id_text_input, ""),
+            "rim_width_text_input": ("demo_rim_width", rim_width_text_input, 0),
+            "notes_area_input": ("demo_notes", notes_area_input, ""),
+        }
+    else:
+        widget_map = {
+            "data_name_text_input": ("name", data_name_text_input, ""),
+            "node_color_picker": ("node_color", node_color_picker, "#000000"),
+            "tire_id_text_input": ("tire_id", tire_id_text_input, ""),
+            "rim_width_text_input": ("rim_width", rim_width_text_input, 0),
+            "notes_area_input": ("notes", notes_area_input, ""),
+        }
 
     if not event:
         logger.info("Resetting data info widgets (no dataset selected).")
@@ -552,7 +626,12 @@ def unpack_data_info(event):
         return
 
     try:
-        dataset = dm.get_dataset(event)
+        if demo_switch.value:
+            idx = dm.list_demo_names().index(event)
+            name = dm.list_datasets()[idx]
+            dataset = dm.get_dataset(name)
+        else:
+            dataset = dm.get_dataset(event)
         logger.info("Populating data info widgets for dataset: %s", event)
 
         for attr, widget, _ in widget_map.values():
@@ -583,35 +662,64 @@ def update_data_info(clicks):
     """
 
     try:
-        dataset = dm.get_dataset(data_select.value)
-        og_name = dataset.name
+        
         # Map dataset attributes to widgets
-        widget_map = {
-            "name": data_name_text_input,
-            "node_color": node_color_picker,
-            "tire_id": tire_id_text_input,
-            "rim_width": rim_width_text_input,
-            "notes": notes_area_input,
-        }
+        if demo_switch.value:
+            idx = dm.list_demo_names().index(data_select.value)
+            name = dm.list_datasets()[idx]
+            dataset = dm.get_dataset(name)
+            og_name = dataset.demo_name
+            widget_map = {
+                "demo_name": data_name_text_input,
+                "node_color": node_color_picker,
+                "demo_tire_id": tire_id_text_input,
+                "demo_rim_width": rim_width_text_input,
+                "demo_notes": notes_area_input,
+            }
+        else:
+            dataset = dm.get_dataset(data_select.value)
+            og_name = dataset.name
+            widget_map = {
+                "name": data_name_text_input,
+                "node_color": node_color_picker,
+                "tire_id": tire_id_text_input,
+                "rim_width": rim_width_text_input,
+                "notes": notes_area_input,
+            }
         logger.debug(f"node color:{widget_map['node_color'].value}")
         for attr, widget in widget_map.items():
             setattr(dataset, attr, widget.value)
 
-        # Update data manager
-        dm.update_dataset(og_name, dataset.name)
-        logger.info("Updated dataset '%s' with new widget values.", dataset.name)
-        
-        # Refresh the data table
-        datasets = dm.list_datasets()
-        data_table.value = pd.DataFrame({
-            "Dataset": datasets,
-            "": ["" for _ in datasets]
-        })
+        if demo_switch.value:
+            # Update data manager
+            dm.update_demo_name(og_name, dataset.demo_name)
+            logger.info("Updated dataset '%s' with new widget values.", dataset.demo_name)
+
+            # Refresh the data table
+            datasets = dm.list_demo_names()
+            data_table.value = pd.DataFrame({
+                "Dataset": datasets,
+                "": ["" for _ in datasets]
+            })
+        else:
+            # Update data manager
+            dm.update_dataset(og_name, dataset.name)
+            logger.info("Updated dataset '%s' with new widget values.", dataset.name)
+            
+            # Refresh the data table
+            datasets = dm.list_datasets()
+            data_table.value = pd.DataFrame({
+                "Dataset": datasets,
+                "": ["" for _ in datasets]
+            })
         logger.debug("Data table refreshed with %d datasets.", len(datasets))
 
         # Update data_select widget
         data_select.options = [""] + datasets
-        data_select.value = dataset.name
+        if demo_switch.value:
+            data_select.value = dataset.demo_name
+        else:
+            data_select.value = dataset.name
 
     except Exception as e:
         logger.error("Failed to update dataset '%s': %s", data_select.value, e, exc_info=True)
@@ -644,14 +752,20 @@ data_table.on_click(confirm_data_removal, column='trash')
 # Open data info layout on color cell slection
 def open_data_info(event):
     info_tab.active = 1
-    data_select.value = dm.list_datasets()[event.row]
+    if demo_switch.value:
+        data_select.value = dm.list_demo_names()[event.row]
+    else:
+        data_select.value = dm.list_datasets()[event.row]
 
 data_table.on_click(open_data_info, column='')
 
 # Edit dataset name from data table
 @hold()
 def edit_data_name(event):
-    data_select.value = dm.list_datasets()[event.row]
+    if demo_switch.value:
+        data_select.value = dm.list_demo_names()[event.row]
+    else:
+        data_select.value = dm.list_datasets()[event.row]
     data_name_text_input.value = event.value
     update_data_info(clicks=None)
 
