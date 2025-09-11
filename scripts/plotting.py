@@ -1,5 +1,6 @@
 # 2D/3D visualization
 import plotly.express as px
+import numpy as np
 
 from .logger_setup import logger
 from .unit_conversion import UnitSystemConverter
@@ -145,7 +146,7 @@ class PlottingUtils:
     def _update_axis_labels(cls, fig, plot_type,
                             x_channel, y_channel, z_channel, x_unit, y_unit, z_unit,
                             axis_visibility, tire_ids, demo_tire_ids, title_text, subtitle_text, 
-                            x_label_text, y_label_text, z_label_text, font_size):
+                            condition_strings, x_label_text, y_label_text, z_label_text, font_size):
         """Updates axis titles based on the plot type and channel names and units."""
         if title_text:
             title = title_text
@@ -155,6 +156,13 @@ class PlottingUtils:
             title = tire_ids[0]
         else:
             title = ""
+        
+        if subtitle_text:
+            subtitle = subtitle_text
+        else:
+            subtitle = (f"SA: {condition_strings['CmdSA']} | SR: {condition_strings['SL']} | "
+                        f"IA: {condition_strings['CmdIA']} | FZ: {condition_strings['CmdFZ']} | "
+                        f"P: {condition_strings['CmdP']} | V: {condition_strings['CmdV']} |")
 
         if x_label_text:
             xaxis_title=x_label_text
@@ -171,9 +179,12 @@ class PlottingUtils:
         else:
             zaxis_title=f"{z_channel} [{z_unit}]"
 
+        # For subtitle need to determine unique values for CmdSA, SL, CmdIA,
+        # CmdFz, CmdP, CmdV, and rim width
+
         if "3D" in plot_type:
             fig.update_layout(
-                title=(f"{title} <br><sup>{subtitle_text}</sup>"),
+                title=(f"{title} <br><sup>{subtitle}</sup>"),
                 scene_xaxis_title_text=xaxis_title,
                 scene_yaxis_title_text=yaxis_title,
                 scene_zaxis_title_text=zaxis_title,
@@ -188,7 +199,7 @@ class PlottingUtils:
             )
         else:
             fig.update_layout(
-                title=(f"{title} <br><sup>{subtitle_text}</sup>"),
+                title=(f"{title} <br><sup>{subtitle}</sup>"),
                 xaxis_title=xaxis_title,
                 yaxis_title=yaxis_title,
                 xaxis=dict(showticklabels=(not axis_visibility)),
@@ -297,6 +308,15 @@ class PlottingUtils:
                 keys_matching = [k for k, v in condition_selectors[i].options.items() if v in condition_selectors[i].value]
                 dataset = dm.parse_dataset(dataset, chan, keys_matching) if chan else dataset
 
+            # Determine condition
+            condition_strings = dict().fromkeys(["CmdSA", "SL", "CmdIA", "CmdFZ", "CmdP", "CmdV"], "")
+            for cond in condition_strings.keys():
+                condition_data = np.unique(cls._get_channel_data(dataset, cond))
+                if len(condition_data) == 1:
+                    condition_strings[cond] = str(int(condition_data[0]))
+                else:
+                    condition_strings[cond] = "VAR"
+
             # Generate and add traces based on plot type
             match plot_type:
                 case "2D":
@@ -337,7 +357,7 @@ class PlottingUtils:
         cls._update_axis_labels(fig, plot_type, x_channel, y_channel,
                                 z_channel, x_unit, y_unit, z_unit, axis_visibility,
                                 tire_ids, demo_tire_ids, title_text, subtitle_text,
-                                x_label_text, y_label_text, z_label_text, font_size)
+                                condition_strings, x_label_text, y_label_text, z_label_text, font_size)
 
         # Hover template
         hover_template = cls._get_hover_template(plot_type, x_channel, y_channel, z_channel, color_channel,
