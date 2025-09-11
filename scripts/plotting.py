@@ -294,6 +294,7 @@ class PlottingUtils:
         chan_selected = [sel.value for sel in chan_selectors]
         condition_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
 
+        condition_strings = {key: [] for key in ["CmdSA", "SL", "CmdIA", "CmdFZ", "CmdP", "CmdV"]}
         for i, name in enumerate(names):
             # Retrieve and convert dataset
             dataset = dm.get_dataset(name)
@@ -309,13 +310,10 @@ class PlottingUtils:
                 dataset = dm.parse_dataset(dataset, chan, keys_matching) if chan else dataset
 
             # Determine condition
-            condition_strings = dict().fromkeys(["CmdSA", "SL", "CmdIA", "CmdFZ", "CmdP", "CmdV"], "")
-            for cond in condition_strings.keys():
-                condition_data = np.unique(cls._get_channel_data(dataset, cond))
-                if len(condition_data) == 1:
-                    condition_strings[cond] = str(int(condition_data[0]))
-                else:
-                    condition_strings[cond] = "VAR"
+            for cond in condition_strings:
+                condition_data = np.unique(cls._get_channel_data(dataset, cond)).tolist()
+                condition_strings[cond].extend(condition_data)
+
 
             # Generate and add traces based on plot type
             match plot_type:
@@ -354,6 +352,14 @@ class PlottingUtils:
         y_unit = cls._get_unit(dataset, y_channel)
         z_unit = cls._get_unit(dataset, z_channel)
         color_unit = cls._get_unit(dataset, color_channel)
+        
+        for cond in condition_strings.keys():
+            unique_values = list(set(condition_strings[cond]))
+            if len(unique_values) == 1:
+                condition_strings[cond] = str(int(unique_values[0]))
+            else:
+                condition_strings[cond] = "VAR"
+                
         cls._update_axis_labels(fig, plot_type, x_channel, y_channel,
                                 z_channel, x_unit, y_unit, z_unit, axis_visibility,
                                 tire_ids, demo_tire_ids, title_text, subtitle_text,
