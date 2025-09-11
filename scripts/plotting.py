@@ -145,7 +145,7 @@ class PlottingUtils:
     def _update_axis_labels(cls, fig, plot_type,
                             x_channel, y_channel, z_channel, x_unit, y_unit, z_unit,
                             axis_visibility, tire_ids, demo_tire_ids, title_text, subtitle_text, 
-                            x_label_text, y_label_text, z_label_text):
+                            x_label_text, y_label_text, z_label_text, font_size):
         """Updates axis titles based on the plot type and channel names and units."""
         if title_text:
             title = title_text
@@ -178,12 +178,12 @@ class PlottingUtils:
                 scene_yaxis_title_text=yaxis_title,
                 scene_zaxis_title_text=zaxis_title,
                 scene_xaxis=dict(showticklabels=(not axis_visibility),
-                                 tickfont_size=15),
+                                 tickfont_size=(font_size-3)),
                 scene_yaxis=dict(showticklabels=(not axis_visibility),
-                                 tickfont_size=15),
+                                 tickfont_size=(font_size-3)),
                 scene_zaxis=dict(showticklabels=(not axis_visibility),
-                                 tickfont_size=15),
-                font=dict(size=18),
+                                 tickfont_size=(font_size-3)),
+                font=dict(size=font_size),
                 
             )
         else:
@@ -193,7 +193,7 @@ class PlottingUtils:
                 yaxis_title=yaxis_title,
                 xaxis=dict(showticklabels=(not axis_visibility)),
                 yaxis=dict(showticklabels=(not axis_visibility)),
-                font=dict(size=18),
+                font=dict(size=font_size),
             )
 
     # --- Colorbar helper ---
@@ -213,7 +213,7 @@ class PlottingUtils:
                   cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4, cmd_multi_select_1, 
                   cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4, axis_visibility,
                   title_text, subtitle_text, x_label_text, y_label_text, z_label_text, c_label_text, 
-                  marker_size):
+                  font_size, marker_size):
         """
         Plots selected datasets using Plotly, supporting 2D/3D and color mapping.
 
@@ -337,7 +337,7 @@ class PlottingUtils:
         cls._update_axis_labels(fig, plot_type, x_channel, y_channel,
                                 z_channel, x_unit, y_unit, z_unit, axis_visibility,
                                 tire_ids, demo_tire_ids, title_text, subtitle_text,
-                                x_label_text, y_label_text, z_label_text)
+                                x_label_text, y_label_text, z_label_text, font_size)
 
         # Hover template
         hover_template = cls._get_hover_template(plot_type, x_channel, y_channel, z_channel, color_channel,

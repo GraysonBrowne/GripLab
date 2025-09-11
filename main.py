@@ -549,6 +549,7 @@ def update_scatter_plot(clicks):
                                                     y_label_text_input.value,
                                                     z_label_text_input.value,
                                                     c_label_text_input.value,
+                                                    font_size_input.value,
                                                     marker_size_input.value)
 
 pn.bind(update_scatter_plot, plot_data_button.param.clicks, watch=True)
