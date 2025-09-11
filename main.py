@@ -545,6 +545,10 @@ def update_scatter_plot(clicks):
                                                     cmd_multi_select_3, cmd_multi_select_4,
                                                     config['demo_mode'], title_text_input.value,
                                                     subtitle_text_input.value,
+                                                    x_label_text_input.value,
+                                                    y_label_text_input.value,
+                                                    z_label_text_input.value,
+                                                    c_label_text_input.value,
                                                     marker_size_input.value)
 
 pn.bind(update_scatter_plot, plot_data_button.param.clicks, watch=True)
