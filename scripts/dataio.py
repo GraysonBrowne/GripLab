@@ -61,7 +61,7 @@ class DataManager:
     def parse_dataset(self, dataset, channel, condition):
         result = replace(dataset, data=dataset.data.copy())
         ref_channel = result.channels.index(channel)
-        ref_array = result.data[:,ref_channel]
+        ref_array = result.data[:,ref_channel].astype(np.int64)
         parse_index = np.isin(ref_array, condition)
         result.data = result.data[parse_index,:]
         return result

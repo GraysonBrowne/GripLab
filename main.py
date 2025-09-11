@@ -574,8 +574,8 @@ def update_cmd_options(event):
             dataset = UnitSystemConverter.convert_dataset(dataset, to_system=unit_select.value)
             dataset = ConventionConverter.convert_dataset_convention(dataset, target_convention=sign_select.value)
             data.append(dataset.data[:,dataset.channels.index(sel.value)] if sel.value in dataset.channels else [])
-        cmd_data = sorted(np.unique(data).tolist(), key=abs)
-        cmd_options = {chan: i for i, chan in enumerate([round(v) for v in cmd_data])}
+        cmd_data = sorted(np.unique(data).astype(np.int64).tolist(), key=abs)
+        cmd_options = {chan: i for i, chan in enumerate([v for v in cmd_data])}
         temp_value = multi_selectors[i].value
         logger.debug(f"cmd options: {cmd_options}")
         multi_selectors[i].options = cmd_options
