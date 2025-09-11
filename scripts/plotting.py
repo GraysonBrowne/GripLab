@@ -133,9 +133,9 @@ class PlottingUtils:
 
     # --- Axis label helper ---
     @classmethod
-    def _update_axis_labels(cls, fig, plot_type, names, demo_names,
+    def _update_axis_labels(cls, fig, plot_type,
                             x_channel, y_channel, z_channel, x_unit, y_unit, z_unit,
-                            axis_visibility, tire_ids, demo_tire_ids,title_text):
+                            axis_visibility, tire_ids, demo_tire_ids, title_text, subtitle_text):
         """Updates axis titles based on the plot type and channel names and units."""
         if title_text:
             title = title_text
@@ -148,7 +148,7 @@ class PlottingUtils:
 
         if "3D" in plot_type:
             fig.update_layout(
-                title=title,
+                title=(f"{title} <br><sup>{subtitle_text}</sup>"),
                 scene_xaxis_title_text=f"{x_channel} [{x_unit}]",
                 scene_yaxis_title_text=f"{y_channel} [{y_unit}]",
                 scene_zaxis_title_text=f"{z_channel} [{z_unit}]",
@@ -163,7 +163,7 @@ class PlottingUtils:
             )
         else:
             fig.update_layout(
-                title=title,
+                title=(f"{title} <br><sup>{subtitle_text}</sup>"),
                 xaxis_title=f"{x_channel} [{x_unit}]",
                 yaxis_title=f"{y_channel} [{y_unit}]",
                 xaxis=dict(showticklabels=(not axis_visibility)),
@@ -187,7 +187,7 @@ class PlottingUtils:
                   unit_select, sign_select, plot_radio_group, color_map, downsample_slider,
                   cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4, cmd_multi_select_1, 
                   cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4, axis_visibility,
-                  title_text, marker_size):
+                  title_text, subtitle_text, marker_size):
         """
         Plots selected datasets using Plotly, supporting 2D/3D and color mapping.
 
@@ -308,9 +308,9 @@ class PlottingUtils:
         y_unit = cls._get_unit(dataset, y_channel)
         z_unit = cls._get_unit(dataset, z_channel)
         color_unit = cls._get_unit(dataset, color_channel)
-        cls._update_axis_labels(fig, plot_type, names, demo_names, x_channel, y_channel,
+        cls._update_axis_labels(fig, plot_type, x_channel, y_channel,
                                 z_channel, x_unit, y_unit, z_unit, axis_visibility,
-                                tire_ids, demo_tire_ids, title_text)
+                                tire_ids, demo_tire_ids, title_text, subtitle_text)
 
         # Hover template
         hover_template = cls._get_hover_template(plot_type, x_channel, y_channel, z_channel, color_channel,
