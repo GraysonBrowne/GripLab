@@ -1,6 +1,7 @@
 # 2D/3D visualization
 import plotly.express as px
 import numpy as np
+from collections import defaultdict
 
 from .logger_setup import logger
 from .unit_conversion import UnitSystemConverter
@@ -162,7 +163,8 @@ class PlottingUtils:
         else:
             subtitle = (f"SA: {condition_strings['CmdSA']} | SR: {condition_strings['SL']} | "
                         f"IA: {condition_strings['CmdIA']} | FZ: {condition_strings['CmdFZ']} | "
-                        f"P: {condition_strings['CmdP']} | V: {condition_strings['CmdV']} |")
+                        f"P: {condition_strings['CmdP']} | V: {condition_strings['CmdV']} | "
+                        f"Rim Width: {condition_strings['rim_width']}")
 
         if x_label_text:
             xaxis_title=x_label_text
@@ -294,7 +296,7 @@ class PlottingUtils:
         chan_selected = [sel.value for sel in chan_selectors]
         condition_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
 
-        condition_strings = {key: [] for key in ["CmdSA", "SL", "CmdIA", "CmdFZ", "CmdP", "CmdV"]}
+        condition_strings = defaultdict(list)
         for i, name in enumerate(names):
             # Retrieve and convert dataset
             dataset = dm.get_dataset(name)
@@ -310,10 +312,11 @@ class PlottingUtils:
                 dataset = dm.parse_dataset(dataset, chan, keys_matching) if chan else dataset
 
             # Determine condition
-            for cond in condition_strings:
+            for cond in ["CmdSA", "SL", "CmdIA", "CmdFZ", "CmdP", "CmdV"]:
                 condition_data = np.unique(cls._get_channel_data(dataset, cond)).tolist()
                 condition_strings[cond].extend(condition_data)
 
+            condition_strings["rim_width"].extend(str(dataset.rim_width))
 
             # Generate and add traces based on plot type
             match plot_type:
