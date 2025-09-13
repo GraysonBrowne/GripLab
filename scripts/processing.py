@@ -2,33 +2,36 @@
 import numpy as np
 import panel as pn
 from scipy.signal import butter, filtfilt
+
 from .logger_setup import logger
+
 
 def low_pass_filter(data, cutoff_hz, fs=100, order=4):
     """
     Apply a low-pass Butterworth filter.
-    
+
     Parameters:
         data (array-like): Input signal.
         cutoff_hz (float): Cutoff frequency in Hz.
         fs (float): Sampling frequency (Hz). Default 100 Hz for 10 ms sampling.
         order (int): Filter order. Default 4.
-        
+
     Returns:
         np.ndarray: Filtered signal.
     """
     nyquist = 0.5 * fs
     normal_cutoff = cutoff_hz / nyquist
-    
+
     # Design Butterworth filter
-    b, a = butter(order, normal_cutoff, btype='low', analog=False)
-    
+    b, a = butter(order, normal_cutoff, btype="low", analog=False)
+
     # Apply with zero-phase filtering
     y = filtfilt(b, a, data)
-    
+
     return y
 
-def downsample_uniform(x, y, z=[], c=[],factor=5):
+
+def downsample_uniform(x, y, z=[], c=[], factor=5):
     """
     Downsamples the input arrays uniformly by selecting every nth element.
 
@@ -37,7 +40,7 @@ def downsample_uniform(x, y, z=[], c=[],factor=5):
         y (array-like): The input array of y-values.
         z (array-like): The input array of z-values.
         c (array-like): The input array of c-values.
-        factor (int, optional): The downsampling factor. Every 'factor'-th 
+        factor (int, optional): The downsampling factor. Every 'factor'-th
             element is selected. Default is 5.
 
     Returns:
@@ -46,17 +49,20 @@ def downsample_uniform(x, y, z=[], c=[],factor=5):
     try:
         if len(x) == 0:
             logger.warning("Nothing to plot under selected conditons.")
-            pn.state.notifications.warning('Nothing to plot under selected conditons.', duration=4000)
+            pn.state.notifications.warning(
+                "Nothing to plot under selected conditons.", duration=4000
+            )
             return x, y, z, c
-        else:   
+        else:
             return x[::factor], y[::factor], z[::factor], c[::factor]
     except Exception as e:
         logger.error(f"Error down sampling data: {e}", exc_info=True)
 
+
 def downsample_xy(x, y, size=2000, method="random", bins=(50, 50), seed=None):
     """
     Downsample two independent channels for scatter plotting.
-    
+
     Parameters
     ----------
     x, y : array-like
@@ -70,7 +76,7 @@ def downsample_xy(x, y, size=2000, method="random", bins=(50, 50), seed=None):
         Number of bins (x_bins, y_bins) for grid method (default 50x50).
     seed : int, optional
         Random seed for reproducibility.
-    
+
     Returns
     -------
     x_ds, y_ds : np.ndarray
@@ -82,7 +88,7 @@ def downsample_xy(x, y, size=2000, method="random", bins=(50, 50), seed=None):
 
     if n <= size:
         return x, y  # already small enough
-    
+
     rng = np.random.default_rng(seed)
 
     if method == "random":

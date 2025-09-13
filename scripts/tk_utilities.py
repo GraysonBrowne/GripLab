@@ -1,8 +1,10 @@
 from tkinter import Tk, filedialog
+
 from .logger_setup import logger
 
+
 class Tk_utils:
-    def select_file(filetypes,initialdir,icon=''):
+    def select_file(filetypes, initialdir, icon=""):
         """
         Opens a file selection dialog for the user to choose a file.
 
@@ -22,11 +24,11 @@ class Tk_utils:
             root = Tk()
             root.iconbitmap(icon)
             root.withdraw()  # Hide the root window
-            root.call('wm', 'attributes', '.', '-topmost', True)  # Bring the dialog to the front
+            root.call(
+                "wm", "attributes", ".", "-topmost", True
+            )  # Bring the dialog to the front
             file_path = filedialog.askopenfilenames(
-                title="Select Data File(s)",
-                initialdir=initialdir,
-                filetypes=filetypes
+                title="Select Data File(s)", initialdir=initialdir, filetypes=filetypes
             )
             root.destroy()  # Destroy the root window after use
             if file_path:
@@ -37,7 +39,7 @@ class Tk_utils:
         except Exception as e:
             logger.error(f"Error selecting file: {e}")
 
-    def select_dir(initialdir,icon=''):
+    def select_dir(initialdir, icon=""):
         """
         Opens a directory selection dialog and returns the selected directory path.
 
@@ -56,10 +58,11 @@ class Tk_utils:
             root = Tk()
             root.iconbitmap(icon)
             root.withdraw()  # Hide the root window
-            root.call('wm', 'attributes', '.', '-topmost', True)  # Bring the dialog to the front
+            root.call(
+                "wm", "attributes", ".", "-topmost", True
+            )  # Bring the dialog to the front
             dir_path = filedialog.askdirectory(
-                title="Select Directory",
-                initialdir=initialdir
+                title="Select Directory", initialdir=initialdir
             )
             root.destroy()  # Destroy the root window after use
             if dir_path:
@@ -70,7 +73,7 @@ class Tk_utils:
         except Exception as e:
             logger.error(f"Error selecting directory: {e}")
 
-    def save_file(defaultextension,initialdir,icon=''):
+    def save_file(defaultextension, initialdir, icon=""):
         """
         Opens a file save dialog using Tkinter and returns the selected file path.
 
@@ -89,11 +92,13 @@ class Tk_utils:
             root = Tk()
             root.iconbitmap(icon)
             root.withdraw()  # Hide the root window
-            root.call('wm', 'attributes', '.', '-topmost', True)  # Bring the dialog to the front
+            root.call(
+                "wm", "attributes", ".", "-topmost", True
+            )  # Bring the dialog to the front
             file_path = filedialog.asksaveasfilename(
                 title="Save File As",
                 defaultextension=defaultextension,
-                initialdir=initialdir
+                initialdir=initialdir,
             )
             root.destroy()  # Destroy the root window after use
             if file_path:
