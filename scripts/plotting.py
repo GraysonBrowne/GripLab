@@ -1,5 +1,7 @@
 # 2D/3D visualization
 import plotly.express as px
+import numpy as np
+from collections import defaultdict
 
 from .logger_setup import logger
 from .unit_conversion import UnitSystemConverter
@@ -145,7 +147,7 @@ class PlottingUtils:
     def _update_axis_labels(cls, fig, plot_type,
                             x_channel, y_channel, z_channel, x_unit, y_unit, z_unit,
                             axis_visibility, tire_ids, demo_tire_ids, title_text, subtitle_text, 
-                            x_label_text, y_label_text, z_label_text, font_size):
+                            condition_strings, x_label_text, y_label_text, z_label_text, font_size):
         """Updates axis titles based on the plot type and channel names and units."""
         if title_text:
             title = title_text
@@ -155,6 +157,14 @@ class PlottingUtils:
             title = tire_ids[0]
         else:
             title = ""
+        
+        if subtitle_text:
+            subtitle = subtitle_text
+        else:
+            subtitle = (f"SA: {condition_strings['CmdSA']} | SR: {condition_strings['SL']} | "
+                        f"IA: {condition_strings['CmdIA']} | FZ: {condition_strings['CmdFZ']} | "
+                        f"P: {condition_strings['CmdP']} | V: {condition_strings['CmdV']} | "
+                        f"Rim Width: {condition_strings['rim_width']}")
 
         if x_label_text:
             xaxis_title=x_label_text
@@ -173,7 +183,9 @@ class PlottingUtils:
 
         if "3D" in plot_type:
             fig.update_layout(
-                title=(f"{title} <br><sup>{subtitle_text}</sup>"),
+                title=dict(text=f"{title} <br><sup>{subtitle}</sup>",
+                           xanchor= 'center',
+                           x=0.5),
                 scene_xaxis_title_text=xaxis_title,
                 scene_yaxis_title_text=yaxis_title,
                 scene_zaxis_title_text=zaxis_title,
@@ -188,7 +200,9 @@ class PlottingUtils:
             )
         else:
             fig.update_layout(
-                title=(f"{title} <br><sup>{subtitle_text}</sup>"),
+                title=dict(text=f"{title} <br><sup>{subtitle}</sup>",
+                           xanchor= 'center',
+                           x=0.5),
                 xaxis_title=xaxis_title,
                 yaxis_title=yaxis_title,
                 xaxis=dict(showticklabels=(not axis_visibility)),
@@ -205,6 +219,24 @@ class PlottingUtils:
                 cmin=min(cmin), cmax=max(cmax),
                 colorscale=color_map.value, showscale=True))
             fig.update_layout(showlegend=False)
+
+    # --- Subtitle helper ---
+    @classmethod
+    def _get_condition_string(cls,condition_strings, dataset, axis_visibility):
+        """Return a string representing the unique values of a condition channel."""
+        for cond in condition_strings.keys():
+            unique_values = [int(x) for x in list(set(condition_strings[cond]))]
+            if axis_visibility:
+                unique_values[0] = "X"
+            if len(unique_values) == 1:
+                if cond == "rim_width":
+                    condition_strings[cond] = f"{unique_values[0]} in"
+                else:
+                    unit = cls._get_unit(dataset, cond)
+                    condition_strings[cond] = f"{unique_values[0]} {unit}"
+            else:
+                condition_strings[cond] = "VAR"
+        return condition_strings
 
     # --- Main entry point ---
     @classmethod
@@ -283,6 +315,7 @@ class PlottingUtils:
         chan_selected = [sel.value for sel in chan_selectors]
         condition_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
 
+        condition_strings = defaultdict(list)
         for i, name in enumerate(names):
             # Retrieve and convert dataset
             dataset = dm.get_dataset(name)
@@ -296,6 +329,12 @@ class PlottingUtils:
             for i, chan in enumerate(chan_selected):
                 keys_matching = [k for k, v in condition_selectors[i].options.items() if v in condition_selectors[i].value]
                 dataset = dm.parse_dataset(dataset, chan, keys_matching) if chan else dataset
+
+            # Determine condition
+            for cond in ["CmdSA", "SL", "CmdIA", "CmdFZ", "CmdP", "CmdV"]:
+                condition_data = np.unique(cls._get_channel_data(dataset, cond)).tolist()
+                condition_strings[cond].extend(condition_data)
+            condition_strings["rim_width"].extend(str(dataset.rim_width))
 
             # Generate and add traces based on plot type
             match plot_type:
@@ -334,10 +373,11 @@ class PlottingUtils:
         y_unit = cls._get_unit(dataset, y_channel)
         z_unit = cls._get_unit(dataset, z_channel)
         color_unit = cls._get_unit(dataset, color_channel)
+        condition_strings = cls._get_condition_string(condition_strings, dataset, axis_visibility)  
         cls._update_axis_labels(fig, plot_type, x_channel, y_channel,
                                 z_channel, x_unit, y_unit, z_unit, axis_visibility,
                                 tire_ids, demo_tire_ids, title_text, subtitle_text,
-                                x_label_text, y_label_text, z_label_text, font_size)
+                                condition_strings, x_label_text, y_label_text, z_label_text, font_size)
 
         # Hover template
         hover_template = cls._get_hover_template(plot_type, x_channel, y_channel, z_channel, color_channel,

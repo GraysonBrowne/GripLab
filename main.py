@@ -555,33 +555,36 @@ def update_scatter_plot(clicks):
 pn.bind(update_scatter_plot, plot_data_button.param.clicks, watch=True)
 
 def update_cmd_options(event):
-    # Update command channel options to prevent duplicate selections
-    channels = dm.get_channels(dm.list_datasets())
-    cmd_channels = [chan for chan in channels if chan.startswith('Cmd')]
-    selectors = [cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4]
-    selected = [sel.value for sel in selectors]
+    try:
+        # Update command channel options to prevent duplicate selections
+        channels = dm.get_channels(dm.list_datasets())
+        cmd_channels = [chan for chan in channels if chan.startswith('Cmd')]
+        selectors = [cmd_select_1, cmd_select_2, cmd_select_3, cmd_select_4]
+        selected = [sel.value for sel in selectors]
 
-    multi_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
-    data_selection = data_table.selection
-    names = [dm.list_datasets()[idx] for idx in data_selection]
-    # Update options for each selector
-    for i, sel in enumerate(selectors):
-        excluded = set(selected) - {selected[i]}
-        sel.options = [""] + [chan for chan in cmd_channels if chan not in excluded]
-        data = []
-        for name in names:
-            dataset = dm.get_dataset(name)
-            dataset = UnitSystemConverter.convert_dataset(dataset, to_system=unit_select.value)
-            dataset = ConventionConverter.convert_dataset_convention(dataset, target_convention=sign_select.value)
-            data.append(dataset.data[:,dataset.channels.index(sel.value)] if sel.value in dataset.channels else [])
-        cmd_data = sorted(np.unique(data).tolist(), key=abs)
-        cmd_options = {chan: i for i, chan in enumerate([round(v) for v in cmd_data])}
-        temp_value = multi_selectors[i].value
-        logger.debug(f"cmd options: {cmd_options}")
-        multi_selectors[i].options = cmd_options
-        multi_selectors[i].value = temp_value
-        logger.debug(f"temp value: {temp_value}")
-        multi_selectors[i].param.trigger('value')
+        multi_selectors = [cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4]
+        data_selection = data_table.selection
+        names = [dm.list_datasets()[idx] for idx in data_selection]
+        # Update options for each selector
+        for i, sel in enumerate(selectors):
+            excluded = set(selected) - {selected[i]}
+            sel.options = [""] + [chan for chan in cmd_channels if chan not in excluded]
+            data = []
+            for name in names:
+                dataset = dm.get_dataset(name)
+                dataset = UnitSystemConverter.convert_dataset(dataset, to_system=unit_select.value)
+                dataset = ConventionConverter.convert_dataset_convention(dataset, target_convention=sign_select.value)
+                data.extend(dataset.data[:,dataset.channels.index(sel.value)] if sel.value in dataset.channels else [])
+            cmd_data = sorted(np.unique(data).astype(np.int64).tolist(), key=abs)
+            cmd_options = {chan: i for i, chan in enumerate([v for v in cmd_data])}
+            temp_value = multi_selectors[i].value
+            logger.debug(f"cmd options: {cmd_options}")
+            multi_selectors[i].options = cmd_options
+            multi_selectors[i].value = temp_value
+            logger.debug(f"temp value: {temp_value}")
+            multi_selectors[i].param.trigger('value')
+    except Exception as e:
+        logger.error(f"Error updating command options: {e}", exc_info=True)
 
 pn.bind(update_cmd_options, cmd_select_1.param.value, watch=True)
 pn.bind(update_cmd_options, cmd_select_2.param.value, watch=True)
