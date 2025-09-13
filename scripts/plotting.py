@@ -359,7 +359,11 @@ class PlottingUtils:
         for cond in condition_strings.keys():
             unique_values = list(set(condition_strings[cond]))
             if len(unique_values) == 1:
-                condition_strings[cond] = str(int(unique_values[0]))
+                if cond == "rim_width":
+                    condition_strings[cond] = f"{int(unique_values[0])} in"
+                else:
+                    unit = cls._get_unit(dataset, cond)
+                    condition_strings[cond] = f"{int(unique_values[0])} {unit}"
             else:
                 condition_strings[cond] = "VAR"
                 
