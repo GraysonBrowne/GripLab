@@ -181,9 +181,6 @@ class PlottingUtils:
         else:
             zaxis_title=f"{z_channel} [{z_unit}]"
 
-        # For subtitle need to determine unique values for CmdSA, SL, CmdIA,
-        # CmdFz, CmdP, CmdV, and rim width
-
         if "3D" in plot_type:
             fig.update_layout(
                 title=dict(text=f"{title} <br><sup>{subtitle}</sup>",
@@ -222,6 +219,24 @@ class PlottingUtils:
                 cmin=min(cmin), cmax=max(cmax),
                 colorscale=color_map.value, showscale=True))
             fig.update_layout(showlegend=False)
+
+    # --- Subtitle helper ---
+    @classmethod
+    def _get_condition_string(cls,condition_strings, dataset, axis_visibility):
+        """Return a string representing the unique values of a condition channel."""
+        for cond in condition_strings.keys():
+            unique_values = [int(x) for x in list(set(condition_strings[cond]))]
+            if axis_visibility:
+                unique_values[0] = "X"
+            if len(unique_values) == 1:
+                if cond == "rim_width":
+                    condition_strings[cond] = f"{unique_values[0]} in"
+                else:
+                    unit = cls._get_unit(dataset, cond)
+                    condition_strings[cond] = f"{unique_values[0]} {unit}"
+            else:
+                condition_strings[cond] = "VAR"
+        return condition_strings
 
     # --- Main entry point ---
     @classmethod
@@ -319,7 +334,6 @@ class PlottingUtils:
             for cond in ["CmdSA", "SL", "CmdIA", "CmdFZ", "CmdP", "CmdV"]:
                 condition_data = np.unique(cls._get_channel_data(dataset, cond)).tolist()
                 condition_strings[cond].extend(condition_data)
-
             condition_strings["rim_width"].extend(str(dataset.rim_width))
 
             # Generate and add traces based on plot type
@@ -359,20 +373,7 @@ class PlottingUtils:
         y_unit = cls._get_unit(dataset, y_channel)
         z_unit = cls._get_unit(dataset, z_channel)
         color_unit = cls._get_unit(dataset, color_channel)
-        
-        for cond in condition_strings.keys():
-            unique_values = [int(x) for x in list(set(condition_strings[cond]))]
-            if axis_visibility:
-                unique_values[0] = "X"
-            if len(unique_values) == 1:
-                if cond == "rim_width":
-                    condition_strings[cond] = f"{unique_values[0]} in"
-                else:
-                    unit = cls._get_unit(dataset, cond)
-                    condition_strings[cond] = f"{unique_values[0]} {unit}"
-            else:
-                condition_strings[cond] = "VAR"
-                
+        condition_strings = cls._get_condition_string(condition_strings, dataset, axis_visibility)  
         cls._update_axis_labels(fig, plot_type, x_channel, y_channel,
                                 z_channel, x_unit, y_unit, z_unit, axis_visibility,
                                 tire_ids, demo_tire_ids, title_text, subtitle_text,
