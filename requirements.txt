@@ -5,3 +5,6 @@ rich
 watchfiles
 pandas
 plotly
+black
+isort
+flake8
