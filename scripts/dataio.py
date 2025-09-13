@@ -130,7 +130,7 @@ def import_mat(filepath, file_name, node_color, demo_name):
         # Ensure 'SL' channel exists
         if 'SL' not in channels:
             channels.append('SL')
-            units.append('none')
+            units.append('-')
             data = np.column_stack([data,np.zeros(len(data),np.float64)])
 
         # Extract tire ID and rim width
@@ -218,7 +218,7 @@ def import_dat(filepath, file_name, node_color, demo_name):
         # Ensure 'SL' channel exists
         if 'SL' not in channels:
             channels.append('SL')
-            units.append('none')
+            units.append('-')
             data = np.column_stack([data,np.zeros(len(data),np.float64)])
 
         # Extract tire ID and rim width
