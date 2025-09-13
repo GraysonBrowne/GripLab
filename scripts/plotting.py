@@ -186,7 +186,9 @@ class PlottingUtils:
 
         if "3D" in plot_type:
             fig.update_layout(
-                title=(f"{title} <br><sup>{subtitle}</sup>"),
+                title=dict(text=f"{title} <br><sup>{subtitle}</sup>",
+                           xanchor= 'center',
+                           x=0.5),
                 scene_xaxis_title_text=xaxis_title,
                 scene_yaxis_title_text=yaxis_title,
                 scene_zaxis_title_text=zaxis_title,
@@ -201,7 +203,9 @@ class PlottingUtils:
             )
         else:
             fig.update_layout(
-                title=(f"{title} <br><sup>{subtitle}</sup>"),
+                title=dict(text=f"{title} <br><sup>{subtitle}</sup>",
+                           xanchor= 'center',
+                           x=0.5),
                 xaxis_title=xaxis_title,
                 yaxis_title=yaxis_title,
                 xaxis=dict(showticklabels=(not axis_visibility)),
