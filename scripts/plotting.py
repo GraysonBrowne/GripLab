@@ -357,13 +357,15 @@ class PlottingUtils:
         color_unit = cls._get_unit(dataset, color_channel)
         
         for cond in condition_strings.keys():
-            unique_values = list(set(condition_strings[cond]))
+            unique_values = [int(x) for x in list(set(condition_strings[cond]))]
+            if axis_visibility:
+                unique_values[0] = "X"
             if len(unique_values) == 1:
                 if cond == "rim_width":
-                    condition_strings[cond] = f"{int(unique_values[0])} in"
+                    condition_strings[cond] = f"{unique_values[0]} in"
                 else:
                     unit = cls._get_unit(dataset, cond)
-                    condition_strings[cond] = f"{int(unique_values[0])} {unit}"
+                    condition_strings[cond] = f"{unique_values[0]} {unit}"
             else:
                 condition_strings[cond] = "VAR"
                 
