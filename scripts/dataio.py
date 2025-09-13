@@ -52,13 +52,16 @@ class DataManager:
             channels.extend(dataset.channels)
         return list(dict.fromkeys(channels))  # Return unique channels
     
+    def list_tire_ids(self):
+        return [ds.tire_id for ds in self._datasets.values()]
+
     def list_colors(self):
         return [ds.node_color for ds in self._datasets.values()]
     
     def parse_dataset(self, dataset, channel, condition):
         result = replace(dataset, data=dataset.data.copy())
         ref_channel = result.channels.index(channel)
-        ref_array = result.data[:,ref_channel]
+        ref_array = result.data[:,ref_channel].astype(np.int64)
         parse_index = np.isin(ref_array, condition)
         result.data = result.data[parse_index,:]
         return result
@@ -83,6 +86,9 @@ class DataManager:
             else:
                 updated_dict[k] = v
         self._datasets = updated_dict
+
+    def list_demo_tire_ids(self):
+        return [ds.demo_tire_id for ds in self._datasets.values()]
 
 
 def import_mat(filepath, file_name, node_color, demo_name):
@@ -124,7 +130,7 @@ def import_mat(filepath, file_name, node_color, demo_name):
         # Ensure 'SL' channel exists
         if 'SL' not in channels:
             channels.append('SL')
-            units.append('none')
+            units.append('-')
             data = np.column_stack([data,np.zeros(len(data),np.float64)])
 
         # Extract tire ID and rim width
@@ -212,7 +218,7 @@ def import_dat(filepath, file_name, node_color, demo_name):
         # Ensure 'SL' channel exists
         if 'SL' not in channels:
             channels.append('SL')
-            units.append('none')
+            units.append('-')
             data = np.column_stack([data,np.zeros(len(data),np.float64)])
 
         # Extract tire ID and rim width

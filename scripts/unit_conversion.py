@@ -87,8 +87,8 @@ class UnitSystemConverter:
                 ch: t for t, chs in cls.unit_types.items() for ch in chs
             }
 
-            # Map channels, use "none" if not found
-            channel_types = [channel_to_type.get(ch, "none") for ch in channels]
+            # Map channels, use "-" if not found
+            channel_types = [channel_to_type.get(ch, "-") for ch in channels]
             return channel_types
         except Exception as e:
             logger.error(f"Error determining unit types: {e}")
@@ -121,8 +121,8 @@ class UnitSystemConverter:
             logger.info(f"Converting {result.name} from {from_system} to {to_system}")
             # Convert each channel based on its unit type
             for i, utype in enumerate(result.unit_types):
-                if utype == "none":
-                    updated_units.append("none")
+                if utype == "-":
+                    updated_units.append("-")
                     continue
 
                 # Get definitions
