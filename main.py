@@ -17,36 +17,12 @@ from scripts.plotting import PlottingUtils
 from scripts.tk_utilities import Tk_utils
 from scripts.unit_conversion import UnitSystemConverter
 
-sidebar_height = """
-#sidebar > ul
-{height: calc(100% - 2em);}
-"""
-modal_width = """
-#pn-Modal {
-    --dialog-width: auto;
-}"""
-
-modal_content = """
-.pn-modal-content {
-    position: relative;
-    top: -30px;
-}
-"""
-
-modal_close_pos = """
-.pn-modal-close {
-    position: relative;
-    left: calc(100% - 40px);
-    top: -17px;
-}
-"""
 table_buttons = [
     "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
 ]
 pn.extension(
     "tabulator",
     "plotly",
-    raw_css=[sidebar_height],
     css_files=table_buttons,
     notifications=True,
 )
@@ -78,6 +54,14 @@ except FileNotFoundError:
     }
     logger.warning(f"No config.yaml found, using default settings: {config}")
 
+try:
+    with open("styles.css", "r") as f:
+        css_content = f.read()
+except FileNotFoundError:
+    logger.error("No styles.css found", exc_info=True)
+
+logger.debug(f"css_content: {css_content}")
+
 dm = IO.DataManager()
 
 # Define the main application template
@@ -86,7 +70,7 @@ template = pn.template.FastListTemplate(
     sidebar_width=420,
     accent="#2A3F5F",
     theme=config["theme"],
-    raw_css=[modal_width, modal_close_pos, modal_content],
+    raw_css=[css_content],
 )
 
 # Define colorway for plots

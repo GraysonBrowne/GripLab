@@ -1,0 +1,18 @@
+#sidebar > ul {
+    height: calc(100% - 2em);
+}
+
+#pn-Modal {
+    --dialog-width: auto;
+}
+
+.pn-modal-content {
+    position: relative;
+    top: -30px;
+}
+
+.pn-modal-close {
+    position: relative;
+    left: calc(100% - 40px);
+    top: -17px;
+}
