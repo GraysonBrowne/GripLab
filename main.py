@@ -162,6 +162,7 @@ cmd_multi_select_4 = pn.widgets.MultiSelect(options=[], size=8,
 downsample_slider = pn.widgets.IntSlider(name='Down Sample Rate', start=1, end=10, 
                                          step=1, value=5,
                                          sizing_mode='stretch_width',)
+node_count_text = pn.widgets.StaticText(name="Node Count", value="0", sizing_mode='stretch_width',)
 # data info widgets
 data_select = pn.widgets.Select(name='Dataset', options=[],sizing_mode='stretch_width',)
 data_name_text_input = pn.widgets.TextInput(name='Name',sizing_mode='stretch_width',
@@ -181,7 +182,7 @@ plot_data_tab = pn.Column(pn.Row(plot_radio_group,plot_settings_button,plot_data
                                   pn.Row(pn.GridBox(x_select, y_select, z_select, 
                                                     color_select, ncols=2, 
                                                     sizing_mode='stretch_width'),
-                                         pn.Column(downsample_slider,width=150)),
+                                         pn.Column(downsample_slider, node_count_text, width=150)),
                                   pn.GridBox(cmd_select_1, cmd_select_2,cmd_select_3, cmd_select_4,
                                   cmd_multi_select_1, cmd_multi_select_2, cmd_multi_select_3, cmd_multi_select_4, ncols=4),
                                   name = "Plot Data",)
@@ -534,8 +535,8 @@ def update_scatter_plot(clicks):
         logger.warning("No datasets selected to plot.")
         pn.state.notifications.warning('Select a dataset to plot.', duration=4000)
         return
-    plotly_pane.object = PlottingUtils.plot_data(data_table,dm, x_select, 
-                                                    y_select, z_select, 
+    plotly_pane.object, node_count = PlottingUtils.plot_data(data_table,dm, x_select,
+                                                    y_select, z_select,
                                                     color_select, unit_select,
                                                     sign_select, plot_radio_group,
                                                     color_map, downsample_slider,
@@ -551,9 +552,12 @@ def update_scatter_plot(clicks):
                                                     c_label_text_input.value,
                                                     font_size_input.value,
                                                     marker_size_input.value)
+    
+    node_count_text.value = str(node_count)
 
 pn.bind(update_scatter_plot, plot_data_button.param.clicks, watch=True)
 
+@hold()
 def update_cmd_options(event):
     try:
         # Update command channel options to prevent duplicate selections
