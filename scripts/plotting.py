@@ -254,8 +254,8 @@ class PlottingUtils:
         else:
             subtitle = (
                 f"SA: {condition_strings['CmdSA']} | SR: {condition_strings['SL']} | "
-                f"IA: {condition_strings['CmdIA']} | FZ: {condition_strings['CmdFZ']} | "
-                f"P: {condition_strings['CmdP']} | V: {condition_strings['CmdV']} | "
+                f"IA: {condition_strings['CmdIA']} | FZ: {condition_strings['CmdFZ']} |"
+                f" P: {condition_strings['CmdP']} | V: {condition_strings['CmdV']} | "
                 f"Rim Width: {condition_strings['rim_width']}"
             )
 
@@ -393,7 +393,8 @@ class PlottingUtils:
         sign_select : Select
             Widget for selecting the sign convention for conversion.
         plot_radio_group : RadioGroup
-            Widget for selecting the plot type (e.g., "2D", "2D Color", "3D", "3D Color").
+            Widget for selecting the plot type (e.g., "2D", "2D Color", "3D",
+              "3D Color").
         color_map : str
             Name of the color map to use for color plots.
         downsample_slider : Slider
@@ -409,7 +410,8 @@ class PlottingUtils:
         - Supports 2D and 3D scatter plots, with optional color mapping.
         - Converts datasets to the selected unit system and sign convention.
         - Updates axis labels, hover templates, and colorbars according to selections.
-        - Logs warnings if no datasets are selected or if an unknown plot type is specified.
+        - Logs warnings if no datasets are selected or if an unknown plot type is
+          specified.
         """
 
         selection = data_table.selection
@@ -587,7 +589,7 @@ class PlottingUtils:
             color_unit,
         )
         if axis_visibility:
-            fig.update_traces(hovertemplate=f"<b>%{{hovertext}}</b><br><extra></extra>")
+            fig.update_traces(hovertemplate="<b>%{{hovertext}}</b><br><extra></extra>")
         else:
             fig.update_traces(hovertemplate=hover_template)
 

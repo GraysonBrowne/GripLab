@@ -97,7 +97,8 @@ class DataManager:
 
 def import_mat(filepath, file_name, node_color, demo_name):
     """
-    Imports data from a MATLAB .mat file and constructs a dataset object with relevant metadata.
+    Imports data from a MATLAB .mat file and constructs a dataset object with relevant
+    metadata.
 
     Parameters:
         filepath (os.PathLike): The path to the .mat file to import.
@@ -113,7 +114,8 @@ def import_mat(filepath, file_name, node_color, demo_name):
             - tire_id (str): Tire identifier extracted from the file.
             - rim_width (int): Rim width extracted from the tire ID string.
             - unit_system (str): 'USCS' if units are in pounds, otherwise 'Metric'.
-            - sign_convention (str): Extracted sign convention, defaults to 'SAE' if not found.
+            - sign_convention (str): Extracted sign convention, defaults to 'SAE' if not
+              found.
             - node_color (str): Hex code that determines plotting color.
             - notes (str): String of notes associated with the dataset.
 
@@ -150,7 +152,8 @@ def import_mat(filepath, file_name, node_color, demo_name):
         else:
             unit_system = "USCS" if "lb" in units else "Metric"
             logger.warning(
-                f"No unit system specified in {file_name}, {unit_system} inferred from channel names."
+                f"No unit system specified in {file_name}, {unit_system} inferred from"
+                f" channel names."
             )
 
         # Determine sign convention
@@ -199,7 +202,8 @@ def import_mat(filepath, file_name, node_color, demo_name):
 
 def import_dat(filepath, file_name, node_color, demo_name):
     """
-    Imports data from a .dat/.txt file and constructs a dataset object with relevant metadata.
+    Imports data from a .dat/.txt file and constructs a dataset object with relevant
+    metadata.
 
     Parameters:
         filepath (os.PathLike): Path to the .dat/.txt file to import.
@@ -215,7 +219,8 @@ def import_dat(filepath, file_name, node_color, demo_name):
             - tire_id (str): Tire identifier extracted from the file.
             - rim_width (int): Rim width extracted from the tire ID string.
             - unit_system (str): 'USCS' if units are in pounds, otherwise 'Metric'.
-            - sign_convention (str): Extracted sign convention, defaults to 'SAE' if not found.
+            - sign_convention (str): Extracted sign convention, defaults to 'SAE' if not
+              found.
             - node_color (str): Hex code that determines plotting color.
             - notes (str): String of notes associated with the dataset.
 
@@ -254,7 +259,8 @@ def import_dat(filepath, file_name, node_color, demo_name):
         else:
             unit_system = "USCS" if "lb" in units else "Metric"
             logger.warning(
-                f"No unit system specified in {file_name}, {unit_system} inferred from channel names."
+                f"No unit system specified in {file_name}, {unit_system} inferred from"
+                f" channel names."
             )
 
         # Determine sign convention

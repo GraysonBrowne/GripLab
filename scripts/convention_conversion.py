@@ -72,7 +72,8 @@ class ConventionConverter:
                 result.data[:, idx] = values_sae * target
 
             logger.debug(
-                f"Converted {dataset.name} from {result.sign_convention} -> {target_convention}"
+                f"Converted {dataset.name} from {result.sign_convention} -> "
+                f"{target_convention}"
             )
 
             # Update dataset metadata
@@ -109,7 +110,8 @@ class ConventionConverter:
             ValueError: If the target convention is not supported.
         Notes:
             - Channels not found in `cls.definitions` are skipped.
-            - The method logs errors and returns the original data in case of exceptions.
+            - The method logs errors and returns the original data in case of
+                exceptions.
         """
         try:
             # No conversion needed

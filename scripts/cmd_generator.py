@@ -7,9 +7,6 @@ from .processing import low_pass_filter
 
 
 class CmdChannelGenerator:
-    # TODO:
-    # Confirm these values again once plotting is further along
-    # Make a unit conversion method to make the target dict less redundant
 
     # Target command values for various channels in different unit systems
     cmd_target = {
@@ -33,20 +30,21 @@ class CmdChannelGenerator:
         sign_convention: str,
     ):
         """
-        Creates command channels (e.g., CmdFZ, CmdP) based on specified target
-        values for each channel and appends them to the dataset if they do not
-        already exist. This method ensures that command channels are generated
-        according to the specified unit system and sign convention, applying
-        necessary conversions and filtering as needed. For each target channel,
-        it maps the original data to the nearest target value, optionally
-        applying a low-pass filter for specific channels (e.g., FZ) to reduce
-        noise before matching.
+        Creates command channels (e.g., CmdFZ, CmdP) based on specified target values
+        for each channel and appends them to the dataset if they do not already exist.
+        This method ensures that command channels are generated according to the
+        specified  unit system and sign convention, applying necessary conversions and
+        filtering as needed. For each target channel, it maps the original data to the
+        nearest target value, optionally applying a low-pass filter for specific
+        channels (e.g., FZ) to reduce noise before matching.
         Args:
             channels (list): List of existing channel names.
             units (list): List of units corresponding to each channel.
             data (np.ndarray): 2D array of shape containing the data.
-            unit_system (str): The unit system to use for target values (e.g., 'USCS', 'Metric').
-            sign_convention (str): The sign convention of the input data (e.g., 'SAE', 'ISO').
+            unit_system (str): The unit system to use for target values
+                (e.g., 'USCS', 'Metric').
+            sign_convention (str): The sign convention of the input data
+                (e.g., 'SAE', 'ISO').
         Returns:
             tuple: Updated (channels, units, data) with command channels
                 appended if they were created.
@@ -113,7 +111,8 @@ class CmdChannelGenerator:
                 units.extend(new_units)
                 data_sae = np.column_stack([data_sae] + new_data)
                 logger.info(
-                    f"Created {len(new_channels)} command channels: {', '.join(new_channels)}"
+                    f"Created {len(new_channels)}"
+                    f" command channels: {', '.join(new_channels)}"
                 )
 
             # Convert back to original sign convention if needed

@@ -9,12 +9,15 @@ class Tk_utils:
         Opens a file selection dialog for the user to choose a file.
 
         Args:
-            filetypes (list of tuple): List of (label, pattern) tuples specifying allowed file types, e.g., [("Text files", "*.txt")].
+            filetypes (list of tuple): List of (label, pattern) tuples specifying
+                allowed file types, e.g., [("Text files", "*.txt")].
             initialdir (str): The initial directory that the dialog opens in.
-            icon (str, optional):  Path to the icon file for the dialog window. Defaults to ''.
+            icon (str, optional):  Path to the icon file for the dialog window.
+                Defaults to "".
 
         Returns:
-            str: The path to the selected file, or an empty string if no file was selected.
+            str: The path to the selected file, or an empty string if no file was
+                selected.
 
         Logs:
             Logs the selected file path or a message if no file was selected.
@@ -45,10 +48,12 @@ class Tk_utils:
 
         Args:
             initialdir (str): The initial directory that the dialog opens in.
-            icon (str, optional): Path to the icon file for the dialog window. Defaults to ''.
+            icon (str, optional): Path to the icon file for the dialog window.
+                Defaults to "".
 
         Returns:
-            str: The path of the selected directory, or an empty string if no directory was selected.
+            str: The path of the selected directory, or an empty string if no directory
+                was selected.
 
         Logs:
             Logs the selected directory path or a message if no directory was selected.
@@ -78,15 +83,19 @@ class Tk_utils:
         Opens a file save dialog using Tkinter and returns the selected file path.
 
         Args:
-            defaultextension (str): The default file extension to use in the save dialog (e.g., '.txt').
+            defaultextension (str): The default file extension to use in the save dialog
+                (e.g., '.txt').
             initialdir (str): The initial directory that the dialog opens in.
-            icon (str, optional): Path to the icon file for the Tkinter window. Defaults to ''.
+            icon (str, optional): Path to the icon file for the Tkinter window.
+                Defaults to ''.
 
         Returns:
-            str: The file path selected by the user, or an empty string if the operation is cancelled.
+            str: The file path selected by the user, or an empty string if the operation
+                is cancelled.
 
         Logs:
-            Logs the selected file path or cancellation, and logs errors if any occur during the process.
+            Logs the selected file path or cancellation, and logs errors if any occur
+                during the process.
         """
         try:
             root = Tk()
