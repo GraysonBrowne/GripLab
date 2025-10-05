@@ -157,8 +157,13 @@ class DataManager:
             return False
         
         if old_name != new_name:
-            self._datasets[new_name] = self._datasets.pop(old_name)
-            self._datasets[new_name].name = new_name
+            updated_dict = {}
+            for k, v in self._datasets.items():
+                if k == old_name:
+                    updated_dict[new_name] = self._datasets[old_name]
+                else:
+                    updated_dict[k] = v
+            self._datasets = updated_dict
         return True
     
     def update_demo_name(self, old_name: str, new_name: str) -> bool:
