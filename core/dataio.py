@@ -1,4 +1,4 @@
-# scripts/dataio.py
+# core/dataio.py
 """Data I/O and management for GripLab application."""
 
 import os
@@ -12,9 +12,9 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.io import loadmat
 
-from .logger_setup import logger
-from .optimized_unit_conversion import UnitSystemConverter
-from .refactored_cmd_generator import CmdChannelGenerator
+from utils.logger import logger
+from converters.units import UnitSystemConverter
+from converters.command import CmdChannelGenerator
 
 
 @dataclass

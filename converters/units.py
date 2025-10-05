@@ -1,4 +1,4 @@
-# scripts/unit_conversion.py
+# converters/units.py
 """Optimized unit system conversion utilities for GripLab application."""
 
 import math
@@ -6,7 +6,7 @@ import numpy as np
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import replace
 
-from .logger_setup import logger
+from utils.logger import logger
 
 
 class UnitSystemConverter:

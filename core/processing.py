@@ -1,4 +1,4 @@
-# scripts/processing.py
+# core/processing.py
 """Signal processing utilities for tire test data."""
 
 import numpy as np
@@ -7,7 +7,7 @@ from enum import Enum
 from scipy.signal import butter, filtfilt
 
 import panel as pn
-from .logger_setup import logger
+from utils.logger import logger
 
 
 class FilterType(Enum):

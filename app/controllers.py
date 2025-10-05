@@ -1,13 +1,13 @@
-# controllers.py
+# app/controllers.py
 """Business logic controllers for GripLab application."""
 
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 import plotly.express as px
 
-import scripts.refactored_dataio as IO
-from scripts.logger_setup import logger
-from scripts.refactored_plotting import PlottingUtils
+import core.dataio as IO
+from utils.logger import logger
+from core.plotting import PlottingUtils
 
 
 class DataController:

@@ -1,4 +1,4 @@
-# scripts/convention_conversion.py
+# converters/conventions.py
 """Sign convention conversion utilities for GripLab application."""
 
 import numpy as np
@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Any
 from dataclasses import replace
 from enum import Enum
 
-from .logger_setup import logger
+from utils.logger import logger
 
 
 class SignConvention(Enum):

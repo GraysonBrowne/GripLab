@@ -1,4 +1,6 @@
-# scripts/logger_setup.py
+# utils/logger.py
+"""Logging setup for GripLab application."""
+
 import logging
 import sys
 from pathlib import Path

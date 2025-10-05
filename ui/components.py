@@ -1,4 +1,4 @@
-# ui_components.py
+# ui/components.py
 """UI component classes for GripLab application."""
 
 from typing import List

@@ -1,13 +1,13 @@
-# scripts/cmd_generator.py
+# converters/command.py
 """Command channel generation for tire test data."""
 
 import numpy as np
 from typing import Dict, List, Tuple, Optional
 from enum import Enum
 
-from .logger_setup import logger
-from .refactored_processing import low_pass_filter
-from .refactored_convention_conversion import ConventionConverter
+from utils.logger import logger
+from core.processing import low_pass_filter
+from converters.conventions import ConventionConverter
 
 
 class CommandChannel(Enum):

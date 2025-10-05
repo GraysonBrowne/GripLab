@@ -1,6 +1,9 @@
+# utils/dialogs.py
+"""Utility functions for file and directory selection dialogs using Tkinter."""
+
 from tkinter import Tk, filedialog
 
-from .logger_setup import logger
+from .logger import logger
 
 
 class Tk_utils:

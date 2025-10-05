@@ -1,4 +1,4 @@
-# scripts/plotting.py
+# core/plotting.py
 """2D/3D visualization utilities for tire test data."""
 
 import numpy as np
@@ -9,10 +9,10 @@ from dataclasses import dataclass
 from enum import Enum
 from collections import defaultdict
 
-from .logger_setup import logger
-from .optimized_unit_conversion import UnitSystemConverter
-from .refactored_convention_conversion import ConventionConverter
-from .refactored_processing import DataDownsampler
+from utils.logger import logger
+from converters.units import UnitSystemConverter
+from converters.conventions import ConventionConverter
+from core.processing import DataDownsampler
 
 
 class PlotType(Enum):

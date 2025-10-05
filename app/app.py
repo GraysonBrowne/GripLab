@@ -1,7 +1,6 @@
-# main.py
+# app/app.py
 """
 GripLab - Tire Data Analysis Application
-Simplified main application entry point.
 """
 
 import sys
@@ -14,20 +13,20 @@ import plotly.express as px
 from panel.io import hold
 
 # Import application modules
-import scripts.refactored_dataio as IO
-from scripts.refactored_convention_conversion import ConventionConverter
-from scripts.logger_setup import logger
-from scripts.tk_utilities import Tk_utils
-from scripts.optimized_unit_conversion import UnitSystemConverter
+import core.dataio as IO
+from converters.conventions import ConventionConverter
+from utils.logger import logger
+from utils.dialogs import Tk_utils
+from converters.units import UnitSystemConverter
 
 # Import new modular components
-from app_config import AppConfig
-from ui_components import (
+from app.config import AppConfig
+from ui.components import (
     PlotControlWidgets, DataInfoWidgets, 
     PlotSettingsWidgets, AppSettingsWidgets
 )
-from controllers import DataController, PlotController
-from modal_layouts import (
+from app.controllers import DataController, PlotController
+from ui.modals import (
     create_settings_layout, create_plot_settings_layout, 
     create_removal_dialog
 )
@@ -67,8 +66,9 @@ class GripLabApp:
     
     def _load_css(self) -> str:
         """Load custom CSS styles."""
+        css_path = Path(Path(__file__).parent.parent, "ui", "styles.css")
         try:
-            with open("styles.css", "r") as f:
+            with open(css_path, "r") as f:
                 return f.read()
         except FileNotFoundError:
             logger.error("styles.css not found")
@@ -575,15 +575,3 @@ class GripLabApp:
             self.template.servable()
         
         return self.template
-
-
-# ===========================
-# Application Entry Point
-# ===========================
-
-def main():
-    """Main application entry point."""
-    app = GripLabApp()
-    app.serve()
-
-main()

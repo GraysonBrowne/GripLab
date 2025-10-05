@@ -1,4 +1,4 @@
-# modal_layouts.py
+# ui/modals.py
 """Modal dialog layouts for GripLab application."""
 
 import panel as pn
