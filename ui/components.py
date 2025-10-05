@@ -65,7 +65,7 @@ class PlotControlWidgets:
         
         # Other controls
         self.downsample_slider = pn.widgets.IntSlider(
-            name="Down Sample Rate", start=1, end=10, step=1, value=5,
+            name="Down Sample Factor", start=1, end=10, step=1, value=5,
             sizing_mode="stretch_width"
         )
         self.node_count = pn.widgets.StaticText(name="Node Count", value="0")

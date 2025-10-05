@@ -168,7 +168,7 @@ class GripLabApp:
                 pn.Column(
                     self.plot_widgets.downsample_slider,
                     self.plot_widgets.node_count,
-                    width=150
+                    width=160
                 )
             ),
             pn.GridBox(
