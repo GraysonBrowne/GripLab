@@ -34,7 +34,7 @@ Attach screenshots, logs, or output to help reviewers understand the changes.
 ---
 
 ## 📝 Checklist
-- [ ] My code follows the project’s [style guidelines](CONTRIBUTING.md).
+- [ ] My code follows the project’s [style guidelines](DEVELOPER_GUIDE.md).
 - [ ] I have added tests that prove my fix/feature works.
 - [ ] I have added/updated documentation if needed.
 - [ ] Linked related issue(s) in the PR description.
