@@ -2,12 +2,13 @@
 """Business logic controllers for GripLab application."""
 
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 import plotly.express as px
 
 import core.dataio as IO
-from utils.logger import logger
 from core.plotting import PlottingUtils
+from utils.logger import logger
 
 
 class DataController:

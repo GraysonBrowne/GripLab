@@ -1,18 +1,19 @@
 # core/plotting.py
 """2D/3D visualization utilities for tire test data."""
 
+from collections import defaultdict
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from typing import Dict, List, Tuple, Optional, Any, Union
-from dataclasses import dataclass
-from enum import Enum
-from collections import defaultdict
 
-from utils.logger import logger
-from converters.units import UnitSystemConverter
 from converters.conventions import ConventionConverter
+from converters.units import UnitSystemConverter
 from core.processing import DataDownsampler
+from utils.logger import logger
 
 
 class PlotType(Enum):

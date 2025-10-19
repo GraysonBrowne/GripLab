@@ -1,10 +1,11 @@
 # converters/conventions.py
 """Sign convention conversion utilities for GripLab application."""
 
-import numpy as np
-from typing import Dict, List, Optional, Any
 from dataclasses import replace
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 
 from utils.logger import logger
 

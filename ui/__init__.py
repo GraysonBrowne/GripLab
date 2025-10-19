@@ -1,18 +1,11 @@
 # ui/__init__.py
 """UI components for GripLab."""
 
-from .components import (
-    WidgetFactory,
-    PlotControlWidgets,
-    DataInfoWidgets,
-    PlotSettingsWidgets,
-    AppSettingsWidgets,
-)
-from .modals import (
-    create_settings_layout,
-    create_plot_settings_layout,
-    create_removal_dialog,
-)
+from .components import (AppSettingsWidgets, DataInfoWidgets,
+                         PlotControlWidgets, PlotSettingsWidgets,
+                         WidgetFactory)
+from .modals import (create_plot_settings_layout, create_removal_dialog,
+                     create_settings_layout)
 
 __all__ = [
     "WidgetFactory",

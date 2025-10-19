@@ -3,18 +3,18 @@
 
 import os
 import re
-from pathlib import Path
-from typing import List, Dict, Optional, Tuple, Any
+from dataclasses import dataclass, field, replace
 from itertools import islice
-from dataclasses import dataclass, replace, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.io import loadmat
 
-from utils.logger import logger
-from converters.units import UnitSystemConverter
 from converters.command import CmdChannelGenerator
+from converters.units import UnitSystemConverter
+from utils.logger import logger
 
 
 @dataclass

@@ -2,9 +2,10 @@
 """Optimized unit system conversion utilities for GripLab application."""
 
 import math
-import numpy as np
-from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import replace
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 from utils.logger import logger
 

@@ -2,6 +2,7 @@
 """UI component classes for GripLab application."""
 
 from typing import List
+
 import panel as pn
 import plotly.express as px
 

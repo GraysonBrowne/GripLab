@@ -6,6 +6,7 @@ GripLab - Tire Data Analysis Application
 import sys
 import webbrowser
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import panel as pn
@@ -14,25 +15,17 @@ from panel.io import hold
 
 # Import application modules
 import core.dataio as IO
-from converters.conventions import ConventionConverter
-from utils.logger import logger
-from utils.dialogs import Tk_utils
-from converters.units import UnitSystemConverter
-
 # Import new modular components
 from app.config import AppConfig
-from ui.components import (
-    PlotControlWidgets,
-    DataInfoWidgets,
-    PlotSettingsWidgets,
-    AppSettingsWidgets,
-)
 from app.controllers import DataController, PlotController
-from ui.modals import (
-    create_settings_layout,
-    create_plot_settings_layout,
-    create_removal_dialog,
-)
+from converters.conventions import ConventionConverter
+from converters.units import UnitSystemConverter
+from ui.components import (AppSettingsWidgets, DataInfoWidgets,
+                           PlotControlWidgets, PlotSettingsWidgets)
+from ui.modals import (create_plot_settings_layout, create_removal_dialog,
+                       create_settings_layout)
+from utils.dialogs import Tk_utils
+from utils.logger import logger
 
 
 class GripLabApp:

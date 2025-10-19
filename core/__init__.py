@@ -1,9 +1,9 @@
 # core/__init__.py
 """Core functionality for GripLab."""
 
-from .dataio import Dataset, DataManager, DataImporter
+from .dataio import DataImporter, DataManager, Dataset
 from .plotting import PlottingUtils
-from .processing import SignalProcessor, DataDownsampler
+from .processing import DataDownsampler, SignalProcessor
 
 __all__ = [
     "Dataset",

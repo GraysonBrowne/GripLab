@@ -1,10 +1,12 @@
 # app/config.py
 """Configuration management for GripLab application."""
 
-import yaml
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from dataclasses import dataclass, asdict
 from typing import Dict
+
+import yaml
+
 from utils.logger import logger
 
 
