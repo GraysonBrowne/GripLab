@@ -5,8 +5,4 @@ from .units import UnitSystemConverter
 from .conventions import ConventionConverter
 from .command import CmdChannelGenerator
 
-__all__ = [
-    'UnitSystemConverter',
-    'ConventionConverter', 
-    'CmdChannelGenerator'
-]
+__all__ = ["UnitSystemConverter", "ConventionConverter", "CmdChannelGenerator"]
