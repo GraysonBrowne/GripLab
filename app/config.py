@@ -11,6 +11,7 @@ from utils.logger import logger
 @dataclass
 class AppConfig:
     """Application configuration container."""
+
     theme: str = "dark"
     unit_system: str = "USCS"
     sign_convention: str = "ISO"
@@ -18,9 +19,9 @@ class AppConfig:
     colorway: str = "G10"
     colormap: str = "Jet"
     data_dir: str = ""
-    
+
     @classmethod
-    def from_yaml(cls, filepath: str) -> 'AppConfig':
+    def from_yaml(cls, filepath: str) -> "AppConfig":
         """Load configuration from YAML file."""
         try:
             with open(filepath) as f:
@@ -32,13 +33,13 @@ class AppConfig:
                     demo_mode=data.get("demo_mode", False),
                     colorway=data.get("plotting", {}).get("colorway", "G10"),
                     colormap=data.get("plotting", {}).get("colormap", "Jet"),
-                    data_dir=data.get("paths", {}).get("data_dir", str(Path.cwd()))
+                    data_dir=data.get("paths", {}).get("data_dir", str(Path.cwd())),
                 )
         except FileNotFoundError:
             logger.warning(f"Config file {filepath} not found, using defaults")
             config = cls(data_dir=str(Path.cwd()))
             return config
-    
+
     def to_dict(self) -> Dict:
         """Convert configuration to dictionary for YAML export."""
         return {
@@ -52,9 +53,9 @@ class AppConfig:
             },
             "paths": {
                 "data_dir": self.data_dir,
-            }
+            },
         }
-    
+
     def save(self, filepath: str):
         """Save configuration to YAML file."""
         try:

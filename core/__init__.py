@@ -6,7 +6,10 @@ from .plotting import PlottingUtils
 from .processing import SignalProcessor, DataDownsampler
 
 __all__ = [
-    'Dataset', 'DataManager', 'DataImporter',
-    'PlottingUtils', 
-    'SignalProcessor', 'DataDownsampler'
+    "Dataset",
+    "DataManager",
+    "DataImporter",
+    "PlottingUtils",
+    "SignalProcessor",
+    "DataDownsampler",
 ]

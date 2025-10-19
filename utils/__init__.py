@@ -5,6 +5,6 @@ from .dialogs import Tk_utils
 from .logger import logger
 
 __all__ = [
-    'Tk_utils',
-    'logger',
+    "Tk_utils",
+    "logger",
 ]
