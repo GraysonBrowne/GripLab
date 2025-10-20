@@ -15,23 +15,15 @@ from panel.io import hold
 
 # Import application modules
 import core.dataio as IO
-
 # Import new modular components
 from app.config import AppConfig
 from app.controllers import DataController, PlotController
 from converters.conventions import ConventionConverter
 from converters.units import UnitSystemConverter
-from ui.components import (
-    AppSettingsWidgets,
-    DataInfoWidgets,
-    PlotControlWidgets,
-    PlotSettingsWidgets,
-)
-from ui.modals import (
-    create_plot_settings_layout,
-    create_removal_dialog,
-    create_settings_layout,
-)
+from ui.components import (AppSettingsWidgets, DataInfoWidgets,
+                           PlotControlWidgets, PlotSettingsWidgets)
+from ui.modals import (create_plot_settings_layout, create_removal_dialog,
+                       create_settings_layout)
 from utils.dialogs import Tk_utils
 from utils.logger import logger
 
