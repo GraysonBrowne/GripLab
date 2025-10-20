@@ -31,10 +31,18 @@ from utils.logger import logger
 class GripLabApp:
     """Main application orchestrator."""
 
-    def __init__(self, config_path: str = "config.yaml"):
+    def __init__(self):
+        # Determine program directory
+        if getattr(sys, "frozen", False):
+            # Adjust working directory for frozen executable
+            self.program_dir = Path(sys.executable).parent.parent
+        else:
+            self.program_dir = Path(__file__).parent.parent
+        self.local_dir = Path(__file__).parent.parent
+
         # Initialize configuration
-        self.config = AppConfig.from_yaml(config_path)
-        self.config_path = config_path
+        self.config_path = Path(self.local_dir, "config.yaml")
+        self.config = AppConfig.from_yaml(self.config_path)
 
         # Initialize data manager and controllers
         self.dm = IO.DataManager()
@@ -65,7 +73,7 @@ class GripLabApp:
 
     def _load_css(self) -> str:
         """Load custom CSS styles."""
-        css_path = Path(Path(__file__).parent.parent, "ui", "styles.css")
+        css_path = Path(self.program_dir, "ui", "styles.css")
         try:
             with open(css_path, "r") as f:
                 return f.read()
@@ -77,9 +85,11 @@ class GripLabApp:
         """Initialize all UI components."""
         # Create main template
         self.template = pn.template.FastListTemplate(
-            title="GripLab",
+            title="Tire Analysis Tool",
+            logo=str(Path(self.program_dir, "docs", "images","GripLab_Banner.png")),
+            favicon=str(Path(self.program_dir, "docs", "images","GripLab_Icon.ico")),
             sidebar_width=420,
-            accent="#2A3F5F",
+            accent="#283442",
             theme=self.config.theme,
             raw_css=[self._load_css()],
         )
@@ -266,6 +276,7 @@ class GripLabApp:
         files = Tk_utils.select_file(
             filetypes=[("MATLAB/ASCII Data Files", "*.mat *.dat *.txt")],
             initialdir=self.config.data_dir,
+            icon=str(Path(self.program_dir, "docs", "images","GripLab_Icon.ico")),
         )
 
         if not files:
@@ -452,7 +463,7 @@ class GripLabApp:
         """Handle help menu selection."""
         actions = {
             "signcon": lambda: webbrowser.open_new(
-                str(Path("docs/Sign_Convention.pdf"))
+                str(Path(self.program_dir, "docs", "Sign_Convention.pdf"))
             ),
             "readme": lambda: webbrowser.open_new(
                 "https://github.com/GraysonBrowne/GripLab/blob/main/README.md"
@@ -473,7 +484,8 @@ class GripLabApp:
 
     def _on_select_data_dir(self, clicks):
         """Handle data directory selection."""
-        directory = Tk_utils.select_dir(initialdir=self.config.data_dir)
+        directory = Tk_utils.select_dir(initialdir=self.config.data_dir,
+                                        icon=str(Path(self.program_dir, "docs", "images","GripLab_Icon.ico")),)
         if directory:
             self.app_settings_widgets.data_dir_input.value = directory
             self.config.data_dir = directory
@@ -599,6 +611,6 @@ class GripLabApp:
             pn.state.on_session_destroyed(on_session_destroyed)
         else:
             # Running in development mode
-            self.template.servable()
+            self.template.servable(title="GripLab")
 
         return self.template
