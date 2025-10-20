@@ -1,4 +1,5 @@
-# GripLab Developer Guide (v2025.10.1.0)
+![GripLab](images/GripLab_Banner.png)
+# Developer Guide (v2025.10.1.0)
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
@@ -109,29 +110,29 @@ GripLab/
 │
 ├── core/                      # Core data handling
 │   ├── __init__.py
-│   ├── dataio.py             # Data I/O (Dataset, DataManager, DataImporter)
-│   ├── plotting.py           # Visualization (PlottingUtils, PlotBuilder, PlotConfig)
-│   └── processing.py         # Signal processing (SignalProcessor, DataDownsampler)
+│   ├── dataio.py              # Data I/O (Dataset, DataManager, DataImporter)
+│   ├── plotting.py            # Visualization (PlottingUtils, PlotBuilder, PlotConfig)
+│   └── processing.py          # Signal processing (SignalProcessor, DataDownsampler)
 │
-├── converters/               # Data transformation utilities
+├── converters/                # Data transformation utilities
 │   ├── __init__.py
-│   ├── units.py              # Unit system conversion (UnitSystemConverter)
-│   ├── conventions.py        # Sign convention conversion (ConventionConverter)
-│   └── commands.py           # Command channel generation (CmdChannelGenerator)
+│   ├── units.py               # Unit system conversion (UnitSystemConverter)
+│   ├── conventions.py         # Sign convention conversion (ConventionConverter)
+│   └── commands.py            # Command channel generation (CmdChannelGenerator)
 │
-├── utils/                    # Shared utilities
+├── utils/                     # Shared utilities
 │   ├── __init__.py
-│   ├── logger.py             # Logging configuration
-│   └── dialogs.py            # File dialog utilities (Tk_utils)
+│   ├── logger.py              # Logging configuration
+│   └── dialogs.py             # File dialog utilities (Tk_utils)
 │
-├── docs/                     # Documentation
-│   ├── guides/               # User guides
-│   ├── images/               # Screenshots and diagrams
-│   ├── DEVELOPER_GUIDE.md    # This document
-│   └── Sign_Convention.pdf   # Sign convention reference
+├── docs/                      # Documentation
+│   ├── guides/                # User guides
+│   ├── images/                # Screenshots and diagrams
+│   ├── DEVELOPER_GUIDE.md     # This document
+│   └── Sign_Convention.pdf    # Sign convention reference
 │
-└── scripts/                  # Utility scripts
-    └── build_exe.py          # PyInstaller build script
+└── scripts/                   # Utility scripts
+    └── build_exe.py           # PyInstaller build script
 ```
 
 ---

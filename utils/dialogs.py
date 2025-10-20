@@ -28,8 +28,8 @@ class Tk_utils:
         """
         try:
             root = Tk()
-            root.iconbitmap(icon)
             root.withdraw()  # Hide the root window
+            root.iconbitmap(icon)
             root.call(
                 "wm", "attributes", ".", "-topmost", True
             )  # Bring the dialog to the front
@@ -64,8 +64,8 @@ class Tk_utils:
         """
         try:
             root = Tk()
-            root.iconbitmap(icon)
             root.withdraw()  # Hide the root window
+            root.iconbitmap(icon)
             root.call(
                 "wm", "attributes", ".", "-topmost", True
             )  # Bring the dialog to the front
@@ -102,8 +102,8 @@ class Tk_utils:
         """
         try:
             root = Tk()
-            root.iconbitmap(icon)
             root.withdraw()  # Hide the root window
+            root.iconbitmap(icon)
             root.call(
                 "wm", "attributes", ".", "-topmost", True
             )  # Bring the dialog to the front
