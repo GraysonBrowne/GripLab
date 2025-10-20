@@ -15,15 +15,23 @@ from panel.io import hold
 
 # Import application modules
 import core.dataio as IO
+
 # Import new modular components
 from app.config import AppConfig
 from app.controllers import DataController, PlotController
 from converters.conventions import ConventionConverter
 from converters.units import UnitSystemConverter
-from ui.components import (AppSettingsWidgets, DataInfoWidgets,
-                           PlotControlWidgets, PlotSettingsWidgets)
-from ui.modals import (create_plot_settings_layout, create_removal_dialog,
-                       create_settings_layout)
+from ui.components import (
+    AppSettingsWidgets,
+    DataInfoWidgets,
+    PlotControlWidgets,
+    PlotSettingsWidgets,
+)
+from ui.modals import (
+    create_plot_settings_layout,
+    create_removal_dialog,
+    create_settings_layout,
+)
 from utils.dialogs import Tk_utils
 from utils.logger import logger
 
@@ -86,8 +94,8 @@ class GripLabApp:
         # Create main template
         self.template = pn.template.FastListTemplate(
             title="Tire Analysis Tool",
-            logo=str(Path(self.program_dir, "docs", "images","GripLab_Banner.png")),
-            favicon=str(Path(self.program_dir, "docs", "images","GripLab_Icon.ico")),
+            logo=str(Path(self.program_dir, "docs", "images", "GripLab_Banner.png")),
+            favicon=str(Path(self.program_dir, "docs", "images", "GripLab_Icon.ico")),
             sidebar_width=420,
             accent="#283442",
             theme=self.config.theme,
@@ -276,7 +284,7 @@ class GripLabApp:
         files = Tk_utils.select_file(
             filetypes=[("MATLAB/ASCII Data Files", "*.mat *.dat *.txt")],
             initialdir=self.config.data_dir,
-            icon=str(Path(self.program_dir, "docs", "images","GripLab_Icon.ico")),
+            icon=str(Path(self.program_dir, "docs", "images", "GripLab_Icon.ico")),
         )
 
         if not files:
@@ -484,8 +492,10 @@ class GripLabApp:
 
     def _on_select_data_dir(self, clicks):
         """Handle data directory selection."""
-        directory = Tk_utils.select_dir(initialdir=self.config.data_dir,
-                                        icon=str(Path(self.program_dir, "docs", "images","GripLab_Icon.ico")),)
+        directory = Tk_utils.select_dir(
+            initialdir=self.config.data_dir,
+            icon=str(Path(self.program_dir, "docs", "images", "GripLab_Icon.ico")),
+        )
         if directory:
             self.app_settings_widgets.data_dir_input.value = directory
             self.config.data_dir = directory
