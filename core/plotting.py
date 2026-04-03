@@ -11,7 +11,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from converters.conventions import ConventionConverter, SignConvention
-from converters.units import UnitSystemConverter
+from converters.units import UnitSystem, UnitSystemConverter
 from core.processing import DataDownsampler
 from utils.logger import logger
 
@@ -57,7 +57,7 @@ class PlotConfig:
 
     # Data options
     downsample_factor: int = 5
-    unit_system: str = "USCS"
+    unit_system: UnitSystem = UnitSystem.USCS
     sign_convention: SignConvention = SignConvention.ISO
 
     def __post_init__(self):

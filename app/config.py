@@ -8,6 +8,7 @@ from typing import Dict
 import yaml
 
 from converters.conventions import SignConvention
+from converters.units import UnitSystem
 from utils.logger import logger
 
 
@@ -16,7 +17,7 @@ class AppConfig:
     """Application configuration container."""
 
     theme: str = "dark"
-    unit_system: str = "USCS"
+    unit_system: UnitSystem = UnitSystem.USCS
     sign_convention: SignConvention = SignConvention.ISO
     demo_mode: bool = False
     colorway: str = "G10"
@@ -31,7 +32,7 @@ class AppConfig:
                 data = yaml.safe_load(f)
                 return cls(
                     theme=data.get("theme", "dark"),
-                    unit_system=data.get("unit_system", "USCS"),
+                    unit_system=UnitSystem(data.get("unit_system", "USCS")),
                     sign_convention=SignConvention(data.get("sign_convention", "ISO")),
                     demo_mode=data.get("demo_mode", False),
                     colorway=data.get("plotting", {}).get("colorway", "G10"),

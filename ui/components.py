@@ -7,6 +7,7 @@ import panel as pn
 import plotly.express as px
 
 from converters.conventions import SignConvention
+from converters.units import UnitSystem
 
 
 class WidgetFactory:
@@ -266,7 +267,7 @@ class AppSettingsWidgets:
 
         self.unit_select = pn.widgets.Select(
             name="Unit System",
-            options=["USCS", "Metric"],
+            options=[s.value for s in UnitSystem if s != UnitSystem.SI],
             value=config.unit_system,
             description="USCS: lb, ft-lb, in, psi, mph, deg F \n\r"
             "Metric: N, N-m, cm, kPa, kph, deg C",

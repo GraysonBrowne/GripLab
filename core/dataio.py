@@ -14,7 +14,7 @@ from scipy.io import loadmat
 
 from converters.command import CmdChannelGenerator
 from converters.conventions import SignConvention
-from converters.units import UnitSystemConverter
+from converters.units import UnitSystem, UnitSystemConverter
 from utils.logger import logger
 
 
@@ -33,7 +33,7 @@ class Dataset:
     # Metadata
     tire_id: str
     rim_width: int
-    unit_system: str
+    unit_system: UnitSystem
     sign_convention: SignConvention
     node_color: str
     notes: str = ""
@@ -329,7 +329,7 @@ class DataImporter:
         metadata = {
             "tire_id": "",
             "rim_width": 0,
-            "unit_system": "USCS",
+            "unit_system": UnitSystem.USCS,
             "sign_convention": SignConvention.SAE,
             "notes": "",
         }
@@ -346,14 +346,14 @@ class DataImporter:
 
         # Extract unit system
         if "units" in file_data:
-            metadata["unit_system"] = file_data["units"]
+            metadata["unit_system"] = UnitSystem(file_data["units"])
         else:
             # Infer from units if not specified
             if "channel" in file_data:
                 units = (
                     np.concatenate(file_data["channel"][0][0][1][0]).ravel().tolist()
                 )
-                metadata["unit_system"] = "USCS" if "lb" in str(units) else "Metric"
+                metadata["unit_system"] = UnitSystem.USCS if "lb" in str(units) else UnitSystem.METRIC
             logger.warning(
                 f"Unit system not specified in {name}, "
                 f"inferred {metadata['unit_system']}"
@@ -381,7 +381,7 @@ class DataImporter:
         metadata = {
             "tire_id": "",
             "rim_width": 0,
-            "unit_system": "USCS",
+            "unit_system": UnitSystem.USCS,
             "sign_convention": SignConvention.SAE,
             "notes": "",
         }
@@ -399,9 +399,9 @@ class DataImporter:
         # Extract unit system
         unit_match = re.search(r"Unit_System=([^;]+)", header_line)
         if unit_match:
-            metadata["unit_system"] = unit_match.group(1)
+            metadata["unit_system"] = UnitSystem(unit_match.group(1))
         else:
-            metadata["unit_system"] = "USCS" if "lb" in units else "Metric"
+            metadata["unit_system"] = UnitSystem.USCS if "lb" in units else UnitSystem.METRIC
             logger.warning(
                 f"Unit system not specified in {name}, {metadata['unit_system']} "
                 f"inferred from channel names."
