@@ -3,7 +3,7 @@
 
 from tkinter import Tk, filedialog
 
-from .logger import logger
+from utils.logger import logger
 
 
 class Tk_utils:

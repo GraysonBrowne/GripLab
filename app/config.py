@@ -1,7 +1,7 @@
 # app/config.py
 """Configuration management for GripLab application."""
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict
 

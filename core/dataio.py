@@ -1,12 +1,11 @@
 # core/dataio.py
 """Data I/O and management for GripLab application."""
 
-import os
 import re
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from itertools import islice
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -422,17 +421,6 @@ class DataImporter:
             metadata["notes"] = notes_match.group(1)
 
         return metadata
-
-
-# Maintain backward compatibility with old function names
-def import_mat(filepath, file_name, node_color, demo_name):
-    """Legacy function for importing MAT files."""
-    return DataImporter.import_mat(Path(filepath), file_name, node_color, demo_name)
-
-
-def import_dat(filepath, file_name, node_color, demo_name):
-    """Legacy function for importing DAT files."""
-    return DataImporter.import_dat(Path(filepath), file_name, node_color, demo_name)
 
 
 # Re-export for backward compatibility
