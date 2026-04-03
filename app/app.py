@@ -530,7 +530,7 @@ class GripLabApp:
                 dataset, to_system=self.app_settings_widgets.unit_select.value
             )
             dataset = ConventionConverter.convert_dataset_convention(
-                dataset, target_convention=self.app_settings_widgets.sign_select.value
+                dataset, target_convention=SignConvention(self.app_settings_widgets.sign_select.value)
             )
 
             if channel in dataset.channels:
