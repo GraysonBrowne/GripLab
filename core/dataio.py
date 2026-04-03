@@ -13,6 +13,7 @@ from numpy.typing import NDArray
 from scipy.io import loadmat
 
 from converters.command import CmdChannelGenerator
+from converters.conventions import SignConvention
 from converters.units import UnitSystemConverter
 from utils.logger import logger
 
@@ -33,7 +34,7 @@ class Dataset:
     tire_id: str
     rim_width: int
     unit_system: str
-    sign_convention: str
+    sign_convention: SignConvention
     node_color: str
     notes: str = ""
 
@@ -329,7 +330,7 @@ class DataImporter:
             "tire_id": "",
             "rim_width": 0,
             "unit_system": "USCS",
-            "sign_convention": "SAE",
+            "sign_convention": SignConvention.SAE,
             "notes": "",
         }
 
@@ -360,7 +361,7 @@ class DataImporter:
 
         # Extract sign convention
         if "sign" in file_data:
-            metadata["sign_convention"] = file_data["sign"]
+            metadata["sign_convention"] = SignConvention(file_data["sign"])
         else:
             logger.warning(
                 f"Sign convention not specified in {name}, " f"defaulting to SAE"
@@ -381,7 +382,7 @@ class DataImporter:
             "tire_id": "",
             "rim_width": 0,
             "unit_system": "USCS",
-            "sign_convention": "SAE",
+            "sign_convention": SignConvention.SAE,
             "notes": "",
         }
 
@@ -409,7 +410,7 @@ class DataImporter:
         # Extract sign convention
         sign_match = re.search(r"Sign_Convention=([^;]+)", header_line)
         if sign_match:
-            metadata["sign_convention"] = sign_match.group(1)
+            metadata["sign_convention"] = SignConvention(sign_match.group(1))
         else:
             logger.warning(
                 f"Sign convention not specified in {name}, defaulting to SAE"

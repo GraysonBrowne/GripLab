@@ -6,6 +6,8 @@ from typing import List
 import panel as pn
 import plotly.express as px
 
+from converters.conventions import SignConvention
+
 
 class WidgetFactory:
     """Factory class for creating UI widgets with consistent styling."""
@@ -273,7 +275,7 @@ class AppSettingsWidgets:
 
         self.sign_select = pn.widgets.Select(
             name="Sign Convention",
-            options=["SAE", "Adapted SAE", "ISO", "Adapted ISO"],
+            options=[c.value for c in SignConvention],
             value=config.sign_convention,
             description="SAE: As supplied from TTC \n\r"
             "Adapted SAE: Used in Pacejka 2012 \n\r"

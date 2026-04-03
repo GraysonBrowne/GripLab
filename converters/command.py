@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from converters.conventions import ConventionConverter
+from converters.conventions import ConventionConverter, SignConvention
 from core.processing import low_pass_filter
 from utils.logger import logger
 
@@ -46,7 +46,7 @@ class CmdChannelGenerator:
         units: List[str],
         data: np.ndarray,
         unit_system: str,
-        sign_convention: str,
+        sign_convention: SignConvention,
     ) -> Tuple[List[str], List[str], np.ndarray]:
         """
         Create command channels for standard test parameters.
@@ -77,7 +77,7 @@ class CmdChannelGenerator:
         try:
             # Convert to SAE for consistent processing
             data_sae = ConventionConverter.convert_channel_convention(
-                channels, data, sign_convention, target_convention="SAE"
+                channels, data, sign_convention, target_convention=SignConvention.SAE
             )
 
             # Generate new command channels
@@ -100,7 +100,7 @@ class CmdChannelGenerator:
             result_data = ConventionConverter.convert_channel_convention(
                 channels,
                 data_sae,
-                current_convention="SAE",
+                current_convention=SignConvention.SAE,
                 target_convention=sign_convention,
             )
 

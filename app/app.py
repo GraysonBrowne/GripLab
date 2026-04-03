@@ -18,7 +18,7 @@ import core.dataio as IO
 # Import new modular components
 from app.config import AppConfig
 from app.controllers import DataController, PlotController
-from converters.conventions import ConventionConverter
+from converters.conventions import ConventionConverter, SignConvention
 from converters.units import UnitSystemConverter
 from ui.components import (AppSettingsWidgets, DataInfoWidgets,
                            PlotControlWidgets, PlotSettingsWidgets)
@@ -311,7 +311,7 @@ class GripLabApp:
         # Update config from widgets
         self.config.theme = self.app_settings_widgets.theme_select.value
         self.config.unit_system = self.app_settings_widgets.unit_select.value
-        self.config.sign_convention = self.app_settings_widgets.sign_select.value
+        self.config.sign_convention = SignConvention(self.app_settings_widgets.sign_select.value)
         self.config.demo_mode = self.app_settings_widgets.demo_switch.value
         self.config.data_dir = self.app_settings_widgets.data_dir_input.value
 

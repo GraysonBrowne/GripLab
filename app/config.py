@@ -7,6 +7,7 @@ from typing import Dict
 
 import yaml
 
+from converters.conventions import SignConvention
 from utils.logger import logger
 
 
@@ -16,7 +17,7 @@ class AppConfig:
 
     theme: str = "dark"
     unit_system: str = "USCS"
-    sign_convention: str = "ISO"
+    sign_convention: SignConvention = SignConvention.ISO
     demo_mode: bool = False
     colorway: str = "G10"
     colormap: str = "Jet"
@@ -31,7 +32,7 @@ class AppConfig:
                 return cls(
                     theme=data.get("theme", "dark"),
                     unit_system=data.get("unit_system", "USCS"),
-                    sign_convention=data.get("sign_convention", "ISO"),
+                    sign_convention=SignConvention(data.get("sign_convention", "ISO")),
                     demo_mode=data.get("demo_mode", False),
                     colorway=data.get("plotting", {}).get("colorway", "G10"),
                     colormap=data.get("plotting", {}).get("colormap", "Jet"),
