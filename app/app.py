@@ -14,8 +14,7 @@ import plotly.express as px
 from panel.io import hold
 
 # Import application modules
-import core.dataio as IO
-# Import new modular components
+from core.dataio import DataManager
 from app.config import AppConfig
 from app.controllers import DataController, PlotController
 from converters.conventions import ConventionConverter, SignConvention
@@ -45,7 +44,7 @@ class GripLabApp:
         self.config = AppConfig.from_yaml(self.config_path)
 
         # Initialize data manager and controllers
-        self.dm = IO.DataManager()
+        self.dm = DataManager()
         self.data_controller = DataController(self.dm, self.config)
         self.plot_controller = PlotController(self.dm, self.config)
 

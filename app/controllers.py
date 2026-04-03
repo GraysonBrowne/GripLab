@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 
 import plotly.express as px
 
-import core.dataio as IO
+from core.dataio import DataImporter, DataManager
 from core.plotting import PlottingUtils
 from utils.logger import logger
 
@@ -14,7 +14,7 @@ from utils.logger import logger
 class DataController:
     """Controller for data management operations."""
 
-    def __init__(self, data_manager: IO.DataManager, config):
+    def __init__(self, data_manager: DataManager, config):
         self.dm = data_manager
         self.config = config
         self.import_counter = 0
@@ -35,9 +35,9 @@ class DataController:
             # Import based on file type
             try:
                 if path.suffix.lower() == ".mat":
-                    dataset = IO.import_mat(path, name, color, demo_name)
+                    dataset = DataImporter.import_mat(path, name, color, demo_name)
                 elif path.suffix.lower() in [".dat", ".txt"]:
-                    dataset = IO.import_dat(path, name, color, demo_name)
+                    dataset = DataImporter.import_dat(path, name, color, demo_name)
                 else:
                     logger.error(f"Unsupported file type: {path.suffix}")
                     continue
@@ -163,7 +163,7 @@ class DataController:
 class PlotController:
     """Controller for plotting operations."""
 
-    def __init__(self, data_manager: IO.DataManager, config):
+    def __init__(self, data_manager: DataManager, config):
         self.dm = data_manager
         self.config = config
 
