@@ -18,7 +18,7 @@ if getattr(sys, "frozen", False):
 else:
     program_dir = Path(__file__).parent
 
-file_handler = logging.FileHandler(Path(program_dir, "app.log"))
+file_handler = logging.FileHandler(Path(program_dir, "debug.log"))
 
 # Set the logging level
 logger.setLevel(logging.DEBUG)
