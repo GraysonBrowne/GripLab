@@ -48,8 +48,8 @@ class AppConfig:
         """Convert configuration to dictionary for YAML export."""
         return {
             "theme": self.theme,
-            "unit_system": self.unit_system,
-            "sign_convention": self.sign_convention,
+            "unit_system": self.unit_system.value,
+            "sign_convention": self.sign_convention.value,
             "demo_mode": self.demo_mode,
             "plotting": {
                 "colorway": self.colorway,
