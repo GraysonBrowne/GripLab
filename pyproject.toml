@@ -43,7 +43,6 @@ select = [
 ]
 ignore = [
     "E203",  # whitespace before ':' — conflicts with formatter
-    "W503",  # line break before binary operator — conflicts with formatter
 ]
  
 [tool.ruff.lint.isort]
