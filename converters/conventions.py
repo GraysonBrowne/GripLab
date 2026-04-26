@@ -90,7 +90,7 @@ class ConventionConverter:
         # Normalize to SAE then apply target
         # If from_sign = -1 and to_sign = -1, result is 1
         # If from_sign = 1 and to_sign = -1, result is -1
-        return to_sign // from_sign if from_sign != 0 else 1
+        return to_sign * from_sign 
 
     @classmethod
     def convert_channel_data(
