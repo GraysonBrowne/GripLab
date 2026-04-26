@@ -44,7 +44,8 @@ class Tk_utils:
             return file_path
         except Exception as e:
             logger.error(f"Error selecting file: {e}")
-
+            return ""
+        
     def select_dir(initialdir, icon=""):
         """
         Opens a directory selection dialog and returns the selected directory path.
@@ -80,6 +81,7 @@ class Tk_utils:
             return dir_path
         except Exception as e:
             logger.error(f"Error selecting directory: {e}")
+            return ""
 
     def save_file(defaultextension, initialdir, icon=""):
         """
@@ -120,3 +122,4 @@ class Tk_utils:
             return file_path
         except Exception as e:
             logger.error(f"Error saving file: {e}")
+            return ""
