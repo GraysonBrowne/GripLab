@@ -7,6 +7,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+import panel as pn
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -373,6 +374,12 @@ class DataProcessor:
         x, y, z, c = DataDownsampler.downsample_uniform(
             x_data, y_data, z_data, c_data, factor=config.downsample_factor
         )
+        if len(x) == 0 or len(y) == 0:
+            if pn.state.notifications:
+                pn.state.notifications.warning(
+                    f"No data to plot from {dataset.name} under selected conditions", 
+                    duration=4000
+                )
 
         return PlotData(x=x, y=y, z=z, c=c, name=dataset.name, color=dataset.node_color)
 

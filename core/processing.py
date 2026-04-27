@@ -161,10 +161,6 @@ class DataDownsampler:
             # Handle empty arrays
             if len(x) == 0 or len(y) == 0:
                 logger.warning("Empty arrays provided for downsampling")
-                if pn.state.notifications:
-                    pn.state.notifications.warning(
-                        "No data to plot under selected conditions", duration=4000
-                    )
                 return (
                     x,
                     y,
