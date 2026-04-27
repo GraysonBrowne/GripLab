@@ -57,22 +57,26 @@ class SignalProcessor:
 
             match filter_type:
                 case FilterType.LOWPASS:
-                    assert isinstance(cutoff, (int, float))
+                    if not isinstance(cutoff, (int, float)):
+                        raise TypeError(f"Expected numeric cutoff, got {type(cutoff)}")
                     normal_cutoff = float(cutoff) / nyquist
                     btype = "low"
 
                 case FilterType.HIGHPASS:
-                    assert isinstance(cutoff, (int, float))
+                    if not isinstance(cutoff, (int, float)):
+                        raise TypeError(f"Expected numeric cutoff, got {type(cutoff)}")
                     normal_cutoff = float(cutoff) / nyquist
                     btype = "high"
 
                 case FilterType.BANDPASS:
-                    assert isinstance(cutoff, tuple)
+                    if not isinstance(cutoff, tuple):
+                        raise TypeError(f"Expected tuple cutoff, got {type(cutoff)}")
                     normal_cutoff = [c / nyquist for c in cutoff]
                     btype = "band"
 
                 case FilterType.BANDSTOP:
-                    assert isinstance(cutoff, tuple)
+                    if not isinstance(cutoff, tuple):
+                        raise TypeError(f"Expected tuple cutoff, got {type(cutoff)}")
                     normal_cutoff = [c / nyquist for c in cutoff]
                     btype = "bandstop"
 
