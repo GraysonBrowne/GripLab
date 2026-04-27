@@ -9,6 +9,10 @@ import plotly.express as px
 from converters.conventions import SignConvention
 from converters.units import UnitSystem
 
+CMAP_CSS = (
+    "div, div:hover {background: var(--panel-surface-color); color: currentColor}" 
+    if pn.config.theme == "dark" else ""
+)
 
 class WidgetFactory:
     """Factory class for creating UI widgets with consistent styling."""
@@ -215,6 +219,7 @@ class PlotSettingsWidgets:
             value=color_map_options["Jet"],
             ncols=1,
             width=200,
+            stylesheets=[CMAP_CSS],
         ) 
 
     def update_axis_state(self, plot_type: str):
@@ -253,6 +258,7 @@ class AppSettingsWidgets:
             value=colorway_dict[config.colorway],
             ncols=1,
             width=200,
+            stylesheets=[CMAP_CSS],
         )
 
         self.demo_switch = pn.widgets.Switch(name="Demo Mode", value=config.demo_mode)
