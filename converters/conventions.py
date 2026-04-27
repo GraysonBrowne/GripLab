@@ -88,8 +88,6 @@ class ConventionConverter:
         to_sign = channel_def.get(to_convention, 1)
 
         # Normalize to SAE then apply target
-        # If from_sign = -1 and to_sign = -1, result is 1
-        # If from_sign = 1 and to_sign = -1, result is -1
         return to_sign * from_sign 
 
     @classmethod
