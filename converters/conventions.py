@@ -87,7 +87,6 @@ class ConventionConverter:
         from_sign = channel_def.get(from_convention, 1)
         to_sign = channel_def.get(to_convention, 1)
 
-        # Normalize to SAE then apply target
         return to_sign * from_sign 
 
     @classmethod

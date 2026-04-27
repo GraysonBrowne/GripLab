@@ -9,12 +9,13 @@ import plotly.express as px
 from core.dataio import DataImporter, DataManager
 from core.plotting import PlottingUtils
 from utils.logger import logger
+from .config import AppConfig
 
 
 class DataController:
     """Controller for data management operations."""
 
-    def __init__(self, data_manager: DataManager, config):
+    def __init__(self, data_manager: DataManager, config: AppConfig):
         self.dm = data_manager
         self.config = config
         self.import_counter = 0
@@ -174,7 +175,7 @@ class DataController:
 class PlotController:
     """Controller for plotting operations."""
 
-    def __init__(self, data_manager: DataManager, config):
+    def __init__(self, data_manager: DataManager, config: AppConfig):
         self.dm = data_manager
         self.config = config
 
@@ -216,7 +217,7 @@ class PlotController:
             logger.error(f"Error creating plot: {e}", exc_info=True)
             return None, 0
 
-    def get_plot_parameters(self, widgets, config) -> Dict[str, Any]:
+    def get_plot_parameters(self, widgets: Dict[str, Any], config: AppConfig) -> Dict[str, Any]:
         """Collect plot parameters from widgets."""
         return {
             "data_table": widgets["data_table"],

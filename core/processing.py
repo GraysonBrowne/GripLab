@@ -144,7 +144,7 @@ class DataDownsampler:
         z: Optional[np.ndarray] = None,
         c: Optional[np.ndarray] = None,
         factor: int = 5,
-    ) -> Tuple:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Downsample arrays uniformly by selecting every nth element.
 
@@ -326,21 +326,3 @@ def low_pass_filter(
     return SignalProcessor.apply_butterworth_filter(
         data, cutoff_hz, fs, order, FilterType.LOWPASS
     )
-
-
-def downsample_uniform(x, y, z=None, c=None, factor=5):
-    """Legacy function for uniform downsampling."""
-    # Handle the legacy interface where z and c might be empty lists
-    z = np.array(z) if z is not None and len(z) > 0 else None
-    c = np.array(c) if c is not None and len(c) > 0 else None
-    return DataDownsampler.downsample_uniform(x, y, z, c, factor)
-
-
-def downsample_xy(x, y, size=2000, method="random", bins=(50, 50), seed=None):
-    """Legacy function for 2D downsampling."""
-    if method == "random":
-        return DataDownsampler.downsample_random(x, y, size, seed)
-    elif method == "grid":
-        return DataDownsampler.downsample_grid(x, y, size, bins, seed)
-    else:
-        raise ValueError(f"Unknown method: {method}")
