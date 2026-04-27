@@ -2,7 +2,7 @@
 """2D/3D visualization utilities for tire test data."""
 
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -326,8 +326,6 @@ class DataProcessor:
         """Filter dataset by channel values."""
         if channel not in dataset.channels:
             return dataset
-
-        from dataclasses import replace
 
         result = replace(dataset, data=dataset.data.copy())
 
