@@ -2,7 +2,7 @@
 """Signal processing utilities for tire test data."""
 
 from enum import Enum
-from typing import List, Optional, Tuple, Union
+from typing import cast, Optional, Tuple, Union
 
 import numpy as np
 import panel as pn
@@ -55,23 +55,34 @@ class SignalProcessor:
         try:
             nyquist = 0.5 * fs
 
-            # Normalize cutoff frequency
-            if isinstance(cutoff, tuple):
-                normal_cutoff = [c / nyquist for c in cutoff]
-            else:
-                normal_cutoff = cutoff / nyquist
+            match filter_type:
+                case FilterType.LOWPASS:
+                    assert isinstance(cutoff, (int, float))
+                    normal_cutoff = float(cutoff) / nyquist
+                    btype = "low"
 
-            # Design filter
-            if filter_type == FilterType.LOWPASS:
-                b, a = butter(order, normal_cutoff, btype="low", analog=False)
-            elif filter_type == FilterType.HIGHPASS:
-                b, a = butter(order, normal_cutoff, btype="high", analog=False)
-            elif filter_type == FilterType.BANDPASS:
-                b, a = butter(order, normal_cutoff, btype="band", analog=False)
-            elif filter_type == FilterType.BANDSTOP:
-                b, a = butter(order, normal_cutoff, btype="bandstop", analog=False)
-            else:
-                raise ValueError(f"Unknown filter type: {filter_type}")
+                case FilterType.HIGHPASS:
+                    assert isinstance(cutoff, (int, float))
+                    normal_cutoff = float(cutoff) / nyquist
+                    btype = "high"
+
+                case FilterType.BANDPASS:
+                    assert isinstance(cutoff, tuple)
+                    normal_cutoff = [c / nyquist for c in cutoff]
+                    btype = "band"
+
+                case FilterType.BANDSTOP:
+                    assert isinstance(cutoff, tuple)
+                    normal_cutoff = [c / nyquist for c in cutoff]
+                    btype = "bandstop"
+
+                case _:
+                    raise ValueError(f"Unknown filter type: {filter_type}")
+            
+            b, a = cast(
+                    Tuple[np.ndarray, np.ndarray],
+                    butter(order, normal_cutoff, btype=btype, analog=False, output="ba"),
+                    )
 
             # Apply zero-phase filtering
             return filtfilt(b, a, data)
@@ -116,7 +127,7 @@ class SignalProcessor:
 
         except Exception as e:
             logger.error(f"Error removing outliers: {e}")
-            return data, np.zeros(len(data), dtype=bool)
+            return np.asarray(data), np.zeros(len(data), dtype=bool)
 
 
 class DataDownsampler:
@@ -146,7 +157,7 @@ class DataDownsampler:
             # Handle empty arrays
             if len(x) == 0 or len(y) == 0:
                 logger.warning("Empty arrays provided for downsampling")
-                if pn.state:
+                if pn.state.notifications:
                     pn.state.notifications.warning(
                         "No data to plot under selected conditions", duration=4000
                     )

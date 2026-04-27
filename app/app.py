@@ -6,6 +6,7 @@ GripLab - Tire Data Analysis Application
 import sys
 import webbrowser
 from pathlib import Path
+from typing import cast, Any
 
 import numpy as np
 import pandas as pd
@@ -40,7 +41,7 @@ class GripLabApp:
         self.local_dir = Path(__file__).parent.parent
 
         # Initialize configuration
-        self.config_path = Path(self.local_dir, "config.yaml")
+        self.config_path = str(Path(self.local_dir, "config.yaml"))
         self.config = AppConfig.from_yaml(self.config_path)
 
         # Initialize data manager and controllers
@@ -141,17 +142,20 @@ class GripLabApp:
 
     def _init_main_view(self):
         """Initialize main view with plot pane."""
-        px.defaults.template = (
-            "plotly_dark" if self.template.theme.name == "DarkTheme" else "plotly_white"
+        theme_name = getattr(self.template.theme, "name", None)
+        defaults = cast(Any, px.defaults)
+
+        defaults.template = (
+            "plotly_dark" if str(theme_name) == "DarkTheme" else "plotly_white"
         )
         self.plot_pane = pn.pane.Plotly(px.scatter(), sizing_mode="stretch_both")
 
     def _layout_ui(self):
         """Layout all UI components in the template."""
         # Header
-        self.template.header.append(
-            pn.Row(pn.layout.HSpacer(), self.settings_btn, self.help_menu)
-        )
+
+        header_object = cast(list, self.template.header)
+        header_object.append(pn.Row(pn.layout.HSpacer(), self.settings_btn, self.help_menu))
 
         # Sidebar - Plot tab
         plot_tab = pn.Column(
@@ -195,17 +199,20 @@ class GripLabApp:
 
         self.info_tabs = pn.layout.Tabs(plot_tab, data_tab)
 
-        self.template.sidebar.append(
-            pn.Column(
-                self.import_btn, self.data_table, pn.layout.Divider(), self.info_tabs
+        sidebar_object = cast(list, self.template.sidebar)
+        sidebar_object.append(
+                pn.Column(
+                    self.import_btn, self.data_table, pn.layout.Divider(), self.info_tabs
+                )
             )
-        )
 
         # Main area
-        self.template.main.append(pn.Column(self.plot_pane))
+        main_object = cast(list, self.template.main)
+        main_object.append(pn.Column(self.plot_pane))
 
         # Modal
-        self.template.modal.append(self.modal_content)
+        modal_object = cast(list, self.template.modal)
+        modal_object.append(self.modal_content)
 
     def _setup_callbacks(self):
         """Setup all widget callbacks."""
@@ -272,7 +279,7 @@ class GripLabApp:
 
     def _on_import_data(self, clicks):
         """Handle data import button click."""
-        files = Tk_utils.select_file(
+        files = Tk_utils().select_file(
             filetypes=[("MATLAB/ASCII Data Files", "*.mat *.dat *.txt")],
             initialdir=self.config.data_dir,
             icon=str(Path(self.program_dir, "docs", "images", "GripLab_Icon.ico")),
@@ -281,7 +288,7 @@ class GripLabApp:
         if not files:
             return
 
-        imported = self.data_controller.import_data(files)
+        imported = self.data_controller.import_data(list(files))
         if imported:
             self._refresh_data_table()
             self._update_channel_options()
@@ -289,13 +296,15 @@ class GripLabApp:
 
             # Select newly imported datasets
             current_selection = self.data_table.selection
-            new_indices = list(
-                range(
-                    len(self.data_table.value) - len(imported),
-                    len(self.data_table.value),
+            table_value = self.data_table.value
+            if isinstance(table_value, pd.DataFrame):
+                new_indices = list(
+                    range(
+                        len(table_value) - len(imported),
+                        len(table_value),
+                    )
                 )
-            )
-            self.data_table.selection = current_selection + new_indices
+                self.data_table.selection = current_selection + new_indices
 
     def _on_settings_click(self, clicks):
         """Open settings modal."""
@@ -308,22 +317,28 @@ class GripLabApp:
     def _on_save_settings(self, clicks):
         """Save application settings."""
         # Update config from widgets
-        self.config.theme = self.app_settings_widgets.theme_select.value
+        theme_value = self.app_settings_widgets.theme_select.value
+        if theme_value is not None:
+            self.config.theme = theme_value
         self.config.unit_system = UnitSystem(self.app_settings_widgets.unit_select.value)
         self.config.sign_convention = SignConvention(self.app_settings_widgets.sign_select.value)
-        self.config.demo_mode = self.app_settings_widgets.demo_switch.value
+        self.config.demo_mode = bool(self.app_settings_widgets.demo_switch.value)
         self.config.data_dir = self.app_settings_widgets.data_dir_input.value
 
         # Update colorway and colormap
-        for name, value in self.app_settings_widgets.colorway_select.options.items():
-            if value == self.app_settings_widgets.colorway_select.value:
-                self.config.colorway = name
-                break
+        colorway_options = getattr(self.app_settings_widgets.colorway_select, 'options', None)
+        if colorway_options and isinstance(colorway_options, dict):
+            for name, value in colorway_options.items():
+                if value == self.app_settings_widgets.colorway_select.value:
+                    self.config.colorway = name
+                    break
 
-        for name, value in self.plot_settings_widgets.color_map.options.items():
-            if value == self.plot_settings_widgets.color_map.value:
-                self.config.colormap = name
-                break
+        colormap_options = getattr(self.plot_settings_widgets.color_map, 'options', None)
+        if colormap_options and isinstance(colormap_options, dict):
+            for name, value in colormap_options.items():
+                if value == self.plot_settings_widgets.color_map.value:
+                    self.config.colormap = name
+                    break
 
         # Save to file
         self.config.save(self.config_path)
@@ -333,7 +348,8 @@ class GripLabApp:
         """Handle plot data button click."""
         if not self.data_table.selection:
             logger.warning("No datasets selected to plot")
-            pn.state.notifications.warning("Select a dataset to plot", duration=4000)
+            if pn.state.notifications:
+                pn.state.notifications.warning("Select a dataset to plot", duration=4000)
             return
 
         # Collect all widget references for the plot controller
@@ -353,7 +369,9 @@ class GripLabApp:
 
     def _on_plot_settings(self, clicks):
         """Open plot settings modal."""
-        self.plot_settings_widgets.update_axis_state(self.plot_widgets.plot_type.value)
+        plot_type = self.plot_widgets.plot_type.value
+        if plot_type is not None:
+            self.plot_settings_widgets.update_axis_state(plot_type)
         layout = create_plot_settings_layout(self.plot_settings_widgets)
         self.modal_content.objects = [layout]
         self.template.open_modal()
@@ -387,6 +405,11 @@ class GripLabApp:
     @hold()
     def _on_update_data(self, clicks):
         """Handle dataset update button click."""
+        dataset_name = self.data_widgets.data_select.value
+        if not dataset_name:
+            logger.warning("No dataset selected to update")
+            return
+
         updates = {
             "name": self.data_widgets.name_input.value,
             "tire_id": self.data_widgets.tire_id_input.value,
@@ -396,7 +419,7 @@ class GripLabApp:
         }
 
         success = self.data_controller.update_dataset_info(
-            self.data_widgets.data_select.value, updates, self.config.demo_mode
+            dataset_name, updates, self.config.demo_mode
         )
 
         if success:
@@ -406,7 +429,7 @@ class GripLabApp:
 
     def _on_demo_mode_change(self, demo_mode):
         """Handle demo mode toggle."""
-        self.config.demo_mode = demo_mode
+        self.config.demo_mode = bool(demo_mode)
         self._refresh_data_table()
         self._update_data_select_options()
 
@@ -483,7 +506,7 @@ class GripLabApp:
 
     def _on_select_data_dir(self, clicks):
         """Handle data directory selection."""
-        directory = Tk_utils.select_dir(
+        directory = Tk_utils().select_dir(
             initialdir=self.config.data_dir,
             icon=str(Path(self.program_dir, "docs", "images", "GripLab_Icon.ico")),
         )
@@ -508,8 +531,8 @@ class GripLabApp:
                     ch for ch in cmd_channels if ch not in excluded
                 ]
 
-                # Update corresponding multi-select
-                self._update_cmd_multi_select(i, selector.value)
+                # Update corresponding multi-select options
+                self._update_cmd_multi_select(i, cast(str, selector.value))
 
         except Exception as e:
             logger.error(f"Error updating command options: {e}", exc_info=True)
@@ -549,7 +572,7 @@ class GripLabApp:
         if options:
             self.plot_widgets.cmd_multi_selects[index].value = current_value
         else:
-            self.plot_widgets.cmd_multi_selects[index].value.clear()
+            self.plot_widgets.cmd_multi_selects[index].value = []
         self.plot_widgets.cmd_multi_selects[index].param.trigger("value")
 
     def _refresh_data_table(self):
@@ -573,7 +596,8 @@ class GripLabApp:
                 return [f"background-color: {color}" for color in self.dm.list_colors()]
             return [""] * len(column)
 
-        self.data_table.style.apply(cell_color)
+        if self.data_table.style is not None:
+            self.data_table.style.apply(cell_color)
 
     def _update_channel_options(self):
         """Update channel selection dropdowns."""

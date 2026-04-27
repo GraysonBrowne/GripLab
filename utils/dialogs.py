@@ -3,11 +3,11 @@
 
 from tkinter import Tk, filedialog
 
-from utils.logger import logger
+from .logger import logger
 
 
 class Tk_utils:
-    def select_file(filetypes, initialdir, icon=""):
+    def select_file(self,filetypes, initialdir, icon=""):
         """
         Opens a file selection dialog for the user to choose a file.
 
@@ -44,9 +44,9 @@ class Tk_utils:
             return file_path
         except Exception as e:
             logger.error(f"Error selecting file: {e}")
-            return ""
+            return tuple()
         
-    def select_dir(initialdir, icon=""):
+    def select_dir(self,initialdir, icon=""):
         """
         Opens a directory selection dialog and returns the selected directory path.
 
@@ -81,9 +81,9 @@ class Tk_utils:
             return dir_path
         except Exception as e:
             logger.error(f"Error selecting directory: {e}")
-            return ""
+            return tuple()
 
-    def save_file(defaultextension, initialdir, icon=""):
+    def save_file(self,defaultextension, initialdir, icon=""):
         """
         Opens a file save dialog using Tkinter and returns the selected file path.
 
@@ -122,4 +122,4 @@ class Tk_utils:
             return file_path
         except Exception as e:
             logger.error(f"Error saving file: {e}")
-            return ""
+            return tuple()

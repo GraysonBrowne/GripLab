@@ -1,7 +1,7 @@
 # ui/components.py
 """UI component classes for GripLab application."""
 
-from typing import List
+from typing import List, Optional
 
 import panel as pn
 import plotly.express as px
@@ -23,7 +23,7 @@ class WidgetFactory:
         return pn.widgets.Button(name=name, **defaults)
 
     @staticmethod
-    def create_select(name: str, options: List = None, **kwargs) -> pn.widgets.Select:
+    def create_select(name: str, options: Optional[List] = None, **kwargs) -> pn.widgets.Select:
         """Create a select dropdown widget."""
         defaults = {"options": options or [], "sizing_mode": "stretch_width"}
         defaults.update(kwargs)
@@ -209,13 +209,13 @@ class PlotSettingsWidgets:
             "Viridis": px.colors.sequential.Viridis,
         }
 
-        self.color_map = pn.widgets.ColorMap(
+        self.color_map = pn.widgets.ColorMap(  # type: ignore[attr-defined]
             name="Color Map",
             options=color_map_options,
             value=color_map_options["Jet"],
             ncols=1,
             width=200,
-        )
+        ) 
 
     def update_axis_state(self, plot_type: str):
         """Update axis label states based on plot type."""
@@ -247,7 +247,7 @@ class AppSettingsWidgets:
             "Dark2": px.colors.qualitative.Dark2,
         }
 
-        self.colorway_select = pn.widgets.ColorMap(
+        self.colorway_select = pn.widgets.ColorMap(  # type: ignore[attr-defined]
             name="Color Sequence",
             options=colorway_dict,
             value=colorway_dict[config.colorway],

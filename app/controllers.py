@@ -42,6 +42,9 @@ class DataController:
                     logger.error(f"Unsupported file type: {path.suffix}")
                     continue
 
+                if dataset is None:
+                    raise ValueError(f"No dataset found for {name}")
+
                 self.dm.add_dataset(name, dataset)
                 imported_names.append(name)
                 self.import_counter += 1
@@ -72,6 +75,8 @@ class DataController:
                 idx = self.dm.list_demo_names().index(dataset_name)
                 name = self.dm.list_datasets()[idx]
                 dataset = self.dm.get_dataset(name)
+                if dataset is None:
+                    raise ValueError(f"No dataset found for {name}")
                 original_name = dataset.demo_name
 
                 # Update demo attributes
@@ -86,6 +91,8 @@ class DataController:
             else:
                 # Handle regular mode updates
                 dataset = self.dm.get_dataset(dataset_name)
+                if dataset is None:
+                    raise ValueError(f"No dataset found for {dataset_name}")
                 original_name = dataset.name
 
                 # Update attributes
@@ -111,7 +118,9 @@ class DataController:
                 idx = self.dm.list_demo_names().index(dataset_name)
                 name = self.dm.list_datasets()[idx]
                 dataset = self.dm.get_dataset(name)
-
+                if dataset is None:
+                    raise ValueError(f"No dataset found for {name}")
+ 
                 return {
                     "name": dataset.demo_name,
                     "tire_id": dataset.demo_tire_id,
@@ -121,6 +130,8 @@ class DataController:
                 }
             else:
                 dataset = self.dm.get_dataset(dataset_name)
+                if dataset is None:
+                    raise ValueError(f"No dataset found for {dataset_name}")
 
                 return {
                     "name": dataset.name,
@@ -156,7 +167,7 @@ class DataController:
 
     def _get_next_color(self) -> str:
         """Get the next color from the configured colorway."""
-        colorway = px.colors.qualitative.__getattribute__(self.config.colorway)
+        colorway = getattr(px.colors.qualitative, self.config.colorway)
         return colorway[self.import_counter % len(colorway)]
 
 

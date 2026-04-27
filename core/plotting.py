@@ -290,7 +290,7 @@ class DataProcessor:
         dataset: Any, config: PlotConfig, cmd_filters: Optional[Dict[str, List]] = None
     ) -> Any:
         """
-        Prepare dataset for plotting with conversions and filtering.
+        Prepare dataset for plotting with conversions and parsing.
 
         Args:
             dataset: Input dataset
@@ -310,12 +310,12 @@ class DataProcessor:
             dataset, target_convention=config.sign_convention
         )
 
-        # Apply command channel filtering if provided
+        # Apply command channel parsing if provided
         if cmd_filters:
             for channel, values in cmd_filters.items():
                 if channel and values:
                     logger.debug(
-                        f"Filtering {dataset.name} on {channel} for values {values}"
+                        f"Parsing {dataset.name} on {channel} for values {values}"
                     )
                     dataset = DataProcessor._filter_by_channel(dataset, channel, values)
 
@@ -409,13 +409,14 @@ class PlotMetadataBuilder:
             return config.subtitle
 
         conditions = defaultdict(list)
-        for dataset in datasets:
+        dataset = datasets[0] if datasets else None
+        for ds in datasets:
             for cond in ["CmdSA", "SL", "CmdIA", "CmdFZ", "CmdP", "CmdV"]:
                 condition_data = np.unique(
-                    dataset.data[:, dataset.channels.index(cond)]
+                    ds.data[:, ds.channels.index(cond)]
                 ).tolist()
                 conditions[cond].extend(condition_data)
-            conditions["rim_width"].extend(str(dataset.rim_width))
+            conditions["rim_width"].extend(str(ds.rim_width))
 
         # Format condition strings
         parts = []
@@ -423,18 +424,20 @@ class PlotMetadataBuilder:
             if not values:
                 continue
 
-            unique_vals = [int(x) for x in list(set(values))]
+            unique_vals: List[Any] = [int(x) for x in list(set(values))]
             if not config.show_axes:
                 unique_vals[0] = "X"
             if len(unique_vals) == 1:
                 if key == "rim_width":
                     parts.append(f"Rim Width: {unique_vals[0]} in")
                 elif key == "SL":
-                    unit = dataset.units[dataset.channels.index(key)]
-                    parts.append(f"SR: {unique_vals[0]} {unit}")
+                    if dataset:
+                        unit = dataset.units[dataset.channels.index(key)]
+                        parts.append(f"SR: {unique_vals[0]} {unit}")
                 else:
-                    unit = dataset.units[dataset.channels.index(key)]
-                    parts.append(f"{key.replace('Cmd', '')}: {unique_vals[0]} {unit}")
+                    if dataset:
+                        unit = dataset.units[dataset.channels.index(key)]
+                        parts.append(f"{key.replace('Cmd', '')}: {unique_vals[0]} {unit}")
             else:
                 parts.append(f"{key.replace('Cmd', '')}: VAR")
 
@@ -491,7 +494,7 @@ class PlottingUtils:
         selection = data_table.selection
         if not selection:
             logger.warning("No datasets selected to plot")
-            return None, 0
+            return go.Figure(), 0
 
         # Build configuration
         config = PlotConfig(
@@ -608,15 +611,15 @@ class PlottingUtils:
         for plot_data in plot_data_list:
             if not plot_data.is_valid():
                 continue
-
-            if config.plot_type == PlotType.PLOT_2D:
-                PlotBuilder.add_2d_trace(fig, plot_data, config)
-            elif config.plot_type == PlotType.PLOT_2D_COLOR:
-                PlotBuilder.add_2d_color_trace(fig, plot_data, config, color_range)
-            elif config.plot_type == PlotType.PLOT_3D:
-                PlotBuilder.add_3d_trace(fig, plot_data, config)
-            elif config.plot_type == PlotType.PLOT_3D_COLOR:
-                PlotBuilder.add_3d_color_trace(fig, plot_data, config, color_range)
+            match config.plot_type:
+                case PlotType.PLOT_2D:
+                    PlotBuilder.add_2d_trace(fig, plot_data, config)
+                case PlotType.PLOT_2D_COLOR:
+                    PlotBuilder.add_2d_color_trace(fig, plot_data, config, color_range or (0.0, 1.0))
+                case PlotType.PLOT_3D:
+                    PlotBuilder.add_3d_trace(fig, plot_data, config)
+                case PlotType.PLOT_3D_COLOR:
+                    PlotBuilder.add_3d_color_trace(fig, plot_data, config, color_range or (0.0, 1.0))
 
         # Update layout
         PlotBuilder.update_layout(fig, config)

@@ -37,7 +37,7 @@ class AppConfig:
                     demo_mode=data.get("demo_mode", False),
                     colorway=data.get("plotting", {}).get("colorway", "G10"),
                     colormap=data.get("plotting", {}).get("colormap", "Jet"),
-                    data_dir=data.get("paths", {}).get("data_dir", str(Path.cwd())),
+                    data_dir=str(data.get("paths", {}).get("data_dir", str(Path.cwd()))),
                 )
         except FileNotFoundError:
             logger.warning(f"Config file {filepath} not found, using defaults")

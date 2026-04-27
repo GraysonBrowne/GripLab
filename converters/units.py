@@ -24,7 +24,8 @@ class UnitSystemConverter:
 
     # Pre-computed conversion factors for direct access
     # Structure: [from_system][to_system][unit_type] = (factor, offset)
-    _CONVERSION_CACHE: Dict[UnitSystem, Dict[UnitSystem, Dict[str, Tuple[float, Any]]]] = {}
+    ConversionTuple = tuple[float, float, float, float]  # (to_si, from_si, to_offset, from_offset)
+    _CONVERSION_CACHE: Dict[UnitSystem, Dict[UnitSystem, Dict[str, ConversionTuple]]] = {}
 
     # Static channel mappings (no Enum overhead)
     CHANNEL_TO_TYPE = {
@@ -129,7 +130,7 @@ class UnitSystemConverter:
                 for unit_type, defs in cls.UNIT_DEFS.items():
                     if from_sys == to_sys:
                         # No conversion needed
-                        cls._CONVERSION_CACHE[from_sys][to_sys][unit_type] = (1.0, 0, 0)
+                        cls._CONVERSION_CACHE[from_sys][to_sys][unit_type] = (1.0, 1.0, 0, 0)
                     else:
                         from_def = defs[from_sys]
                         to_def = defs[to_sys]
