@@ -421,7 +421,3 @@ class DataImporter:
             metadata["notes"] = notes_match.group(1)
 
         return metadata
-
-
-# Re-export for backward compatibility
-dataset = Dataset
