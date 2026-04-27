@@ -5,7 +5,6 @@ from enum import Enum
 from typing import cast, Optional, Tuple, Union
 
 import numpy as np
-import panel as pn
 from scipy.signal import butter, filtfilt
 
 from utils.logger import logger
