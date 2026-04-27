@@ -2,10 +2,9 @@
 """Signal processing utilities for tire test data."""
 
 from enum import Enum
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple, Union, cast
 
 import numpy as np
-import panel as pn
 from scipy.signal import butter, filtfilt
 
 from utils.logger import logger
@@ -55,23 +54,38 @@ class SignalProcessor:
         try:
             nyquist = 0.5 * fs
 
-            # Normalize cutoff frequency
-            if isinstance(cutoff, tuple):
-                normal_cutoff = [c / nyquist for c in cutoff]
-            else:
-                normal_cutoff = cutoff / nyquist
+            match filter_type:
+                case FilterType.LOWPASS:
+                    if not isinstance(cutoff, (int, float)):
+                        raise TypeError(f"Expected numeric cutoff, got {type(cutoff)}")
+                    normal_cutoff = float(cutoff) / nyquist
+                    btype = "low"
 
-            # Design filter
-            if filter_type == FilterType.LOWPASS:
-                b, a = butter(order, normal_cutoff, btype="low", analog=False)
-            elif filter_type == FilterType.HIGHPASS:
-                b, a = butter(order, normal_cutoff, btype="high", analog=False)
-            elif filter_type == FilterType.BANDPASS:
-                b, a = butter(order, normal_cutoff, btype="band", analog=False)
-            elif filter_type == FilterType.BANDSTOP:
-                b, a = butter(order, normal_cutoff, btype="bandstop", analog=False)
-            else:
-                raise ValueError(f"Unknown filter type: {filter_type}")
+                case FilterType.HIGHPASS:
+                    if not isinstance(cutoff, (int, float)):
+                        raise TypeError(f"Expected numeric cutoff, got {type(cutoff)}")
+                    normal_cutoff = float(cutoff) / nyquist
+                    btype = "high"
+
+                case FilterType.BANDPASS:
+                    if not isinstance(cutoff, tuple):
+                        raise TypeError(f"Expected tuple cutoff, got {type(cutoff)}")
+                    normal_cutoff = [c / nyquist for c in cutoff]
+                    btype = "band"
+
+                case FilterType.BANDSTOP:
+                    if not isinstance(cutoff, tuple):
+                        raise TypeError(f"Expected tuple cutoff, got {type(cutoff)}")
+                    normal_cutoff = [c / nyquist for c in cutoff]
+                    btype = "bandstop"
+
+                case _:
+                    raise ValueError(f"Unknown filter type: {filter_type}")
+
+            b, a = cast(
+                Tuple[np.ndarray, np.ndarray],
+                butter(order, normal_cutoff, btype=btype, analog=False, output="ba"),
+            )
 
             # Apply zero-phase filtering
             return filtfilt(b, a, data)
@@ -116,7 +130,7 @@ class SignalProcessor:
 
         except Exception as e:
             logger.error(f"Error removing outliers: {e}")
-            return data, np.zeros(len(data), dtype=bool)
+            return np.asarray(data), np.zeros(len(data), dtype=bool)
 
 
 class DataDownsampler:
@@ -129,7 +143,7 @@ class DataDownsampler:
         z: Optional[np.ndarray] = None,
         c: Optional[np.ndarray] = None,
         factor: int = 5,
-    ) -> Tuple:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Downsample arrays uniformly by selecting every nth element.
 
@@ -146,10 +160,6 @@ class DataDownsampler:
             # Handle empty arrays
             if len(x) == 0 or len(y) == 0:
                 logger.warning("Empty arrays provided for downsampling")
-                if pn.state:
-                    pn.state.notifications.warning(
-                        "No data to plot under selected conditions", duration=4000
-                    )
                 return (
                     x,
                     y,
@@ -277,7 +287,7 @@ class DataDownsampler:
         z: Optional[np.ndarray] = None,
         c: Optional[np.ndarray] = None,
         target_points: int = 5000,
-    ) -> Tuple:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Intelligently downsample based on data characteristics.
 
@@ -294,7 +304,12 @@ class DataDownsampler:
 
         # No downsampling needed
         if n_points <= target_points:
-            return x, y, z, c
+            return (
+                x,
+                y,
+                z if z is not None else np.array([]),
+                c if c is not None else np.array([]),
+            )
 
         # Calculate appropriate factor
         factor = max(1, n_points // target_points)
@@ -311,21 +326,3 @@ def low_pass_filter(
     return SignalProcessor.apply_butterworth_filter(
         data, cutoff_hz, fs, order, FilterType.LOWPASS
     )
-
-
-def downsample_uniform(x, y, z=None, c=None, factor=5):
-    """Legacy function for uniform downsampling."""
-    # Handle the legacy interface where z and c might be empty lists
-    z = np.array(z) if z is not None and len(z) > 0 else None
-    c = np.array(c) if c is not None and len(c) > 0 else None
-    return DataDownsampler.downsample_uniform(x, y, z, c, factor)
-
-
-def downsample_xy(x, y, size=2000, method="random", bins=(50, 50), seed=None):
-    """Legacy function for 2D downsampling."""
-    if method == "random":
-        return DataDownsampler.downsample_random(x, y, size, seed)
-    elif method == "grid":
-        return DataDownsampler.downsample_grid(x, y, size, bins, seed)
-    else:
-        raise ValueError(f"Unknown method: {method}")

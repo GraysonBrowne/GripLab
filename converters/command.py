@@ -6,7 +6,8 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from converters.conventions import ConventionConverter
+from converters.conventions import ConventionConverter, SignConvention
+from converters.units import UnitSystem
 from core.processing import low_pass_filter
 from utils.logger import logger
 
@@ -25,15 +26,24 @@ class CmdChannelGenerator:
     """Generates command channels for tire test data analysis."""
 
     # Target values for command channels by unit system
-    CMD_TARGETS: Dict[str, Dict[str, List[float]]] = {
-        "V": {"USCS": [0, 2, 15, 25, 45], "Metric": [0, 3, 24, 40, 72]},
-        "P": {"USCS": [0, 8, 10, 12, 14], "Metric": [0, 55, 69, 83, 97]},
-        "FZ": {
-            "USCS": [0, -50, -100, -150, -200, -250, -350],
-            "Metric": [0, -222, -445, -667, -890, -1112, -1557],
+    CMD_TARGETS: Dict[str, Dict[UnitSystem, List[float]]] = {
+        "V": {
+            UnitSystem.USCS: [0, 2, 15, 25, 45],
+            UnitSystem.METRIC: [0, 3, 24, 40, 72],
         },
-        "IA": {"USCS": [0, 2, 4], "Metric": [0, 2, 4]},
-        "SA": {"USCS": [0, -1, -3, -6, 1, 6], "Metric": [0, -1, -3, -6, 1, 6]},
+        "P": {
+            UnitSystem.USCS: [0, 8, 10, 12, 14],
+            UnitSystem.METRIC: [0, 55, 69, 83, 97],
+        },
+        "FZ": {
+            UnitSystem.USCS: [0, -50, -100, -150, -200, -250, -350],
+            UnitSystem.METRIC: [0, -222, -445, -667, -890, -1112, -1557],
+        },
+        "IA": {UnitSystem.USCS: [0, 2, 4], UnitSystem.METRIC: [0, 2, 4]},
+        "SA": {
+            UnitSystem.USCS: [0, -1, -3, -6, 1, 6],
+            UnitSystem.METRIC: [0, -1, -3, -6, 1, 6],
+        },
     }
 
     # Filtering parameters for noisy channels
@@ -45,8 +55,8 @@ class CmdChannelGenerator:
         channels: List[str],
         units: List[str],
         data: np.ndarray,
-        unit_system: str,
-        sign_convention: str,
+        unit_system: UnitSystem,
+        sign_convention: SignConvention,
     ) -> Tuple[List[str], List[str], np.ndarray]:
         """
         Create command channels for standard test parameters.
@@ -77,7 +87,7 @@ class CmdChannelGenerator:
         try:
             # Convert to SAE for consistent processing
             data_sae = ConventionConverter.convert_channel_convention(
-                channels, data, sign_convention, target_convention="SAE"
+                channels, data, sign_convention, target_convention=SignConvention.SAE
             )
 
             # Generate new command channels
@@ -100,7 +110,7 @@ class CmdChannelGenerator:
             result_data = ConventionConverter.convert_channel_convention(
                 channels,
                 data_sae,
-                current_convention="SAE",
+                current_convention=SignConvention.SAE,
                 target_convention=sign_convention,
             )
 
@@ -121,7 +131,11 @@ class CmdChannelGenerator:
 
     @classmethod
     def _validate_inputs(
-        cls, channels: List[str], units: List[str], data: np.ndarray, unit_system: str
+        cls,
+        channels: List[str],
+        units: List[str],
+        data: np.ndarray,
+        unit_system: UnitSystem,
     ) -> bool:
         """Validate input parameters."""
         if len(channels) != len(units):
@@ -132,7 +146,7 @@ class CmdChannelGenerator:
             logger.error("Channels and data columns mismatch")
             return False
 
-        if unit_system not in ["USCS", "Metric"]:
+        if unit_system not in UnitSystem:
             logger.error(f"Unsupported unit system: {unit_system}")
             return False
 
@@ -144,7 +158,7 @@ class CmdChannelGenerator:
         channels: List[str],
         units: List[str],
         data: np.ndarray,
-        unit_system: str,
+        unit_system: UnitSystem,
         existing: List[str],
     ) -> Tuple[List[str], List[str], List[np.ndarray]]:
         """Generate new command channels."""
@@ -216,7 +230,9 @@ class CmdChannelGenerator:
         return nearest_values
 
     @classmethod
-    def get_cmd_channel_info(cls, channel: str, unit_system: str) -> Optional[Dict]:
+    def get_cmd_channel_info(
+        cls, channel: str, unit_system: UnitSystem
+    ) -> Optional[Dict]:
         """
         Get information about a command channel.
 
@@ -274,8 +290,8 @@ class CmdChannelGenerator:
 
             if not is_discrete:
                 logger.warning(
-                    f"Command channel {channel} has {len(unique_values)} unique values, "
-                    f"expected discrete values"
+                    f"Command channel {channel} has {len(unique_values)} unique values,"
+                    f" expected discrete values"
                 )
 
         return validation

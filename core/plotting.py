@@ -2,16 +2,17 @@
 """2D/3D visualization utilities for tire test data."""
 
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+import panel as pn
 import plotly.express as px
 import plotly.graph_objects as go
 
-from converters.conventions import ConventionConverter
-from converters.units import UnitSystemConverter
+from converters.conventions import ConventionConverter, SignConvention
+from converters.units import UnitSystem, UnitSystemConverter
 from core.processing import DataDownsampler
 from utils.logger import logger
 
@@ -57,8 +58,8 @@ class PlotConfig:
 
     # Data options
     downsample_factor: int = 5
-    unit_system: str = "USCS"
-    sign_convention: str = "ISO"
+    unit_system: UnitSystem = UnitSystem.USCS
+    sign_convention: SignConvention = SignConvention.ISO
 
     def __post_init__(self):
         """Validate configuration after initialization."""
@@ -148,7 +149,8 @@ class PlotBuilder:
                 "<b>%{hovertext}</b><br>"
                 + f"{config.x_channel}: %{{x:.2f}} {config.x_unit}<br>"
                 + f"{config.y_channel}: %{{y:.2f}} {config.y_unit}<br>"
-                + f"{config.color_channel}: %{{marker.color:.2f}} {config.color_unit}<extra></extra>"
+                + f"{config.color_channel}: %{{marker.color:.2f}} "
+                + f"{config.color_unit}<extra></extra>"
             )
         else:
             hovertemplate = "<b>%{hovertext}</b><br><extra></extra>"
@@ -212,7 +214,8 @@ class PlotBuilder:
                 + f"{config.x_channel}: %{{x:.2f}} {config.x_unit}<br>"
                 + f"{config.y_channel}: %{{y:.2f}} {config.y_unit}<br>"
                 + f"{config.z_channel}: %{{z:.2f}} {config.z_unit}<br>"
-                + f"{config.color_channel}: %{{marker.color:.2f}} {config.color_unit}<extra></extra>"
+                + f"{config.color_channel}: %{{marker.color:.2f}} "
+                + f"{config.color_unit}<extra></extra>"
             )
         else:
             hovertemplate = "<b>%{hovertext}</b><br><extra></extra>"
@@ -290,7 +293,7 @@ class DataProcessor:
         dataset: Any, config: PlotConfig, cmd_filters: Optional[Dict[str, List]] = None
     ) -> Any:
         """
-        Prepare dataset for plotting with conversions and filtering.
+        Prepare dataset for plotting with conversions and parsing.
 
         Args:
             dataset: Input dataset
@@ -310,12 +313,12 @@ class DataProcessor:
             dataset, target_convention=config.sign_convention
         )
 
-        # Apply command channel filtering if provided
+        # Apply command channel parsing if provided
         if cmd_filters:
             for channel, values in cmd_filters.items():
                 if channel and values:
                     logger.debug(
-                        f"Filtering {dataset.name} on {channel} for values {values}"
+                        f"Parsing {dataset.name} on {channel} for values {values}"
                     )
                     dataset = DataProcessor._filter_by_channel(dataset, channel, values)
 
@@ -326,8 +329,6 @@ class DataProcessor:
         """Filter dataset by channel values."""
         if channel not in dataset.channels:
             return dataset
-
-        from dataclasses import replace
 
         result = replace(dataset, data=dataset.data.copy())
 
@@ -375,6 +376,12 @@ class DataProcessor:
         x, y, z, c = DataDownsampler.downsample_uniform(
             x_data, y_data, z_data, c_data, factor=config.downsample_factor
         )
+        if len(x) == 0 or len(y) == 0:
+            if pn.state.notifications:
+                pn.state.notifications.warning(
+                    f"No data to plot from {dataset.name} under selected conditions",
+                    duration=4000,
+                )
 
         return PlotData(x=x, y=y, z=z, c=c, name=dataset.name, color=dataset.node_color)
 
@@ -409,13 +416,12 @@ class PlotMetadataBuilder:
             return config.subtitle
 
         conditions = defaultdict(list)
-        for dataset in datasets:
+        dataset = datasets[0] if datasets else None
+        for ds in datasets:
             for cond in ["CmdSA", "SL", "CmdIA", "CmdFZ", "CmdP", "CmdV"]:
-                condition_data = np.unique(
-                    dataset.data[:, dataset.channels.index(cond)]
-                ).tolist()
+                condition_data = np.unique(ds.data[:, ds.channels.index(cond)]).tolist()
                 conditions[cond].extend(condition_data)
-            conditions["rim_width"].extend(str(dataset.rim_width))
+            conditions["rim_width"].extend(str(ds.rim_width))
 
         # Format condition strings
         parts = []
@@ -423,18 +429,22 @@ class PlotMetadataBuilder:
             if not values:
                 continue
 
-            unique_vals = [int(x) for x in list(set(values))]
+            unique_vals: List[Any] = [int(x) for x in list(set(values))]
             if not config.show_axes:
                 unique_vals[0] = "X"
             if len(unique_vals) == 1:
                 if key == "rim_width":
                     parts.append(f"Rim Width: {unique_vals[0]} in")
                 elif key == "SL":
-                    unit = dataset.units[dataset.channels.index(key)]
-                    parts.append(f"SR: {unique_vals[0]} {unit}")
+                    if dataset:
+                        unit = dataset.units[dataset.channels.index(key)]
+                        parts.append(f"SR: {unique_vals[0]} {unit}")
                 else:
-                    unit = dataset.units[dataset.channels.index(key)]
-                    parts.append(f"{key.replace('Cmd', '')}: {unique_vals[0]} {unit}")
+                    if dataset:
+                        unit = dataset.units[dataset.channels.index(key)]
+                        parts.append(
+                            f"{key.replace('Cmd', '')}: {unique_vals[0]} {unit}"
+                        )
             else:
                 parts.append(f"{key.replace('Cmd', '')}: VAR")
 
@@ -491,7 +501,7 @@ class PlottingUtils:
         selection = data_table.selection
         if not selection:
             logger.warning("No datasets selected to plot")
-            return None, 0
+            return go.Figure(), 0
 
         # Build configuration
         config = PlotConfig(
@@ -608,15 +618,19 @@ class PlottingUtils:
         for plot_data in plot_data_list:
             if not plot_data.is_valid():
                 continue
-
-            if config.plot_type == PlotType.PLOT_2D:
-                PlotBuilder.add_2d_trace(fig, plot_data, config)
-            elif config.plot_type == PlotType.PLOT_2D_COLOR:
-                PlotBuilder.add_2d_color_trace(fig, plot_data, config, color_range)
-            elif config.plot_type == PlotType.PLOT_3D:
-                PlotBuilder.add_3d_trace(fig, plot_data, config)
-            elif config.plot_type == PlotType.PLOT_3D_COLOR:
-                PlotBuilder.add_3d_color_trace(fig, plot_data, config, color_range)
+            match config.plot_type:
+                case PlotType.PLOT_2D:
+                    PlotBuilder.add_2d_trace(fig, plot_data, config)
+                case PlotType.PLOT_2D_COLOR:
+                    PlotBuilder.add_2d_color_trace(
+                        fig, plot_data, config, color_range or (0.0, 1.0)
+                    )
+                case PlotType.PLOT_3D:
+                    PlotBuilder.add_3d_trace(fig, plot_data, config)
+                case PlotType.PLOT_3D_COLOR:
+                    PlotBuilder.add_3d_color_trace(
+                        fig, plot_data, config, color_range or (0.0, 1.0)
+                    )
 
         # Update layout
         PlotBuilder.update_layout(fig, config)
