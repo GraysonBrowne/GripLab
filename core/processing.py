@@ -288,7 +288,7 @@ class DataDownsampler:
         z: Optional[np.ndarray] = None,
         c: Optional[np.ndarray] = None,
         target_points: int = 5000,
-    ) -> Tuple:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Intelligently downsample based on data characteristics.
 
@@ -305,7 +305,12 @@ class DataDownsampler:
 
         # No downsampling needed
         if n_points <= target_points:
-            return x, y, z, c
+            return (
+                x,
+                y,
+                z if z is not None else np.array([]),
+                c if c is not None else np.array([]),
+            )
 
         # Calculate appropriate factor
         factor = max(1, n_points // target_points)

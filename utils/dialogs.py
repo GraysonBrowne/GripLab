@@ -80,10 +80,10 @@ class Tk_utils:
                 return dir_path
             else:
                 logger.info("No directory selected.")
-                return tuple()
+                return ""
         except Exception as e:
             logger.error(f"Error selecting directory: {e}")
-            return tuple()
+            return ""
 
     def save_file(self, defaultextension, initialdir, icon=""):
         """
@@ -122,7 +122,7 @@ class Tk_utils:
                 return file_path
             else:
                 logger.info("Save operation cancelled.")
-                return tuple()
+                return ""
         except Exception as e:
             logger.error(f"Error saving file: {e}")
-            return tuple()
+            return ""

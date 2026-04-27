@@ -2,9 +2,10 @@
 """Business logic controllers for GripLab application."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import plotly.express as px
+from plotly.graph_objects import Figure
 
 from core.dataio import DataImporter, DataManager
 from core.plotting import PlottingUtils
@@ -179,7 +180,7 @@ class PlotController:
         self.dm = data_manager
         self.config = config
 
-    def create_plot(self, plot_params: Dict[str, Any]) -> tuple:
+    def create_plot(self, plot_params: Dict[str, Any]) -> Tuple[Optional[Figure], int]:
         """Create a plot based on the provided parameters."""
         try:
             fig, node_count = PlottingUtils.plot_data(
