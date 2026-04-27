@@ -10,9 +10,11 @@ from converters.conventions import SignConvention
 from converters.units import UnitSystem
 
 CMAP_CSS = (
-    "div, div:hover {background: var(--panel-surface-color); color: currentColor}" 
-    if pn.config.theme == "dark" else ""
+    "div, div:hover {background: var(--panel-surface-color); color: currentColor}"
+    if pn.config.theme == "dark"
+    else ""
 )
+
 
 class WidgetFactory:
     """Factory class for creating UI widgets with consistent styling."""
@@ -27,7 +29,9 @@ class WidgetFactory:
         return pn.widgets.Button(name=name, **defaults)
 
     @staticmethod
-    def create_select(name: str, options: Optional[List] = None, **kwargs) -> pn.widgets.Select:
+    def create_select(
+        name: str, options: Optional[List] = None, **kwargs
+    ) -> pn.widgets.Select:
         """Create a select dropdown widget."""
         defaults = {"options": options or [], "sizing_mode": "stretch_width"}
         defaults.update(kwargs)
@@ -220,7 +224,7 @@ class PlotSettingsWidgets:
             ncols=1,
             width=200,
             stylesheets=[CMAP_CSS],
-        ) 
+        )
 
     def update_axis_state(self, plot_type: str):
         """Update axis label states based on plot type."""

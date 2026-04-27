@@ -2,7 +2,7 @@
 """Signal processing utilities for tire test data."""
 
 from enum import Enum
-from typing import cast, Optional, Tuple, Union
+from typing import Optional, Tuple, Union, cast
 
 import numpy as np
 from scipy.signal import butter, filtfilt
@@ -81,11 +81,11 @@ class SignalProcessor:
 
                 case _:
                     raise ValueError(f"Unknown filter type: {filter_type}")
-            
+
             b, a = cast(
-                    Tuple[np.ndarray, np.ndarray],
-                    butter(order, normal_cutoff, btype=btype, analog=False, output="ba"),
-                    )
+                Tuple[np.ndarray, np.ndarray],
+                butter(order, normal_cutoff, btype=btype, analog=False, output="ba"),
+            )
 
             # Apply zero-phase filtering
             return filtfilt(b, a, data)

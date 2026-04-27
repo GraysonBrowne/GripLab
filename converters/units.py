@@ -4,7 +4,7 @@
 import math
 from dataclasses import replace
 from enum import StrEnum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 import numpy as np
 
@@ -24,8 +24,12 @@ class UnitSystemConverter:
 
     # Pre-computed conversion factors for direct access
     # Structure: [from_system][to_system][unit_type] = (factor, offset)
-    ConversionTuple = tuple[float, float, float, float]  # (to_si, from_si, to_offset, from_offset)
-    _CONVERSION_CACHE: Dict[UnitSystem, Dict[UnitSystem, Dict[str, ConversionTuple]]] = {}
+    ConversionTuple = tuple[
+        float, float, float, float
+    ]  # (to_si, from_si, to_offset, from_offset)
+    _CONVERSION_CACHE: Dict[
+        UnitSystem, Dict[UnitSystem, Dict[str, ConversionTuple]]
+    ] = {}
 
     # Static channel mappings (no Enum overhead)
     CHANNEL_TO_TYPE = {
@@ -130,7 +134,12 @@ class UnitSystemConverter:
                 for unit_type, defs in cls.UNIT_DEFS.items():
                     if from_sys == to_sys:
                         # No conversion needed
-                        cls._CONVERSION_CACHE[from_sys][to_sys][unit_type] = (1.0, 1.0, 0, 0)
+                        cls._CONVERSION_CACHE[from_sys][to_sys][unit_type] = (
+                            1.0,
+                            1.0,
+                            0,
+                            0,
+                        )
                     else:
                         from_def = defs[from_sys]
                         to_def = defs[to_sys]
@@ -264,7 +273,11 @@ class UnitSystemConverter:
 
     @classmethod
     def convert_value(
-        cls, value: float, unit_type: str, from_system: UnitSystem, to_system: UnitSystem
+        cls,
+        value: float,
+        unit_type: str,
+        from_system: UnitSystem,
+        to_system: UnitSystem,
     ) -> float:
         """
         Single value conversion.

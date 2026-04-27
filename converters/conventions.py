@@ -25,36 +25,88 @@ class ConventionConverter:
     # Sign convention multipliers relative to SAE baseline
     SIGN_DEFINITIONS: Dict[str, Dict[str, int]] = {
         # Angle channels
-        "IA": {SignConvention.SAE: 1, SignConvention.ADAPTED_SAE: 1, 
-               SignConvention.ISO: 1, SignConvention.ADAPTED_ISO: -1},
-        "SA": {SignConvention.SAE: 1, SignConvention.ADAPTED_SAE: -1, 
-               SignConvention.ISO: -1, SignConvention.ADAPTED_ISO: 1},
+        "IA": {
+            SignConvention.SAE: 1,
+            SignConvention.ADAPTED_SAE: 1,
+            SignConvention.ISO: 1,
+            SignConvention.ADAPTED_ISO: -1,
+        },
+        "SA": {
+            SignConvention.SAE: 1,
+            SignConvention.ADAPTED_SAE: -1,
+            SignConvention.ISO: -1,
+            SignConvention.ADAPTED_ISO: 1,
+        },
         # Slip channels
-        "SR": {SignConvention.SAE: 1, SignConvention.ADAPTED_SAE: 1, 
-               SignConvention.ISO: 1, SignConvention.ADAPTED_ISO: 1},
-        "SL": {SignConvention.SAE: 1, SignConvention.ADAPTED_SAE: 1, 
-               SignConvention.ISO: 1, SignConvention.ADAPTED_ISO: 1},
+        "SR": {
+            SignConvention.SAE: 1,
+            SignConvention.ADAPTED_SAE: 1,
+            SignConvention.ISO: 1,
+            SignConvention.ADAPTED_ISO: 1,
+        },
+        "SL": {
+            SignConvention.SAE: 1,
+            SignConvention.ADAPTED_SAE: 1,
+            SignConvention.ISO: 1,
+            SignConvention.ADAPTED_ISO: 1,
+        },
         # Force channels
-        "FX": {SignConvention.SAE: 1, SignConvention.ADAPTED_SAE: 1, 
-               SignConvention.ISO: 1, SignConvention.ADAPTED_ISO: 1},
-        "FY": {SignConvention.SAE: 1, SignConvention.ADAPTED_SAE: 1, 
-               SignConvention.ISO: -1, SignConvention.ADAPTED_ISO: -1},
-        "FZ": {SignConvention.SAE: 1, SignConvention.ADAPTED_SAE: -1, 
-               SignConvention.ISO: -1, SignConvention.ADAPTED_ISO: -1},
+        "FX": {
+            SignConvention.SAE: 1,
+            SignConvention.ADAPTED_SAE: 1,
+            SignConvention.ISO: 1,
+            SignConvention.ADAPTED_ISO: 1,
+        },
+        "FY": {
+            SignConvention.SAE: 1,
+            SignConvention.ADAPTED_SAE: 1,
+            SignConvention.ISO: -1,
+            SignConvention.ADAPTED_ISO: -1,
+        },
+        "FZ": {
+            SignConvention.SAE: 1,
+            SignConvention.ADAPTED_SAE: -1,
+            SignConvention.ISO: -1,
+            SignConvention.ADAPTED_ISO: -1,
+        },
         # Moment channels
-        "MX": {SignConvention.SAE: 1, SignConvention.ADAPTED_SAE: 1, 
-               SignConvention.ISO: 1, SignConvention.ADAPTED_ISO: 1},
-        "MY": {SignConvention.SAE: 1, SignConvention.ADAPTED_SAE: 1, 
-               SignConvention.ISO: -1, SignConvention.ADAPTED_ISO: -1},
-        "MZ": {SignConvention.SAE: 1, SignConvention.ADAPTED_SAE: 1, 
-               SignConvention.ISO: -1, SignConvention.ADAPTED_ISO: -1},
+        "MX": {
+            SignConvention.SAE: 1,
+            SignConvention.ADAPTED_SAE: 1,
+            SignConvention.ISO: 1,
+            SignConvention.ADAPTED_ISO: 1,
+        },
+        "MY": {
+            SignConvention.SAE: 1,
+            SignConvention.ADAPTED_SAE: 1,
+            SignConvention.ISO: -1,
+            SignConvention.ADAPTED_ISO: -1,
+        },
+        "MZ": {
+            SignConvention.SAE: 1,
+            SignConvention.ADAPTED_SAE: 1,
+            SignConvention.ISO: -1,
+            SignConvention.ADAPTED_ISO: -1,
+        },
         # Command channels
-        "CmdIA": {SignConvention.SAE: 1, SignConvention.ADAPTED_SAE: 1, 
-                  SignConvention.ISO: 1, SignConvention.ADAPTED_ISO: -1},
-        "CmdSA": {SignConvention.SAE: 1, SignConvention.ADAPTED_SAE: -1, 
-                  SignConvention.ISO: -1, SignConvention.ADAPTED_ISO: 1},
-        "CmdFZ": {SignConvention.SAE: 1, SignConvention.ADAPTED_SAE: -1, 
-                  SignConvention.ISO: -1, SignConvention.ADAPTED_ISO: -1},
+        "CmdIA": {
+            SignConvention.SAE: 1,
+            SignConvention.ADAPTED_SAE: 1,
+            SignConvention.ISO: 1,
+            SignConvention.ADAPTED_ISO: -1,
+        },
+        "CmdSA": {
+            SignConvention.SAE: 1,
+            SignConvention.ADAPTED_SAE: -1,
+            SignConvention.ISO: -1,
+            SignConvention.ADAPTED_ISO: 1,
+        },
+        "CmdFZ": {
+            SignConvention.SAE: 1,
+            SignConvention.ADAPTED_SAE: -1,
+            SignConvention.ISO: -1,
+            SignConvention.ADAPTED_ISO: -1,
+        },
     }
 
     @classmethod
@@ -64,8 +116,11 @@ class ConventionConverter:
 
     @classmethod
     def get_multiplier(
-        cls, channel: str, from_convention: SignConvention, to_convention: SignConvention
-        ) -> int:
+        cls,
+        channel: str,
+        from_convention: SignConvention,
+        to_convention: SignConvention,
+    ) -> int:
         """
         Get the multiplier for converting a channel between conventions.
 
@@ -87,12 +142,16 @@ class ConventionConverter:
         from_sign = channel_def.get(from_convention, 1)
         to_sign = channel_def.get(to_convention, 1)
 
-        return to_sign * from_sign 
+        return to_sign * from_sign
 
     @classmethod
     def convert_channel_data(
-        cls, data: np.ndarray, channel: str, from_convention: SignConvention, 
-        to_convention: SignConvention) -> np.ndarray:
+        cls,
+        data: np.ndarray,
+        channel: str,
+        from_convention: SignConvention,
+        to_convention: SignConvention,
+    ) -> np.ndarray:
         """
         Convert channel data between sign conventions.
 
@@ -111,8 +170,9 @@ class ConventionConverter:
         return data * multiplier
 
     @classmethod
-    def convert_dataset_convention(cls, dataset: Any, target_convention: SignConvention
-        ) -> Any:
+    def convert_dataset_convention(
+        cls, dataset: Any, target_convention: SignConvention
+    ) -> Any:
         """
         Convert entire dataset to target sign convention.
 
@@ -160,9 +220,13 @@ class ConventionConverter:
             return dataset
 
     @classmethod
-    def convert_channel_convention(cls, channels: List[str], data: np.ndarray,
-        current_convention: SignConvention, target_convention: SignConvention,
-        ) -> np.ndarray:
+    def convert_channel_convention(
+        cls,
+        channels: List[str],
+        data: np.ndarray,
+        current_convention: SignConvention,
+        target_convention: SignConvention,
+    ) -> np.ndarray:
         """
         Convert data array between sign conventions.
 
@@ -221,7 +285,9 @@ class ConventionConverter:
         info = {
             "SAE": {
                 "name": "SAE",
-                "description": "SAE J670 standard as supplied from tire test consortium",
+                "description": (
+                    "SAE J670 standard as supplied from tire test consortium"
+                ),
                 "usage": "Standard for tire testing in North America",
             },
             "Adapted SAE": {
@@ -231,7 +297,9 @@ class ConventionConverter:
             },
             "ISO": {
                 "name": "ISO",
-                "description": "ISO 8855 standard used in most commercial simulation tools",
+                "description": (
+                    "ISO 8855 standard used in most commercial simulation tools"
+                ),
                 "usage": "ADAMS, MF-Tyre/MF-Swift, and other commercial tools",
             },
             "Adapted ISO": {

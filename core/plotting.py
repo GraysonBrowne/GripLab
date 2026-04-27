@@ -149,7 +149,8 @@ class PlotBuilder:
                 "<b>%{hovertext}</b><br>"
                 + f"{config.x_channel}: %{{x:.2f}} {config.x_unit}<br>"
                 + f"{config.y_channel}: %{{y:.2f}} {config.y_unit}<br>"
-                + f"{config.color_channel}: %{{marker.color:.2f}} {config.color_unit}<extra></extra>"
+                + f"{config.color_channel}: %{{marker.color:.2f}} "
+                + f"{config.color_unit}<extra></extra>"
             )
         else:
             hovertemplate = "<b>%{hovertext}</b><br><extra></extra>"
@@ -213,7 +214,8 @@ class PlotBuilder:
                 + f"{config.x_channel}: %{{x:.2f}} {config.x_unit}<br>"
                 + f"{config.y_channel}: %{{y:.2f}} {config.y_unit}<br>"
                 + f"{config.z_channel}: %{{z:.2f}} {config.z_unit}<br>"
-                + f"{config.color_channel}: %{{marker.color:.2f}} {config.color_unit}<extra></extra>"
+                + f"{config.color_channel}: %{{marker.color:.2f}} "
+                + f"{config.color_unit}<extra></extra>"
             )
         else:
             hovertemplate = "<b>%{hovertext}</b><br><extra></extra>"
@@ -377,8 +379,8 @@ class DataProcessor:
         if len(x) == 0 or len(y) == 0:
             if pn.state.notifications:
                 pn.state.notifications.warning(
-                    f"No data to plot from {dataset.name} under selected conditions", 
-                    duration=4000
+                    f"No data to plot from {dataset.name} under selected conditions",
+                    duration=4000,
                 )
 
         return PlotData(x=x, y=y, z=z, c=c, name=dataset.name, color=dataset.node_color)
@@ -417,9 +419,7 @@ class PlotMetadataBuilder:
         dataset = datasets[0] if datasets else None
         for ds in datasets:
             for cond in ["CmdSA", "SL", "CmdIA", "CmdFZ", "CmdP", "CmdV"]:
-                condition_data = np.unique(
-                    ds.data[:, ds.channels.index(cond)]
-                ).tolist()
+                condition_data = np.unique(ds.data[:, ds.channels.index(cond)]).tolist()
                 conditions[cond].extend(condition_data)
             conditions["rim_width"].extend(str(ds.rim_width))
 
@@ -442,7 +442,9 @@ class PlotMetadataBuilder:
                 else:
                     if dataset:
                         unit = dataset.units[dataset.channels.index(key)]
-                        parts.append(f"{key.replace('Cmd', '')}: {unique_vals[0]} {unit}")
+                        parts.append(
+                            f"{key.replace('Cmd', '')}: {unique_vals[0]} {unit}"
+                        )
             else:
                 parts.append(f"{key.replace('Cmd', '')}: VAR")
 
@@ -620,11 +622,15 @@ class PlottingUtils:
                 case PlotType.PLOT_2D:
                     PlotBuilder.add_2d_trace(fig, plot_data, config)
                 case PlotType.PLOT_2D_COLOR:
-                    PlotBuilder.add_2d_color_trace(fig, plot_data, config, color_range or (0.0, 1.0))
+                    PlotBuilder.add_2d_color_trace(
+                        fig, plot_data, config, color_range or (0.0, 1.0)
+                    )
                 case PlotType.PLOT_3D:
                     PlotBuilder.add_3d_trace(fig, plot_data, config)
                 case PlotType.PLOT_3D_COLOR:
-                    PlotBuilder.add_3d_color_trace(fig, plot_data, config, color_range or (0.0, 1.0))
+                    PlotBuilder.add_3d_color_trace(
+                        fig, plot_data, config, color_range or (0.0, 1.0)
+                    )
 
         # Update layout
         PlotBuilder.update_layout(fig, config)

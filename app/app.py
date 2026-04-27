@@ -6,7 +6,7 @@ GripLab - Tire Data Analysis Application
 import sys
 import webbrowser
 from pathlib import Path
-from typing import cast, Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -14,16 +14,24 @@ import panel as pn
 import plotly.express as px
 from panel.io import hold
 
-# Import application modules
-from core.dataio import DataManager
 from app.config import AppConfig
 from app.controllers import DataController, PlotController
 from converters.conventions import ConventionConverter, SignConvention
 from converters.units import UnitSystem, UnitSystemConverter
-from ui.components import (AppSettingsWidgets, DataInfoWidgets,
-                           PlotControlWidgets, PlotSettingsWidgets)
-from ui.modals import (create_plot_settings_layout, create_removal_dialog,
-                       create_settings_layout)
+
+# Import application modules
+from core.dataio import DataManager
+from ui.components import (
+    AppSettingsWidgets,
+    DataInfoWidgets,
+    PlotControlWidgets,
+    PlotSettingsWidgets,
+)
+from ui.modals import (
+    create_plot_settings_layout,
+    create_removal_dialog,
+    create_settings_layout,
+)
 from utils.dialogs import Tk_utils
 from utils.logger import logger
 
@@ -155,7 +163,9 @@ class GripLabApp:
         # Header
 
         header_object = cast(list, self.template.header)
-        header_object.append(pn.Row(pn.layout.HSpacer(), self.settings_btn, self.help_menu))
+        header_object.append(
+            pn.Row(pn.layout.HSpacer(), self.settings_btn, self.help_menu)
+        )
 
         # Sidebar - Plot tab
         plot_tab = pn.Column(
@@ -201,10 +211,10 @@ class GripLabApp:
 
         sidebar_object = cast(list, self.template.sidebar)
         sidebar_object.append(
-                pn.Column(
-                    self.import_btn, self.data_table, pn.layout.Divider(), self.info_tabs
-                )
+            pn.Column(
+                self.import_btn, self.data_table, pn.layout.Divider(), self.info_tabs
             )
+        )
 
         # Main area
         main_object = cast(list, self.template.main)
@@ -320,20 +330,28 @@ class GripLabApp:
         theme_value = self.app_settings_widgets.theme_select.value
         if theme_value is not None:
             self.config.theme = theme_value
-        self.config.unit_system = UnitSystem(self.app_settings_widgets.unit_select.value)
-        self.config.sign_convention = SignConvention(self.app_settings_widgets.sign_select.value)
+        self.config.unit_system = UnitSystem(
+            self.app_settings_widgets.unit_select.value
+        )
+        self.config.sign_convention = SignConvention(
+            self.app_settings_widgets.sign_select.value
+        )
         self.config.demo_mode = bool(self.app_settings_widgets.demo_switch.value)
         self.config.data_dir = self.app_settings_widgets.data_dir_input.value
 
         # Update colorway and colormap
-        colorway_options = getattr(self.app_settings_widgets.colorway_select, 'options', None)
+        colorway_options = getattr(
+            self.app_settings_widgets.colorway_select, "options", None
+        )
         if colorway_options and isinstance(colorway_options, dict):
             for name, value in colorway_options.items():
                 if value == self.app_settings_widgets.colorway_select.value:
                     self.config.colorway = name
                     break
 
-        colormap_options = getattr(self.plot_settings_widgets.color_map, 'options', None)
+        colormap_options = getattr(
+            self.plot_settings_widgets.color_map, "options", None
+        )
         if colormap_options and isinstance(colormap_options, dict):
             for name, value in colormap_options.items():
                 if value == self.plot_settings_widgets.color_map.value:
@@ -349,7 +367,9 @@ class GripLabApp:
         if not self.data_table.selection:
             logger.warning("No datasets selected to plot")
             if pn.state.notifications:
-                pn.state.notifications.warning("Select a dataset to plot", duration=4000)
+                pn.state.notifications.warning(
+                    "Select a dataset to plot", duration=4000
+                )
             return
 
         # Collect all widget references for the plot controller
@@ -549,10 +569,14 @@ class GripLabApp:
         for name in names:
             dataset = self.dm.get_dataset(name)
             dataset = UnitSystemConverter.convert_dataset(
-                dataset, to_system=UnitSystem(self.app_settings_widgets.unit_select.value)
+                dataset,
+                to_system=UnitSystem(self.app_settings_widgets.unit_select.value),
             )
             dataset = ConventionConverter.convert_dataset_convention(
-                dataset, target_convention=SignConvention(self.app_settings_widgets.sign_select.value)
+                dataset,
+                target_convention=SignConvention(
+                    self.app_settings_widgets.sign_select.value
+                ),
             )
 
             if channel in dataset.channels:

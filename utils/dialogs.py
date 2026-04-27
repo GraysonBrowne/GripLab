@@ -46,7 +46,7 @@ class Tk_utils:
         except Exception as e:
             logger.error(f"Error selecting file: {e}")
             return tuple()
-        
+
     def select_dir(self, initialdir, icon=""):
         """
         Opens a directory selection dialog and returns the selected directory path.

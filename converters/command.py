@@ -27,14 +27,23 @@ class CmdChannelGenerator:
 
     # Target values for command channels by unit system
     CMD_TARGETS: Dict[str, Dict[UnitSystem, List[float]]] = {
-        "V": {UnitSystem.USCS: [0, 2, 15, 25, 45], UnitSystem.METRIC: [0, 3, 24, 40, 72]},
-        "P": {UnitSystem.USCS: [0, 8, 10, 12, 14], UnitSystem.METRIC: [0, 55, 69, 83, 97]},
+        "V": {
+            UnitSystem.USCS: [0, 2, 15, 25, 45],
+            UnitSystem.METRIC: [0, 3, 24, 40, 72],
+        },
+        "P": {
+            UnitSystem.USCS: [0, 8, 10, 12, 14],
+            UnitSystem.METRIC: [0, 55, 69, 83, 97],
+        },
         "FZ": {
             UnitSystem.USCS: [0, -50, -100, -150, -200, -250, -350],
             UnitSystem.METRIC: [0, -222, -445, -667, -890, -1112, -1557],
         },
         "IA": {UnitSystem.USCS: [0, 2, 4], UnitSystem.METRIC: [0, 2, 4]},
-        "SA": {UnitSystem.USCS: [0, -1, -3, -6, 1, 6], UnitSystem.METRIC: [0, -1, -3, -6, 1, 6]},
+        "SA": {
+            UnitSystem.USCS: [0, -1, -3, -6, 1, 6],
+            UnitSystem.METRIC: [0, -1, -3, -6, 1, 6],
+        },
     }
 
     # Filtering parameters for noisy channels
@@ -122,7 +131,11 @@ class CmdChannelGenerator:
 
     @classmethod
     def _validate_inputs(
-        cls, channels: List[str], units: List[str], data: np.ndarray, unit_system: UnitSystem
+        cls,
+        channels: List[str],
+        units: List[str],
+        data: np.ndarray,
+        unit_system: UnitSystem,
     ) -> bool:
         """Validate input parameters."""
         if len(channels) != len(units):
@@ -217,7 +230,9 @@ class CmdChannelGenerator:
         return nearest_values
 
     @classmethod
-    def get_cmd_channel_info(cls, channel: str, unit_system: UnitSystem) -> Optional[Dict]:
+    def get_cmd_channel_info(
+        cls, channel: str, unit_system: UnitSystem
+    ) -> Optional[Dict]:
         """
         Get information about a command channel.
 
@@ -275,8 +290,8 @@ class CmdChannelGenerator:
 
             if not is_discrete:
                 logger.warning(
-                    f"Command channel {channel} has {len(unique_values)} unique values, "
-                    f"expected discrete values"
+                    f"Command channel {channel} has {len(unique_values)} unique values,"
+                    f" expected discrete values"
                 )
 
         return validation

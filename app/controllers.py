@@ -10,6 +10,7 @@ from plotly.graph_objects import Figure
 from core.dataio import DataImporter, DataManager
 from core.plotting import PlottingUtils
 from utils.logger import logger
+
 from .config import AppConfig
 
 
@@ -122,7 +123,7 @@ class DataController:
                 dataset = self.dm.get_dataset(name)
                 if dataset is None:
                     raise ValueError(f"No dataset found for {name}")
- 
+
                 return {
                     "name": dataset.demo_name,
                     "tire_id": dataset.demo_tire_id,
@@ -218,7 +219,9 @@ class PlotController:
             logger.error(f"Error creating plot: {e}", exc_info=True)
             return None, 0
 
-    def get_plot_parameters(self, widgets: Dict[str, Any], config: AppConfig) -> Dict[str, Any]:
+    def get_plot_parameters(
+        self, widgets: Dict[str, Any], config: AppConfig
+    ) -> Dict[str, Any]:
         """Collect plot parameters from widgets."""
         return {
             "data_table": widgets["data_table"],

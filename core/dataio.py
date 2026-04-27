@@ -352,7 +352,9 @@ class DataImporter:
                 units = (
                     np.concatenate(file_data["channel"][0][0][1][0]).ravel().tolist()
                 )
-                metadata["unit_system"] = UnitSystem.USCS if "lb" in str(units) else UnitSystem.METRIC
+                metadata["unit_system"] = (
+                    UnitSystem.USCS if "lb" in str(units) else UnitSystem.METRIC
+                )
             logger.warning(
                 f"Unit system not specified in {name}, "
                 f"inferred {metadata['unit_system']}"
@@ -363,7 +365,7 @@ class DataImporter:
             metadata["sign_convention"] = SignConvention(file_data["sign"])
         else:
             logger.warning(
-                f"Sign convention not specified in {name}, " f"defaulting to SAE"
+                f"Sign convention not specified in {name}, defaulting to SAE"
             )
 
         # Extract notes
@@ -400,7 +402,9 @@ class DataImporter:
         if unit_match:
             metadata["unit_system"] = UnitSystem(unit_match.group(1))
         else:
-            metadata["unit_system"] = UnitSystem.USCS if "lb" in units else UnitSystem.METRIC
+            metadata["unit_system"] = (
+                UnitSystem.USCS if "lb" in units else UnitSystem.METRIC
+            )
             logger.warning(
                 f"Unit system not specified in {name}, {metadata['unit_system']} "
                 f"inferred from channel names."
