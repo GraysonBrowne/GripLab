@@ -7,7 +7,7 @@ from .logger import logger
 
 
 class Tk_utils:
-    def select_file(self,filetypes, initialdir, icon=""):
+    def select_file(self, filetypes, initialdir, icon=""):
         """
         Opens a file selection dialog for the user to choose a file.
 
@@ -39,14 +39,15 @@ class Tk_utils:
             root.destroy()  # Destroy the root window after use
             if file_path:
                 logger.info(f"File(s) selected: {file_path}")
+                return file_path
             else:
                 logger.info("No file selected.")
-            return file_path
+                return tuple()
         except Exception as e:
             logger.error(f"Error selecting file: {e}")
             return tuple()
         
-    def select_dir(self,initialdir, icon=""):
+    def select_dir(self, initialdir, icon=""):
         """
         Opens a directory selection dialog and returns the selected directory path.
 
@@ -76,14 +77,15 @@ class Tk_utils:
             root.destroy()  # Destroy the root window after use
             if dir_path:
                 logger.info(f"Directory selected: {dir_path}")
+                return dir_path
             else:
                 logger.info("No directory selected.")
-            return dir_path
+                return tuple()
         except Exception as e:
             logger.error(f"Error selecting directory: {e}")
             return tuple()
 
-    def save_file(self,defaultextension, initialdir, icon=""):
+    def save_file(self, defaultextension, initialdir, icon=""):
         """
         Opens a file save dialog using Tkinter and returns the selected file path.
 
@@ -117,9 +119,10 @@ class Tk_utils:
             root.destroy()  # Destroy the root window after use
             if file_path:
                 logger.info(f"File path to save: {file_path}")
+                return file_path
             else:
                 logger.info("Save operation cancelled.")
-            return file_path
+                return tuple()
         except Exception as e:
             logger.error(f"Error saving file: {e}")
             return tuple()
