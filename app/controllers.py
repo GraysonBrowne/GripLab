@@ -213,6 +213,7 @@ class PlotController:
                 plot_params.get("c_label_text", ""),
                 plot_params.get("font_size", 18),
                 plot_params.get("marker_size", 10),
+                plot_params.get("marker_opacity", 1.0),
             )
             return fig, node_count
         except Exception as e:
@@ -251,4 +252,5 @@ class PlotController:
             "c_label_text": widgets["plot_settings"].c_label.value,
             "font_size": widgets["plot_settings"].font_size.value,
             "marker_size": widgets["plot_settings"].marker_size.value,
+            "marker_opacity": widgets["plot_settings"].marker_opacity.value,
         }

@@ -17,6 +17,44 @@ from core.processing import DataDownsampler
 from utils.logger import logger
 
 
+def hex_to_rgba(hex_color: str, alpha: float = 1.0) -> str:
+    """
+    Convert a hex color string to an RGBA string.
+
+    Args:
+        hex_color: Hex color string (e.g. "#FF5733" or "FF5733")
+        alpha: Opacity value between 0.0 and 1.0
+
+    Returns:
+        RGBA string (e.g. "rgba(255, 87, 51, 0.8)")
+    """
+    hex_color = hex_color.lstrip("#")
+    r, g, b = (int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+    return f"rgba({r}, {g}, {b}, {alpha})"
+
+
+def colorscale_with_alpha(colorscale: list[str], alpha: float) -> list[list]:
+    """
+    Convert a list of hex colors to a Plotly colorscale with alpha.
+
+    Args:
+        colorscale: List of hex color strings (e.g. ["#FF5733", "#33FF57"])
+        alpha: Opacity value between 0.0 and 1.0
+
+    Returns:
+        Plotly colorscale with alpha (e.g. [[0.0, "rgba(255, 87, 51, 0.8)"],
+        [1.0, "rgba(51, 255, 87, 0.8)"]])
+    """
+    n = len(colorscale)
+    if n == 1:
+        return [[0.0, hex_to_rgba(colorscale[0], alpha)]]
+    else:
+        return [
+            [i / (n - 1), hex_to_rgba(color, alpha)]
+            for i, color in enumerate(colorscale)
+        ]
+
+
 class PlotType(Enum):
     """Types of plots available."""
 
@@ -53,6 +91,7 @@ class PlotConfig:
     # Style options
     font_size: int = 18
     marker_size: int = 10
+    marker_opacity: float = 1.0
     color_map: Any = None
     show_axes: bool = True
 
@@ -130,7 +169,11 @@ class PlotBuilder:
             y=data.y,
             mode="markers",
             name=data.name,
-            marker=dict(size=config.marker_size, color=data.color),
+            marker=dict(
+                size=config.marker_size,
+                color=hex_to_rgba(data.color, alpha=config.marker_opacity),
+                line=dict(color=data.color, width=1),
+            ),
             hovertext=data.hover_text or [data.name] * data.point_count,
             hovertemplate=hovertemplate,
         )
@@ -154,6 +197,7 @@ class PlotBuilder:
             )
         else:
             hovertemplate = "<b>%{hovertext}</b><br><extra></extra>"
+
         trace = dict(
             type="scatter",
             x=data.x,
@@ -162,7 +206,35 @@ class PlotBuilder:
             marker=dict(
                 size=config.marker_size,
                 color=data.c,
-                colorscale=config.color_map,
+                colorscale=colorscale_with_alpha(
+                    config.color_map, config.marker_opacity
+                ),
+                cmin=color_range[0],
+                cmax=color_range[1],
+                showscale=False,
+                line=dict(
+                    color=data.c,
+                    colorscale=config.color_map,
+                    cmin=color_range[0],
+                    cmax=color_range[1],
+                    width=1,
+                ),
+            ),
+            hovertext=data.hover_text or [data.name] * data.point_count,
+            hovertemplate=hovertemplate,
+        )
+        fig.add_trace(trace)
+
+        # Invisible dummy trace — opaque colorscale, drives the colorbar
+        colorbar_trace = dict(
+            type="scatter",
+            x=[None],
+            y=[None],
+            mode="markers",
+            marker=dict(
+                size=0,
+                color=[color_range[0], color_range[1]],
+                colorscale=config.color_map,  # fully opaque
                 cmin=color_range[0],
                 cmax=color_range[1],
                 colorbar=dict(
@@ -170,10 +242,10 @@ class PlotBuilder:
                 ),
                 showscale=True,
             ),
-            hovertext=data.hover_text or [data.name] * data.point_count,
-            hovertemplate=hovertemplate,
+            showlegend=False,
+            hoverinfo="none",
         )
-        fig.add_trace(trace)
+        fig.add_trace(colorbar_trace)
 
     @staticmethod
     def add_3d_trace(fig: go.Figure, data: PlotData, config: PlotConfig) -> None:
@@ -182,19 +254,23 @@ class PlotBuilder:
             hovertemplate = (
                 "<b>%{hovertext}</b><br>"
                 + f"{config.x_channel}: %{{x:.2f}} {config.x_unit}<br>"
-                + f"{config.y_channel}: %{{y:.2f}} {config.y_unit}<br>"
-                + f"{config.z_channel}: %{{z:.2f}} {config.z_unit}<extra></extra>"
+                + f"{config.y_channel}: %{{z:.2f}} {config.y_unit}<br>"
+                + f"{config.z_channel}: %{{y:.2f}} {config.z_unit}<extra></extra>"
             )
         else:
             hovertemplate = "<b>%{hovertext}</b><br><extra></extra>"
         trace = dict(
             type="scatter3d",
             x=data.x,
-            y=data.y,
-            z=data.z,
+            y=data.z,
+            z=data.y,
             mode="markers",
             name=data.name,
-            marker=dict(size=config.marker_size, color=data.color),
+            marker=dict(
+                size=config.marker_size,
+                color=hex_to_rgba(data.color, alpha=config.marker_opacity),
+                line=dict(color=data.color, width=1),
+            ),
             hovertext=data.hover_text or [data.name] * data.point_count,
             hovertemplate=hovertemplate,
         )
@@ -212,23 +288,53 @@ class PlotBuilder:
             hovertemplate = (
                 "<b>%{hovertext}</b><br>"
                 + f"{config.x_channel}: %{{x:.2f}} {config.x_unit}<br>"
-                + f"{config.y_channel}: %{{y:.2f}} {config.y_unit}<br>"
-                + f"{config.z_channel}: %{{z:.2f}} {config.z_unit}<br>"
+                + f"{config.y_channel}: %{{z:.2f}} {config.y_unit}<br>"
+                + f"{config.z_channel}: %{{y:.2f}} {config.z_unit}<br>"
                 + f"{config.color_channel}: %{{marker.color:.2f}} "
                 + f"{config.color_unit}<extra></extra>"
             )
         else:
             hovertemplate = "<b>%{hovertext}</b><br><extra></extra>"
+
         trace = dict(
             type="scatter3d",
             x=data.x,
-            y=data.y,
-            z=data.z,
+            y=data.z,
+            z=data.y,
             mode="markers",
             marker=dict(
                 size=config.marker_size,
                 color=data.c,
-                colorscale=config.color_map,
+                colorscale=colorscale_with_alpha(
+                    config.color_map, config.marker_opacity
+                ),
+                cmin=color_range[0],
+                cmax=color_range[1],
+                showscale=False,
+                line=dict(
+                    color=data.c,
+                    colorscale=config.color_map,
+                    cmin=color_range[0],
+                    cmax=color_range[1],
+                    width=1,
+                ),
+            ),
+            hovertext=data.hover_text or [data.name] * data.point_count,
+            hovertemplate=hovertemplate,
+        )
+        fig.add_trace(trace)
+
+        # Invisible dummy trace — opaque colorscale, drives the colorbar
+        colorbar_trace = dict(
+            type="scatter3d",
+            x=[None],
+            y=[None],
+            z=[None],
+            mode="markers",
+            marker=dict(
+                size=0,
+                color=[color_range[0], color_range[1]],
+                colorscale=config.color_map,  # fully opaque
                 cmin=color_range[0],
                 cmax=color_range[1],
                 colorbar=dict(
@@ -236,10 +342,10 @@ class PlotBuilder:
                 ),
                 showscale=True,
             ),
-            hovertext=data.hover_text or [data.name] * data.point_count,
-            hovertemplate=hovertemplate,
+            showlegend=False,
+            hoverinfo="none",
         )
-        fig.add_trace(trace)
+        fig.add_trace(colorbar_trace)
 
     @staticmethod
     def update_layout(fig: go.Figure, config: PlotConfig) -> None:
@@ -258,12 +364,12 @@ class PlotBuilder:
                         tickfont=dict(size=config.font_size - 3),
                     ),
                     yaxis=dict(
-                        title=config.y_label,
+                        title=config.z_label,
                         showticklabels=config.show_axes,
                         tickfont=dict(size=config.font_size - 3),
                     ),
                     zaxis=dict(
-                        title=config.z_label,
+                        title=config.y_label,
                         showticklabels=config.show_axes,
                         tickfont=dict(size=config.font_size - 3),
                     ),
@@ -459,7 +565,7 @@ class PlotMetadataBuilder:
 
 
 class PlottingUtils:
-    """Main plotting utility class - maintains backward compatibility."""
+    """Main plotting utility class."""
 
     @classmethod
     def plot_data(
@@ -492,9 +598,9 @@ class PlottingUtils:
         c_label_text="",
         font_size=18,
         marker_size=10,
+        marker_opacity=1.0,
     ) -> Tuple[go.Figure, int]:
         """
-        Legacy interface for backward compatibility.
         Creates a plot from widget selections.
         """
         # Get selected datasets
@@ -520,6 +626,7 @@ class PlottingUtils:
             color_label=c_label_text,
             font_size=font_size,
             marker_size=marker_size,
+            marker_opacity=marker_opacity,
             color_map=color_map.value if hasattr(color_map, "value") else color_map,
             show_axes=not axis_visibility,
             downsample_factor=downsample_slider.value,
