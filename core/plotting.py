@@ -144,7 +144,9 @@ class PlotBuilder:
             y=data.y,
             mode="markers",
             name=data.name,
-            marker=dict(size=config.marker_size, color=data.color),
+            marker=dict(size=config.marker_size, 
+                        color=hex_to_rgba(data.color, alpha=config.marker_opacity),
+                        line=dict(color=data.color, width=1)),
             hovertext=data.hover_text or [data.name] * data.point_count,
             hovertemplate=hovertemplate,
         )
@@ -168,6 +170,7 @@ class PlotBuilder:
             )
         else:
             hovertemplate = "<b>%{hovertext}</b><br><extra></extra>"
+        
         trace = dict(
             type="scatter",
             x=data.x,
@@ -176,18 +179,40 @@ class PlotBuilder:
             marker=dict(
                 size=config.marker_size,
                 color=data.c,
-                colorscale=config.color_map,
+                colorscale=colorscale_with_alpha(config.color_map, config.marker_opacity),
                 cmin=color_range[0],
                 cmax=color_range[1],
-                colorbar=dict(
-                    title=config.color_label, showticklabels=config.show_axes
-                ),
-                showscale=True,
+                showscale=False,
+                line=dict(color=data.c,
+                    colorscale=config.color_map,
+                    cmin=color_range[0],
+                    cmax=color_range[1],
+                    width=1,)
             ),
             hovertext=data.hover_text or [data.name] * data.point_count,
             hovertemplate=hovertemplate,
         )
         fig.add_trace(trace)
+
+        # Invisible dummy trace — opaque colorscale, drives the colorbar
+        colorbar_trace = dict(
+            type="scatter",
+            x=[None],
+            y=[None],
+            mode="markers",
+            marker=dict(
+                size=0,
+                color=[color_range[0], color_range[1]],
+                colorscale=config.color_map,  # fully opaque
+                cmin=color_range[0],
+                cmax=color_range[1],
+                colorbar=dict(title=config.color_label, showticklabels=config.show_axes),
+                showscale=True,
+            ),
+            showlegend=False,
+            hoverinfo="none",
+        )
+        fig.add_trace(colorbar_trace)
 
     @staticmethod
     def add_3d_trace(fig: go.Figure, data: PlotData, config: PlotConfig) -> None:
@@ -208,7 +233,9 @@ class PlotBuilder:
             z=data.z,
             mode="markers",
             name=data.name,
-            marker=dict(size=config.marker_size, color=data.color),
+            marker=dict(size=config.marker_size, 
+                        color=hex_to_rgba(data.color, alpha=config.marker_opacity),
+                        line=dict(color=data.color, width=1)),
             hovertext=data.hover_text or [data.name] * data.point_count,
             hovertemplate=hovertemplate,
         )
@@ -233,6 +260,7 @@ class PlotBuilder:
             )
         else:
             hovertemplate = "<b>%{hovertext}</b><br><extra></extra>"
+
         trace = dict(
             type="scatter3d",
             x=data.x,
@@ -242,18 +270,41 @@ class PlotBuilder:
             marker=dict(
                 size=config.marker_size,
                 color=data.c,
-                colorscale=config.color_map,
+                colorscale=colorscale_with_alpha(config.color_map, config.marker_opacity),
                 cmin=color_range[0],
                 cmax=color_range[1],
-                colorbar=dict(
-                    title=config.color_label, showticklabels=config.show_axes
-                ),
-                showscale=True,
+                showscale=False,
+                line=dict(color=data.c,
+                    colorscale=config.color_map,
+                    cmin=color_range[0],
+                    cmax=color_range[1],
+                    width=1,)
             ),
             hovertext=data.hover_text or [data.name] * data.point_count,
             hovertemplate=hovertemplate,
         )
         fig.add_trace(trace)
+
+        # Invisible dummy trace — opaque colorscale, drives the colorbar
+        colorbar_trace = dict(
+            type="scatter3d",
+            x=[None],
+            y=[None],
+            z=[None],
+            mode="markers",
+            marker=dict(
+                size=0,
+                color=[color_range[0], color_range[1]],
+                colorscale=config.color_map,  # fully opaque
+                cmin=color_range[0],
+                cmax=color_range[1],
+                colorbar=dict(title=config.color_label, showticklabels=config.show_axes),
+                showscale=True,
+            ),
+            showlegend=False,
+            hoverinfo="none",
+        )
+        fig.add_trace(colorbar_trace)
 
     @staticmethod
     def update_layout(fig: go.Figure, config: PlotConfig) -> None:
@@ -473,7 +524,7 @@ class PlotMetadataBuilder:
 
 
 class PlottingUtils:
-    """Main plotting utility class - maintains backward compatibility."""
+    """Main plotting utility class."""
 
     @classmethod
     def plot_data(
