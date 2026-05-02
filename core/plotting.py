@@ -18,18 +18,41 @@ from utils.logger import logger
 
 
 def hex_to_rgba(hex_color: str, alpha: float = 1.0) -> str:
-    """Convert hex color to RGBA string."""
+    """
+    Convert a hex color string to an RGBA string.
+
+    Args:
+        hex_color: Hex color string (e.g. "#FF5733" or "FF5733")
+        alpha: Opacity value between 0.0 and 1.0
+
+    Returns:
+        RGBA string (e.g. "rgba(255, 87, 51, 0.8)")
+    """
     hex_color = hex_color.lstrip("#")
     r, g, b = (int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
     return f"rgba({r}, {g}, {b}, {alpha})"
 
 
-def colorscale_with_alpha(colorscale: list[str], alpha: float) -> list:
-    """Convert a list of hex colors to a Plotly colorscale with alpha."""
+def colorscale_with_alpha(colorscale: list[str], alpha: float) -> list[list]:
+    """
+    Convert a list of hex colors to a Plotly colorscale with alpha.
+
+    Args:
+        colorscale: List of hex color strings (e.g. ["#FF5733", "#33FF57"])
+        alpha: Opacity value between 0.0 and 1.0
+
+    Returns:
+        Plotly colorscale with alpha (e.g. [[0.0, "rgba(255, 87, 51, 0.8)"],
+        [1.0, "rgba(51, 255, 87, 0.8)"]])
+    """
     n = len(colorscale)
-    return [
-        [i / (n - 1), hex_to_rgba(color, alpha)] for i, color in enumerate(colorscale)
-    ]
+    if n == 1:
+        return [[0.0, hex_to_rgba(colorscale[0], alpha)]]
+    else:
+        return [
+            [i / (n - 1), hex_to_rgba(color, alpha)]
+            for i, color in enumerate(colorscale)
+        ]
 
 
 class PlotType(Enum):
@@ -578,7 +601,6 @@ class PlottingUtils:
         marker_opacity=1.0,
     ) -> Tuple[go.Figure, int]:
         """
-        Legacy interface for backward compatibility.
         Creates a plot from widget selections.
         """
         # Get selected datasets
