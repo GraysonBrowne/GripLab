@@ -56,6 +56,7 @@ def create_plot_settings_layout(plot_settings_widgets):
         plot_settings_widgets.color_map,
         plot_settings_widgets.font_size,
         plot_settings_widgets.marker_size,
+        plot_settings_widgets.marker_opacity,
         width=450,
         margin=(0, 20),
     )

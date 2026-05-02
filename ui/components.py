@@ -199,6 +199,15 @@ class PlotSettingsWidgets:
             sizing_mode="stretch_width",
         )
 
+        self.marker_opacity = pn.widgets.FloatSlider(
+            name="Marker Opacity",
+            value=1.0,
+            start=0.0,
+            end=1.0,
+            step=0.05,
+            sizing_mode="stretch_width",
+        )
+
         # Color map
         color_map_options = {
             "Jet": [
