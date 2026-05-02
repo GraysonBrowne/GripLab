@@ -16,19 +16,21 @@ from converters.units import UnitSystem, UnitSystemConverter
 from core.processing import DataDownsampler
 from utils.logger import logger
 
+
 def hex_to_rgba(hex_color: str, alpha: float = 1.0) -> str:
     """Convert hex color to RGBA string."""
     hex_color = hex_color.lstrip("#")
-    r, g, b = (int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    r, g, b = (int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
     return f"rgba({r}, {g}, {b}, {alpha})"
+
 
 def colorscale_with_alpha(colorscale: list[str], alpha: float) -> list:
     """Convert a list of hex colors to a Plotly colorscale with alpha."""
     n = len(colorscale)
     return [
-        [i / (n - 1), hex_to_rgba(color, alpha)]
-        for i, color in enumerate(colorscale)
+        [i / (n - 1), hex_to_rgba(color, alpha)] for i, color in enumerate(colorscale)
     ]
+
 
 class PlotType(Enum):
     """Types of plots available."""
@@ -144,9 +146,11 @@ class PlotBuilder:
             y=data.y,
             mode="markers",
             name=data.name,
-            marker=dict(size=config.marker_size, 
-                        color=hex_to_rgba(data.color, alpha=config.marker_opacity),
-                        line=dict(color=data.color, width=1)),
+            marker=dict(
+                size=config.marker_size,
+                color=hex_to_rgba(data.color, alpha=config.marker_opacity),
+                line=dict(color=data.color, width=1),
+            ),
             hovertext=data.hover_text or [data.name] * data.point_count,
             hovertemplate=hovertemplate,
         )
@@ -170,7 +174,7 @@ class PlotBuilder:
             )
         else:
             hovertemplate = "<b>%{hovertext}</b><br><extra></extra>"
-        
+
         trace = dict(
             type="scatter",
             x=data.x,
@@ -179,15 +183,19 @@ class PlotBuilder:
             marker=dict(
                 size=config.marker_size,
                 color=data.c,
-                colorscale=colorscale_with_alpha(config.color_map, config.marker_opacity),
+                colorscale=colorscale_with_alpha(
+                    config.color_map, config.marker_opacity
+                ),
                 cmin=color_range[0],
                 cmax=color_range[1],
                 showscale=False,
-                line=dict(color=data.c,
+                line=dict(
+                    color=data.c,
                     colorscale=config.color_map,
                     cmin=color_range[0],
                     cmax=color_range[1],
-                    width=1,)
+                    width=1,
+                ),
             ),
             hovertext=data.hover_text or [data.name] * data.point_count,
             hovertemplate=hovertemplate,
@@ -206,7 +214,9 @@ class PlotBuilder:
                 colorscale=config.color_map,  # fully opaque
                 cmin=color_range[0],
                 cmax=color_range[1],
-                colorbar=dict(title=config.color_label, showticklabels=config.show_axes),
+                colorbar=dict(
+                    title=config.color_label, showticklabels=config.show_axes
+                ),
                 showscale=True,
             ),
             showlegend=False,
@@ -233,9 +243,11 @@ class PlotBuilder:
             z=data.y,
             mode="markers",
             name=data.name,
-            marker=dict(size=config.marker_size, 
-                        color=hex_to_rgba(data.color, alpha=config.marker_opacity),
-                        line=dict(color=data.color, width=1)),
+            marker=dict(
+                size=config.marker_size,
+                color=hex_to_rgba(data.color, alpha=config.marker_opacity),
+                line=dict(color=data.color, width=1),
+            ),
             hovertext=data.hover_text or [data.name] * data.point_count,
             hovertemplate=hovertemplate,
         )
@@ -270,15 +282,19 @@ class PlotBuilder:
             marker=dict(
                 size=config.marker_size,
                 color=data.c,
-                colorscale=colorscale_with_alpha(config.color_map, config.marker_opacity),
+                colorscale=colorscale_with_alpha(
+                    config.color_map, config.marker_opacity
+                ),
                 cmin=color_range[0],
                 cmax=color_range[1],
                 showscale=False,
-                line=dict(color=data.c,
+                line=dict(
+                    color=data.c,
                     colorscale=config.color_map,
                     cmin=color_range[0],
                     cmax=color_range[1],
-                    width=1,)
+                    width=1,
+                ),
             ),
             hovertext=data.hover_text or [data.name] * data.point_count,
             hovertemplate=hovertemplate,
@@ -298,7 +314,9 @@ class PlotBuilder:
                 colorscale=config.color_map,  # fully opaque
                 cmin=color_range[0],
                 cmax=color_range[1],
-                colorbar=dict(title=config.color_label, showticklabels=config.show_axes),
+                colorbar=dict(
+                    title=config.color_label, showticklabels=config.show_axes
+                ),
                 showscale=True,
             ),
             showlegend=False,
