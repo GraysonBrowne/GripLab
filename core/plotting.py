@@ -53,6 +53,7 @@ class PlotConfig:
     # Style options
     font_size: int = 18
     marker_size: int = 10
+    marker_opacity: float = 1.0
     color_map: Any = None
     show_axes: bool = True
 
@@ -492,6 +493,7 @@ class PlottingUtils:
         c_label_text="",
         font_size=18,
         marker_size=10,
+        marker_opacity=1.0,
     ) -> Tuple[go.Figure, int]:
         """
         Legacy interface for backward compatibility.
@@ -520,6 +522,7 @@ class PlottingUtils:
             color_label=c_label_text,
             font_size=font_size,
             marker_size=marker_size,
+            marker_opacity=marker_opacity,
             color_map=color_map.value if hasattr(color_map, "value") else color_map,
             show_axes=not axis_visibility,
             downsample_factor=downsample_slider.value,
