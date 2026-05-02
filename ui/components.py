@@ -201,7 +201,7 @@ class PlotSettingsWidgets:
 
         self.marker_opacity = pn.widgets.FloatSlider(
             name="Marker Opacity",
-            value=1.0,
+            value=0.3,
             start=0.0,
             end=1.0,
             step=0.05,
