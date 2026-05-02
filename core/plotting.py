@@ -221,16 +221,16 @@ class PlotBuilder:
             hovertemplate = (
                 "<b>%{hovertext}</b><br>"
                 + f"{config.x_channel}: %{{x:.2f}} {config.x_unit}<br>"
-                + f"{config.y_channel}: %{{y:.2f}} {config.y_unit}<br>"
-                + f"{config.z_channel}: %{{z:.2f}} {config.z_unit}<extra></extra>"
+                + f"{config.y_channel}: %{{z:.2f}} {config.y_unit}<br>"
+                + f"{config.z_channel}: %{{y:.2f}} {config.z_unit}<extra></extra>"
             )
         else:
             hovertemplate = "<b>%{hovertext}</b><br><extra></extra>"
         trace = dict(
             type="scatter3d",
             x=data.x,
-            y=data.y,
-            z=data.z,
+            y=data.z,
+            z=data.y,
             mode="markers",
             name=data.name,
             marker=dict(size=config.marker_size, 
@@ -253,8 +253,8 @@ class PlotBuilder:
             hovertemplate = (
                 "<b>%{hovertext}</b><br>"
                 + f"{config.x_channel}: %{{x:.2f}} {config.x_unit}<br>"
-                + f"{config.y_channel}: %{{y:.2f}} {config.y_unit}<br>"
-                + f"{config.z_channel}: %{{z:.2f}} {config.z_unit}<br>"
+                + f"{config.y_channel}: %{{z:.2f}} {config.y_unit}<br>"
+                + f"{config.z_channel}: %{{y:.2f}} {config.z_unit}<br>"
                 + f"{config.color_channel}: %{{marker.color:.2f}} "
                 + f"{config.color_unit}<extra></extra>"
             )
@@ -264,8 +264,8 @@ class PlotBuilder:
         trace = dict(
             type="scatter3d",
             x=data.x,
-            y=data.y,
-            z=data.z,
+            y=data.z,
+            z=data.y,
             mode="markers",
             marker=dict(
                 size=config.marker_size,
@@ -323,12 +323,12 @@ class PlotBuilder:
                         tickfont=dict(size=config.font_size - 3),
                     ),
                     yaxis=dict(
-                        title=config.y_label,
+                        title=config.z_label,
                         showticklabels=config.show_axes,
                         tickfont=dict(size=config.font_size - 3),
                     ),
                     zaxis=dict(
-                        title=config.z_label,
+                        title=config.y_label,
                         showticklabels=config.show_axes,
                         tickfont=dict(size=config.font_size - 3),
                     ),
