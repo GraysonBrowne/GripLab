@@ -9,12 +9,14 @@ import plotly.express as px
 from converters.conventions import SignConvention
 from converters.units import UnitSystem
 
+
 def _cmap_css() -> str:
     return (
         "div, div:hover {background: var(--panel-surface-color); color: currentColor}"
         if pn.config.theme == "dark"
         else ""
     )
+
 
 class WidgetFactory:
     """Factory class for creating UI widgets with consistent styling."""

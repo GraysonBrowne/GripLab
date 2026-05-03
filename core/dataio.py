@@ -215,8 +215,12 @@ class DataImporter:
             file_data = loadmat(str(filepath))
 
             # Extract channels and units
-            raw_channels = np.concatenate(file_data["channel"][0][0][0][0]).ravel().tolist()
-            raw_units = np.concatenate(file_data["channel"][0][0][1][0]).ravel().tolist()
+            raw_channels = (
+                np.concatenate(file_data["channel"][0][0][0][0]).ravel().tolist()
+            )
+            raw_units = (
+                np.concatenate(file_data["channel"][0][0][1][0]).ravel().tolist()
+            )
 
             # Standardize channel names to uppercase
             channels = [ch.upper() for ch in raw_channels]

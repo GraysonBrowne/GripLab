@@ -239,9 +239,8 @@ class PlotBuilder:
                 cmin=color_range[0],
                 cmax=color_range[1],
                 colorbar=dict(
-                    title=dict(text=config.color_label,
-                               side="right"),
-                    showticklabels=config.show_axes
+                    title=dict(text=config.color_label, side="right"),
+                    showticklabels=config.show_axes,
                 ),
                 showscale=True,
             ),
@@ -341,8 +340,8 @@ class PlotBuilder:
                 cmin=color_range[0],
                 cmax=color_range[1],
                 colorbar=dict(
-                    title=dict(text=config.color_label,
-                               side="right"), showticklabels=config.show_axes
+                    title=dict(text=config.color_label, side="right"),
+                    showticklabels=config.show_axes,
                 ),
                 showscale=True,
             ),
@@ -519,15 +518,19 @@ class PlotMetadataBuilder:
 
         match config.plot_type:
             case PlotType.PLOT_2D:
-                return f"{config.y_channel} vs {config.x_channel}"
+                title = f"{config.y_channel} vs {config.x_channel}"
             case PlotType.PLOT_2D_COLOR:
-                return f"{config.y_channel} vs {config.x_channel} colored by {config.color_channel}"
+                title = f"{config.y_channel} vs {config.x_channel} colored by "
+                f"{config.color_channel}"
             case PlotType.PLOT_3D:
-                return f"{config.y_channel} vs {config.x_channel} vs {config.z_channel}"
+                title = f"{config.y_channel} vs {config.x_channel} vs "
+                f"{config.z_channel}"
             case PlotType.PLOT_3D_COLOR:
-                return f"{config.y_channel} vs {config.x_channel} vs {config.z_channel} colored by {config.color_channel}"
+                title = f"{config.y_channel} vs {config.x_channel} vs "
+                f"{config.z_channel} colored by {config.color_channel}"
             case _:
-                return ""
+                title = ""
+        return title
 
     @staticmethod
     def build_subtitle(datasets: List[Any], config: PlotConfig) -> str:
@@ -575,7 +578,7 @@ class PlotMetadataBuilder:
         """Build axis label with channel and unit."""
         if custom_label:
             return custom_label
-        
+
         label = ChannelMetadata.get_label(channel)
         return f"{label} [{unit}]" if unit else label
 

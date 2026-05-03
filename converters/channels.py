@@ -3,8 +3,8 @@
 
 from typing import Dict
 
-class ChannelMetadata:
 
+class ChannelMetadata:
     CHANNEL_LABELS: Dict[str, str] = {
         # Forces
         "FX": "Longitudinal Force",
@@ -47,5 +47,6 @@ class ChannelMetadata:
 
     @classmethod
     def get_label(cls, channel: str) -> str:
-        """Return the standard display label for a channel, or the channel name if unknown."""
+        """Return the standard display label for a channel, or the channel name if
+        unknown."""
         return cls.CHANNEL_LABELS.get(channel, channel)
