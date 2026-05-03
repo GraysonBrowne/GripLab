@@ -222,9 +222,6 @@ class DataImporter:
                 np.concatenate(file_data["channel"][0][0][1][0]).ravel().tolist()
             )
 
-            # Standardize channel names to uppercase
-            channels = [ch.upper() for ch in raw_channels]
-
             # Standardize units and handle temperature cases
             units = [unit.strip() for unit in raw_units]
             for i, unit in enumerate(units):
@@ -232,7 +229,10 @@ class DataImporter:
                     units[i] = unit[:-1] + unit[-1].upper()
 
             # Stack channel data
-            data = np.column_stack([file_data[chan] for chan in channels])
+            data = np.column_stack([file_data[chan] for chan in raw_channels])
+
+            # Standardize channel names to uppercase
+            channels = [ch.upper() for ch in raw_channels]
 
             # Ensure SL channel exists
             if "SL" not in channels:
@@ -290,9 +290,6 @@ class DataImporter:
             raw_channels = header_lines[1].strip().split("\t")
             raw_units = header_lines[2].strip().split("\t")
 
-            # Standardize channel names to uppercase
-            channels = [ch.upper() for ch in raw_channels]
-
             # Standardize units and handle temperature cases
             units = [unit.strip() for unit in raw_units]
             for i, unit in enumerate(units):
@@ -301,6 +298,9 @@ class DataImporter:
 
             # Load data
             data = np.loadtxt(filepath, delimiter="\t", skiprows=3)
+
+            # Standardize channel names to uppercase
+            channels = [ch.upper() for ch in raw_channels]
 
             # Ensure SL channel exists
             if "SL" not in channels:
