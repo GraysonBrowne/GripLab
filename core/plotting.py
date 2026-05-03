@@ -520,14 +520,20 @@ class PlotMetadataBuilder:
             case PlotType.PLOT_2D:
                 title = f"{config.y_channel} vs {config.x_channel}"
             case PlotType.PLOT_2D_COLOR:
-                title = (f"{config.y_channel} vs {config.x_channel} colored by "
-                + f"{config.color_channel}")
+                title = (
+                    f"{config.y_channel} vs {config.x_channel} colored by "
+                    + f"{config.color_channel}"
+                )
             case PlotType.PLOT_3D:
-                title = (f"{config.y_channel} vs {config.x_channel} vs "
-                + f"{config.z_channel}")
+                title = (
+                    f"{config.y_channel} vs {config.x_channel} vs "
+                    + f"{config.z_channel}"
+                )
             case PlotType.PLOT_3D_COLOR:
-                title = (f"{config.y_channel} vs {config.x_channel} vs "
-                + f"{config.z_channel} colored by {config.color_channel}")
+                title = (
+                    f"{config.y_channel} vs {config.x_channel} vs "
+                    + f"{config.z_channel} colored by {config.color_channel}"
+                )
             case _:
                 title = ""
         return title
