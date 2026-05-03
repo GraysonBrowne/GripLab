@@ -11,6 +11,7 @@ import panel as pn
 import plotly.express as px
 import plotly.graph_objects as go
 
+from converters.channels import ChannelMetadata
 from converters.conventions import ConventionConverter, SignConvention
 from converters.units import UnitSystem, UnitSystemConverter
 from core.processing import DataDownsampler
@@ -238,7 +239,8 @@ class PlotBuilder:
                 cmin=color_range[0],
                 cmax=color_range[1],
                 colorbar=dict(
-                    title=config.color_label, showticklabels=config.show_axes
+                    title=dict(text=config.color_label, side="right"),
+                    showticklabels=config.show_axes,
                 ),
                 showscale=True,
             ),
@@ -338,7 +340,8 @@ class PlotBuilder:
                 cmin=color_range[0],
                 cmax=color_range[1],
                 colorbar=dict(
-                    title=config.color_label, showticklabels=config.show_axes
+                    title=dict(text=config.color_label, side="right"),
+                    showticklabels=config.show_axes,
                 ),
                 showscale=True,
             ),
@@ -513,7 +516,27 @@ class PlotMetadataBuilder:
         if len(unique_ids) == 1:
             return unique_ids[0]
 
-        return ""
+        match config.plot_type:
+            case PlotType.PLOT_2D:
+                title = f"{config.y_channel} vs {config.x_channel}"
+            case PlotType.PLOT_2D_COLOR:
+                title = (
+                    f"{config.y_channel} vs {config.x_channel} colored by "
+                    + f"{config.color_channel}"
+                )
+            case PlotType.PLOT_3D:
+                title = (
+                    f"{config.y_channel} vs {config.x_channel} vs "
+                    + f"{config.z_channel}"
+                )
+            case PlotType.PLOT_3D_COLOR:
+                title = (
+                    f"{config.y_channel} vs {config.x_channel} vs "
+                    + f"{config.z_channel} colored by {config.color_channel}"
+                )
+            case _:
+                title = ""
+        return title
 
     @staticmethod
     def build_subtitle(datasets: List[Any], config: PlotConfig) -> str:
@@ -561,7 +584,9 @@ class PlotMetadataBuilder:
         """Build axis label with channel and unit."""
         if custom_label:
             return custom_label
-        return f"{channel} [{unit}]" if unit else channel
+
+        label = ChannelMetadata.get_label(channel)
+        return f"{label} [{unit}]" if unit else label
 
 
 class PlottingUtils:
