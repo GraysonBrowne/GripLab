@@ -517,7 +517,17 @@ class PlotMetadataBuilder:
         if len(unique_ids) == 1:
             return unique_ids[0]
 
-        return ""
+        match config.plot_type:
+            case PlotType.PLOT_2D:
+                return f"{config.y_channel} vs {config.x_channel}"
+            case PlotType.PLOT_2D_COLOR:
+                return f"{config.y_channel} vs {config.x_channel} colored by {config.color_channel}"
+            case PlotType.PLOT_3D:
+                return f"{config.y_channel} vs {config.x_channel} vs {config.z_channel}"
+            case PlotType.PLOT_3D_COLOR:
+                return f"{config.y_channel} vs {config.x_channel} vs {config.z_channel} colored by {config.color_channel}"
+            case _:
+                return ""
 
     @staticmethod
     def build_subtitle(datasets: List[Any], config: PlotConfig) -> str:
