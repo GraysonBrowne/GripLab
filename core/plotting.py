@@ -11,6 +11,7 @@ import panel as pn
 import plotly.express as px
 import plotly.graph_objects as go
 
+from converters.channels import ChannelMetadata
 from converters.conventions import ConventionConverter, SignConvention
 from converters.units import UnitSystem, UnitSystemConverter
 from core.processing import DataDownsampler
@@ -561,7 +562,9 @@ class PlotMetadataBuilder:
         """Build axis label with channel and unit."""
         if custom_label:
             return custom_label
-        return f"{channel} [{unit}]" if unit else channel
+        
+        label = ChannelMetadata.get_label(channel)
+        return f"{label} [{unit}]" if unit else label
 
 
 class PlottingUtils:
