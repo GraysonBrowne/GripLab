@@ -239,7 +239,9 @@ class PlotBuilder:
                 cmin=color_range[0],
                 cmax=color_range[1],
                 colorbar=dict(
-                    title=config.color_label, showticklabels=config.show_axes
+                    title=dict(text=config.color_label,
+                               side="right"),
+                    showticklabels=config.show_axes
                 ),
                 showscale=True,
             ),
@@ -339,7 +341,8 @@ class PlotBuilder:
                 cmin=color_range[0],
                 cmax=color_range[1],
                 colorbar=dict(
-                    title=config.color_label, showticklabels=config.show_axes
+                    title=dict(text=config.color_label,
+                               side="right"), showticklabels=config.show_axes
                 ),
                 showscale=True,
             ),
