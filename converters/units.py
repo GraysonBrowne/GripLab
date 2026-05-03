@@ -63,7 +63,7 @@ class UnitSystemConverter:
         "TSTI": "temperature",
         "TSTC": "temperature",
         "TSTO": "temperature",
-        "AmbTmp": "temperature",
+        "AMBTMP": "temperature",
         # Time
         "ET": "time",
     }
@@ -107,8 +107,8 @@ class UnitSystemConverter:
             UnitSystem.USCS: ("rpm", 2 * math.pi / 60, 0),
         },
         "temperature": {
-            UnitSystem.SI: ("deg k", 1.0, 0),
-            UnitSystem.METRIC: ("deg c", 1.0, 273.15),
+            UnitSystem.SI: ("deg K", 1.0, 0),
+            UnitSystem.METRIC: ("deg C", 1.0, 273.15),
             UnitSystem.USCS: ("deg F", 5 / 9, (255.37, 459.67)),
         },
         "time": {

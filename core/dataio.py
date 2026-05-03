@@ -215,8 +215,17 @@ class DataImporter:
             file_data = loadmat(str(filepath))
 
             # Extract channels and units
-            channels = np.concatenate(file_data["channel"][0][0][0][0]).ravel().tolist()
-            units = np.concatenate(file_data["channel"][0][0][1][0]).ravel().tolist()
+            raw_channels = np.concatenate(file_data["channel"][0][0][0][0]).ravel().tolist()
+            raw_units = np.concatenate(file_data["channel"][0][0][1][0]).ravel().tolist()
+
+            # Standardize channel names to uppercase
+            channels = [ch.upper() for ch in raw_channels]
+
+            # Standardize units and handle temperature cases
+            units = [unit.strip() for unit in raw_units]
+            for i, unit in enumerate(units):
+                if unit.lower().startswith("deg") and len(unit) > 3:
+                    units[i] = unit[:-1] + unit[-1].upper()
 
             # Stack channel data
             data = np.column_stack([file_data[chan] for chan in channels])
@@ -274,8 +283,17 @@ class DataImporter:
                 header_lines = list(islice(f, 3))
 
             # Parse header
-            channels = header_lines[1].strip().split("\t")
-            units = header_lines[2].strip().split("\t")
+            raw_channels = header_lines[1].strip().split("\t")
+            raw_units = header_lines[2].strip().split("\t")
+
+            # Standardize channel names to uppercase
+            channels = [ch.upper() for ch in raw_channels]
+
+            # Standardize units and handle temperature cases
+            units = [unit.strip() for unit in raw_units]
+            for i, unit in enumerate(units):
+                if unit.lower().startswith("deg") and len(unit) > 3:
+                    units[i] = unit[:-1] + unit[-1].upper()
 
             # Load data
             data = np.loadtxt(filepath, delimiter="\t", skiprows=3)
