@@ -2,19 +2,22 @@
 """Business logic controllers for GripLab application."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import plotly.express as px
+from plotly.graph_objects import Figure
 
-import core.dataio as IO
+from core.dataio import DataImporter, DataManager
 from core.plotting import PlottingUtils
 from utils.logger import logger
+
+from .config import AppConfig
 
 
 class DataController:
     """Controller for data management operations."""
 
-    def __init__(self, data_manager: IO.DataManager, config):
+    def __init__(self, data_manager: DataManager, config: AppConfig):
         self.dm = data_manager
         self.config = config
         self.import_counter = 0
@@ -35,12 +38,15 @@ class DataController:
             # Import based on file type
             try:
                 if path.suffix.lower() == ".mat":
-                    dataset = IO.import_mat(path, name, color, demo_name)
+                    dataset = DataImporter.import_mat(path, name, color, demo_name)
                 elif path.suffix.lower() in [".dat", ".txt"]:
-                    dataset = IO.import_dat(path, name, color, demo_name)
+                    dataset = DataImporter.import_dat(path, name, color, demo_name)
                 else:
                     logger.error(f"Unsupported file type: {path.suffix}")
                     continue
+
+                if dataset is None:
+                    raise ValueError(f"No dataset found for {name}")
 
                 self.dm.add_dataset(name, dataset)
                 imported_names.append(name)
@@ -72,6 +78,8 @@ class DataController:
                 idx = self.dm.list_demo_names().index(dataset_name)
                 name = self.dm.list_datasets()[idx]
                 dataset = self.dm.get_dataset(name)
+                if dataset is None:
+                    raise ValueError(f"No dataset found for {name}")
                 original_name = dataset.demo_name
 
                 # Update demo attributes
@@ -86,6 +94,8 @@ class DataController:
             else:
                 # Handle regular mode updates
                 dataset = self.dm.get_dataset(dataset_name)
+                if dataset is None:
+                    raise ValueError(f"No dataset found for {dataset_name}")
                 original_name = dataset.name
 
                 # Update attributes
@@ -111,6 +121,8 @@ class DataController:
                 idx = self.dm.list_demo_names().index(dataset_name)
                 name = self.dm.list_datasets()[idx]
                 dataset = self.dm.get_dataset(name)
+                if dataset is None:
+                    raise ValueError(f"No dataset found for {name}")
 
                 return {
                     "name": dataset.demo_name,
@@ -121,6 +133,8 @@ class DataController:
                 }
             else:
                 dataset = self.dm.get_dataset(dataset_name)
+                if dataset is None:
+                    raise ValueError(f"No dataset found for {dataset_name}")
 
                 return {
                     "name": dataset.name,
@@ -156,18 +170,18 @@ class DataController:
 
     def _get_next_color(self) -> str:
         """Get the next color from the configured colorway."""
-        colorway = px.colors.qualitative.__getattribute__(self.config.colorway)
+        colorway = getattr(px.colors.qualitative, self.config.colorway)
         return colorway[self.import_counter % len(colorway)]
 
 
 class PlotController:
     """Controller for plotting operations."""
 
-    def __init__(self, data_manager: IO.DataManager, config):
+    def __init__(self, data_manager: DataManager, config: AppConfig):
         self.dm = data_manager
         self.config = config
 
-    def create_plot(self, plot_params: Dict[str, Any]) -> tuple:
+    def create_plot(self, plot_params: Dict[str, Any]) -> Tuple[Optional[Figure], int]:
         """Create a plot based on the provided parameters."""
         try:
             fig, node_count = PlottingUtils.plot_data(
@@ -199,13 +213,16 @@ class PlotController:
                 plot_params.get("c_label_text", ""),
                 plot_params.get("font_size", 18),
                 plot_params.get("marker_size", 10),
+                plot_params.get("marker_opacity", 1.0),
             )
             return fig, node_count
         except Exception as e:
             logger.error(f"Error creating plot: {e}", exc_info=True)
             return None, 0
 
-    def get_plot_parameters(self, widgets, config) -> Dict[str, Any]:
+    def get_plot_parameters(
+        self, widgets: Dict[str, Any], config: AppConfig
+    ) -> Dict[str, Any]:
         """Collect plot parameters from widgets."""
         return {
             "data_table": widgets["data_table"],
@@ -235,4 +252,5 @@ class PlotController:
             "c_label_text": widgets["plot_settings"].c_label.value,
             "font_size": widgets["plot_settings"].font_size.value,
             "marker_size": widgets["plot_settings"].marker_size.value,
+            "marker_opacity": widgets["plot_settings"].marker_opacity.value,
         }

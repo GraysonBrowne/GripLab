@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+ 
+[project]
+name = "GripLab"
+version = "2026.04.1.0"
+description = "Formula SAE tire data analysis application"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy==2.3.2",
+    "scipy==1.16.1",
+    "panel==1.7.5",
+    "rich==14.1.0",
+    "watchfiles==1.1.0",
+    "pandas==2.3.2",
+    "plotly==6.3.0",
+    "pyyaml==6.0.2",
+]
+ 
+[project.optional-dependencies]
+dev = [
+    "ruff==0.15.9",
+]
+build = [
+    "pyinstaller==6.16.0",
+]
+ 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "core*", "converters*", "ui*", "utils*"]
+ 
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+ 
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+]
+ignore = [
+    "E203",  # whitespace before ':' — conflicts with formatter
+]
+ 
+[tool.ruff.lint.isort]
+known-first-party = ["app", "core", "converters", "ui", "utils"]

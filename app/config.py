@@ -1,12 +1,14 @@
 # app/config.py
 """Configuration management for GripLab application."""
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict
 
 import yaml
 
+from converters.conventions import SignConvention
+from converters.units import UnitSystem
 from utils.logger import logger
 
 
@@ -15,8 +17,8 @@ class AppConfig:
     """Application configuration container."""
 
     theme: str = "dark"
-    unit_system: str = "USCS"
-    sign_convention: str = "ISO"
+    unit_system: UnitSystem = UnitSystem.USCS
+    sign_convention: SignConvention = SignConvention.ISO
     demo_mode: bool = False
     colorway: str = "G10"
     colormap: str = "Jet"
@@ -30,12 +32,14 @@ class AppConfig:
                 data = yaml.safe_load(f)
                 return cls(
                     theme=data.get("theme", "dark"),
-                    unit_system=data.get("unit_system", "USCS"),
-                    sign_convention=data.get("sign_convention", "ISO"),
+                    unit_system=UnitSystem(data.get("unit_system", "USCS")),
+                    sign_convention=SignConvention(data.get("sign_convention", "ISO")),
                     demo_mode=data.get("demo_mode", False),
                     colorway=data.get("plotting", {}).get("colorway", "G10"),
                     colormap=data.get("plotting", {}).get("colormap", "Jet"),
-                    data_dir=data.get("paths", {}).get("data_dir", str(Path.cwd())),
+                    data_dir=str(
+                        data.get("paths", {}).get("data_dir", str(Path.cwd()))
+                    ),
                 )
         except FileNotFoundError:
             logger.warning(f"Config file {filepath} not found, using defaults")
@@ -46,8 +50,8 @@ class AppConfig:
         """Convert configuration to dictionary for YAML export."""
         return {
             "theme": self.theme,
-            "unit_system": self.unit_system,
-            "sign_convention": self.sign_convention,
+            "unit_system": self.unit_system.value,
+            "sign_convention": self.sign_convention.value,
             "demo_mode": self.demo_mode,
             "plotting": {
                 "colorway": self.colorway,

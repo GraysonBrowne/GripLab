@@ -3,11 +3,20 @@
 
 import math
 from dataclasses import replace
-from typing import Any, Dict, List, Optional, Tuple
+from enum import StrEnum
+from typing import Any, Dict, List
 
 import numpy as np
 
 from utils.logger import logger
+
+
+class UnitSystem(StrEnum):
+    """Supported unit systems."""
+
+    SI = "SI"
+    METRIC = "Metric"
+    USCS = "USCS"
 
 
 class UnitSystemConverter:
@@ -15,7 +24,12 @@ class UnitSystemConverter:
 
     # Pre-computed conversion factors for direct access
     # Structure: [from_system][to_system][unit_type] = (factor, offset)
-    _CONVERSION_CACHE: Dict[str, Dict[str, Dict[str, Tuple[float, Any]]]] = {}
+    ConversionTuple = tuple[
+        float, float, float, float
+    ]  # (to_si, from_si, to_offset, from_offset)
+    _CONVERSION_CACHE: Dict[
+        UnitSystem, Dict[UnitSystem, Dict[str, ConversionTuple]]
+    ] = {}
 
     # Static channel mappings (no Enum overhead)
     CHANNEL_TO_TYPE = {
@@ -49,7 +63,7 @@ class UnitSystemConverter:
         "TSTI": "temperature",
         "TSTC": "temperature",
         "TSTO": "temperature",
-        "AmbTmp": "temperature",
+        "AMBTMP": "temperature",
         # Time
         "ET": "time",
     }
@@ -58,49 +72,49 @@ class UnitSystemConverter:
     # Structure: [unit_type][system] = (unit_string, to_si_factor, offset)
     UNIT_DEFS = {
         "length": {
-            "SI": ("m", 1.0, 0),
-            "Metric": ("cm", 0.01, 0),
-            "USCS": ("in", 0.0254, 0),
+            UnitSystem.SI: ("m", 1.0, 0),
+            UnitSystem.METRIC: ("cm", 0.01, 0),
+            UnitSystem.USCS: ("in", 0.0254, 0),
         },
         "force": {
-            "SI": ("N", 1.0, 0),
-            "Metric": ("N", 1.0, 0),
-            "USCS": ("lb", 4.44822, 0),
+            UnitSystem.SI: ("N", 1.0, 0),
+            UnitSystem.METRIC: ("N", 1.0, 0),
+            UnitSystem.USCS: ("lb", 4.44822, 0),
         },
         "torque": {
-            "SI": ("Nm", 1.0, 0),
-            "Metric": ("Nm", 1.0, 0),
-            "USCS": ("ft-lb", 1.35582, 0),
+            UnitSystem.SI: ("Nm", 1.0, 0),
+            UnitSystem.METRIC: ("Nm", 1.0, 0),
+            UnitSystem.USCS: ("ft-lb", 1.35582, 0),
         },
         "pressure": {
-            "SI": ("Pa", 1.0, 0),
-            "Metric": ("kPa", 1000, 0),
-            "USCS": ("psi", 6894.76, 0),
+            UnitSystem.SI: ("Pa", 1.0, 0),
+            UnitSystem.METRIC: ("kPa", 1000, 0),
+            UnitSystem.USCS: ("psi", 6894.76, 0),
         },
         "angle": {
-            "SI": ("rad", 1.0, 0),
-            "Metric": ("deg", math.pi / 180, 0),
-            "USCS": ("deg", math.pi / 180, 0),
+            UnitSystem.SI: ("rad", 1.0, 0),
+            UnitSystem.METRIC: ("deg", math.pi / 180, 0),
+            UnitSystem.USCS: ("deg", math.pi / 180, 0),
         },
         "speed": {
-            "SI": ("m/s", 1.0, 0),
-            "Metric": ("kph", 1000 / 3600, 0),
-            "USCS": ("mph", 0.44704, 0),
+            UnitSystem.SI: ("m/s", 1.0, 0),
+            UnitSystem.METRIC: ("kph", 1000 / 3600, 0),
+            UnitSystem.USCS: ("mph", 0.44704, 0),
         },
         "rotational_speed": {
-            "SI": ("rad/s", 1.0, 0),
-            "Metric": ("rpm", 2 * math.pi / 60, 0),
-            "USCS": ("rpm", 2 * math.pi / 60, 0),
+            UnitSystem.SI: ("rad/s", 1.0, 0),
+            UnitSystem.METRIC: ("rpm", 2 * math.pi / 60, 0),
+            UnitSystem.USCS: ("rpm", 2 * math.pi / 60, 0),
         },
         "temperature": {
-            "SI": ("deg k", 1.0, 0),
-            "Metric": ("deg c", 1.0, 273.15),
-            "USCS": ("deg F", 5 / 9, (255.37, 459.67)),
+            UnitSystem.SI: ("deg K", 1.0, 0),
+            UnitSystem.METRIC: ("deg C", 1.0, 273.15),
+            UnitSystem.USCS: ("deg F", 5 / 9, (255.37, 459.67)),
         },
         "time": {
-            "SI": ("sec", 1.0, 0),
-            "Metric": ("sec", 1.0, 0),
-            "USCS": ("sec", 1.0, 0),
+            UnitSystem.SI: ("sec", 1.0, 0),
+            UnitSystem.METRIC: ("sec", 1.0, 0),
+            UnitSystem.USCS: ("sec", 1.0, 0),
         },
     }
 
@@ -110,7 +124,7 @@ class UnitSystemConverter:
         if cls._CONVERSION_CACHE:
             return  # Already initialized
 
-        systems = ["SI", "Metric", "USCS"]
+        systems = list(UnitSystem)
 
         for from_sys in systems:
             cls._CONVERSION_CACHE[from_sys] = {}
@@ -120,7 +134,12 @@ class UnitSystemConverter:
                 for unit_type, defs in cls.UNIT_DEFS.items():
                     if from_sys == to_sys:
                         # No conversion needed
-                        cls._CONVERSION_CACHE[from_sys][to_sys][unit_type] = (1.0, 0, 0)
+                        cls._CONVERSION_CACHE[from_sys][to_sys][unit_type] = (
+                            1.0,
+                            1.0,
+                            0,
+                            0,
+                        )
                     else:
                         from_def = defs[from_sys]
                         to_def = defs[to_sys]
@@ -161,7 +180,7 @@ class UnitSystemConverter:
         return [cls.CHANNEL_TO_TYPE.get(ch, "-") for ch in channels]
 
     @classmethod
-    def convert_dataset(cls, dataset: Any, to_system: str) -> Any:
+    def convert_dataset(cls, dataset: Any, to_system: UnitSystem) -> Any:
         """
         Dataset conversion.
 
@@ -254,7 +273,11 @@ class UnitSystemConverter:
 
     @classmethod
     def convert_value(
-        cls, value: float, unit_type: str, from_system: str, to_system: str
+        cls,
+        value: float,
+        unit_type: str,
+        from_system: UnitSystem,
+        to_system: UnitSystem,
     ) -> float:
         """
         Single value conversion.

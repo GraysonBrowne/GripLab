@@ -1,10 +1,21 @@
 # ui/components.py
 """UI component classes for GripLab application."""
 
-from typing import List
+from typing import List, Optional
 
 import panel as pn
 import plotly.express as px
+
+from converters.conventions import SignConvention
+from converters.units import UnitSystem
+
+
+def _cmap_css() -> str:
+    return (
+        "div, div:hover {background: var(--panel-surface-color); color: currentColor}"
+        if pn.config.theme == "dark"
+        else ""
+    )
 
 
 class WidgetFactory:
@@ -20,7 +31,9 @@ class WidgetFactory:
         return pn.widgets.Button(name=name, **defaults)
 
     @staticmethod
-    def create_select(name: str, options: List = None, **kwargs) -> pn.widgets.Select:
+    def create_select(
+        name: str, options: Optional[List] = None, **kwargs
+    ) -> pn.widgets.Select:
         """Create a select dropdown widget."""
         defaults = {"options": options or [], "sizing_mode": "stretch_width"}
         defaults.update(kwargs)
@@ -188,6 +201,15 @@ class PlotSettingsWidgets:
             sizing_mode="stretch_width",
         )
 
+        self.marker_opacity = pn.widgets.FloatSlider(
+            name="Marker Opacity",
+            value=0.3,
+            start=0.0,
+            end=1.0,
+            step=0.05,
+            sizing_mode="stretch_width",
+        )
+
         # Color map
         color_map_options = {
             "Jet": [
@@ -206,12 +228,13 @@ class PlotSettingsWidgets:
             "Viridis": px.colors.sequential.Viridis,
         }
 
-        self.color_map = pn.widgets.ColorMap(
+        self.color_map = pn.widgets.ColorMap(  # type: ignore[attr-defined]
             name="Color Map",
             options=color_map_options,
             value=color_map_options["Jet"],
             ncols=1,
             width=200,
+            stylesheets=[_cmap_css()],
         )
 
     def update_axis_state(self, plot_type: str):
@@ -244,12 +267,13 @@ class AppSettingsWidgets:
             "Dark2": px.colors.qualitative.Dark2,
         }
 
-        self.colorway_select = pn.widgets.ColorMap(
+        self.colorway_select = pn.widgets.ColorMap(  # type: ignore[attr-defined]
             name="Color Sequence",
             options=colorway_dict,
             value=colorway_dict[config.colorway],
             ncols=1,
             width=200,
+            stylesheets=[_cmap_css()],
         )
 
         self.demo_switch = pn.widgets.Switch(name="Demo Mode", value=config.demo_mode)
@@ -264,7 +288,7 @@ class AppSettingsWidgets:
 
         self.unit_select = pn.widgets.Select(
             name="Unit System",
-            options=["USCS", "Metric"],
+            options=[s.value for s in UnitSystem if s != UnitSystem.SI],
             value=config.unit_system,
             description="USCS: lb, ft-lb, in, psi, mph, deg F \n\r"
             "Metric: N, N-m, cm, kPa, kph, deg C",
@@ -273,7 +297,7 @@ class AppSettingsWidgets:
 
         self.sign_select = pn.widgets.Select(
             name="Sign Convention",
-            options=["SAE", "Adapted SAE", "ISO", "Adapted ISO"],
+            options=[c.value for c in SignConvention],
             value=config.sign_convention,
             description="SAE: As supplied from TTC \n\r"
             "Adapted SAE: Used in Pacejka 2012 \n\r"

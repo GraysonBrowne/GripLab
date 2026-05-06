@@ -1,19 +1,19 @@
 # core/dataio.py
 """Data I/O and management for GripLab application."""
 
-import os
 import re
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from itertools import islice
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.io import loadmat
 
 from converters.command import CmdChannelGenerator
-from converters.units import UnitSystemConverter
+from converters.conventions import SignConvention
+from converters.units import UnitSystem, UnitSystemConverter
 from utils.logger import logger
 
 
@@ -32,8 +32,8 @@ class Dataset:
     # Metadata
     tire_id: str
     rim_width: int
-    unit_system: str
-    sign_convention: str
+    unit_system: UnitSystem
+    sign_convention: SignConvention
     node_color: str
     notes: str = ""
 
@@ -215,11 +215,24 @@ class DataImporter:
             file_data = loadmat(str(filepath))
 
             # Extract channels and units
-            channels = np.concatenate(file_data["channel"][0][0][0][0]).ravel().tolist()
-            units = np.concatenate(file_data["channel"][0][0][1][0]).ravel().tolist()
+            raw_channels = (
+                np.concatenate(file_data["channel"][0][0][0][0]).ravel().tolist()
+            )
+            raw_units = (
+                np.concatenate(file_data["channel"][0][0][1][0]).ravel().tolist()
+            )
+
+            # Standardize units and handle temperature cases
+            units = [unit.strip() for unit in raw_units]
+            for i, unit in enumerate(units):
+                if unit.lower().startswith("deg") and len(unit) > 3:
+                    units[i] = unit[:-1] + unit[-1].upper()
 
             # Stack channel data
-            data = np.column_stack([file_data[chan] for chan in channels])
+            data = np.column_stack([file_data[chan] for chan in raw_channels])
+
+            # Standardize channel names to uppercase
+            channels = [ch.upper() for ch in raw_channels]
 
             # Ensure SL channel exists
             if "SL" not in channels:
@@ -274,11 +287,20 @@ class DataImporter:
                 header_lines = list(islice(f, 3))
 
             # Parse header
-            channels = header_lines[1].strip().split("\t")
-            units = header_lines[2].strip().split("\t")
+            raw_channels = header_lines[1].strip().split("\t")
+            raw_units = header_lines[2].strip().split("\t")
+
+            # Standardize units and handle temperature cases
+            units = [unit.strip() for unit in raw_units]
+            for i, unit in enumerate(units):
+                if unit.lower().startswith("deg") and len(unit) > 3:
+                    units[i] = unit[:-1] + unit[-1].upper()
 
             # Load data
             data = np.loadtxt(filepath, delimiter="\t", skiprows=3)
+
+            # Standardize channel names to uppercase
+            channels = [ch.upper() for ch in raw_channels]
 
             # Ensure SL channel exists
             if "SL" not in channels:
@@ -328,8 +350,8 @@ class DataImporter:
         metadata = {
             "tire_id": "",
             "rim_width": 0,
-            "unit_system": "USCS",
-            "sign_convention": "SAE",
+            "unit_system": UnitSystem.USCS,
+            "sign_convention": SignConvention.SAE,
             "notes": "",
         }
 
@@ -345,14 +367,16 @@ class DataImporter:
 
         # Extract unit system
         if "units" in file_data:
-            metadata["unit_system"] = file_data["units"]
+            metadata["unit_system"] = UnitSystem(file_data["units"])
         else:
             # Infer from units if not specified
             if "channel" in file_data:
                 units = (
                     np.concatenate(file_data["channel"][0][0][1][0]).ravel().tolist()
                 )
-                metadata["unit_system"] = "USCS" if "lb" in str(units) else "Metric"
+                metadata["unit_system"] = (
+                    UnitSystem.USCS if "lb" in str(units) else UnitSystem.METRIC
+                )
             logger.warning(
                 f"Unit system not specified in {name}, "
                 f"inferred {metadata['unit_system']}"
@@ -360,10 +384,10 @@ class DataImporter:
 
         # Extract sign convention
         if "sign" in file_data:
-            metadata["sign_convention"] = file_data["sign"]
+            metadata["sign_convention"] = SignConvention(file_data["sign"])
         else:
             logger.warning(
-                f"Sign convention not specified in {name}, " f"defaulting to SAE"
+                f"Sign convention not specified in {name}, defaulting to SAE"
             )
 
         # Extract notes
@@ -380,8 +404,8 @@ class DataImporter:
         metadata = {
             "tire_id": "",
             "rim_width": 0,
-            "unit_system": "USCS",
-            "sign_convention": "SAE",
+            "unit_system": UnitSystem.USCS,
+            "sign_convention": SignConvention.SAE,
             "notes": "",
         }
 
@@ -398,9 +422,11 @@ class DataImporter:
         # Extract unit system
         unit_match = re.search(r"Unit_System=([^;]+)", header_line)
         if unit_match:
-            metadata["unit_system"] = unit_match.group(1)
+            metadata["unit_system"] = UnitSystem(unit_match.group(1))
         else:
-            metadata["unit_system"] = "USCS" if "lb" in units else "Metric"
+            metadata["unit_system"] = (
+                UnitSystem.USCS if "lb" in units else UnitSystem.METRIC
+            )
             logger.warning(
                 f"Unit system not specified in {name}, {metadata['unit_system']} "
                 f"inferred from channel names."
@@ -409,7 +435,7 @@ class DataImporter:
         # Extract sign convention
         sign_match = re.search(r"Sign_Convention=([^;]+)", header_line)
         if sign_match:
-            metadata["sign_convention"] = sign_match.group(1)
+            metadata["sign_convention"] = SignConvention(sign_match.group(1))
         else:
             logger.warning(
                 f"Sign convention not specified in {name}, defaulting to SAE"
@@ -421,18 +447,3 @@ class DataImporter:
             metadata["notes"] = notes_match.group(1)
 
         return metadata
-
-
-# Maintain backward compatibility with old function names
-def import_mat(filepath, file_name, node_color, demo_name):
-    """Legacy function for importing MAT files."""
-    return DataImporter.import_mat(Path(filepath), file_name, node_color, demo_name)
-
-
-def import_dat(filepath, file_name, node_color, demo_name):
-    """Legacy function for importing DAT files."""
-    return DataImporter.import_dat(Path(filepath), file_name, node_color, demo_name)
-
-
-# Re-export for backward compatibility
-dataset = Dataset

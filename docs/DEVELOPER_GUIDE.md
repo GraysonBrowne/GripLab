@@ -16,7 +16,10 @@
 
 ## Project Overview
 
-GripLab is an internal tire data analysis application built with Panel, Plotly, and scientific Python libraries. It provides comprehensive tools for importing, processing, visualizing, and analyzing tire test data with support for multiple unit systems and sign conventions.
+GripLab is an internal tire data analysis application built with Panel, Plotly, and 
+scientific Python libraries. It provides comprehensive tools for importing, processing, 
+visualizing, and analyzing tire test data with support for multiple unit systems and 
+sign conventions.
 
 ### Key Features
 - Multi-format data import (MATLAB .mat, ASCII .dat/.txt)
@@ -118,7 +121,7 @@ GripLab/
 │   ├── __init__.py
 │   ├── units.py               # Unit system conversion (UnitSystemConverter)
 │   ├── conventions.py         # Sign convention conversion (ConventionConverter)
-│   └── commands.py            # Command channel generation (CmdChannelGenerator)
+│   └── command.py             # Command channel generation (CmdChannelGenerator)
 │
 ├── utils/                     # Shared utilities
 │   ├── __init__.py
