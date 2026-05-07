@@ -1,5 +1,5 @@
 ![GripLab](images/GripLab_Banner.png)
-# Developer Guide (v2026.06.1)
+# Developer Guide (v2026.05.1)
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
