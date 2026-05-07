@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
  
 [project]
 name = "GripLab"
-version = "2026.04.1.0"
+version = "2026.05.1"
 description = "Formula SAE tire data analysis application"
 requires-python = ">=3.12"
 dependencies = [
