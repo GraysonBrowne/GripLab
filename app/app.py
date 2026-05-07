@@ -4,7 +4,9 @@ GripLab - Tire Data Analysis Application
 """
 
 import sys
+import tomllib
 import webbrowser
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any, cast
 
@@ -12,6 +14,7 @@ import numpy as np
 import pandas as pd
 import panel as pn
 import plotly.express as px
+from bokeh.models import Tooltip
 from panel.io import hold
 
 from app.config import AppConfig
@@ -35,18 +38,25 @@ from ui.modals import (
 from utils.dialogs import Tk_utils
 from utils.logger import logger
 
+def _read_version() -> str:
+    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+    with open(pyproject_path, "rb") as f:
+        return tomllib.load(f)["project"]["version"]
+    
+__version__ = _read_version()
 
 class GripLabApp:
     """Main application orchestrator."""
 
     def __init__(self):
+        logger.info(f"GripLab v{__version__} starting")
         # Determine program directory
         if getattr(sys, "frozen", False):
             # Adjust working directory for frozen executable
-            self.program_dir = Path(sys.executable).parent.parent
+            self.local_dir = Path(sys.executable).parent
         else:
-            self.program_dir = Path(__file__).parent.parent
-        self.local_dir = Path(__file__).parent.parent
+            self.local_dir = Path(__file__).parent.parent
+        self.program_dir = Path(__file__).parent.parent
 
         # Initialize configuration
         self.config_path = str(Path(self.local_dir, "config.yaml"))
@@ -99,6 +109,7 @@ class GripLabApp:
             sidebar_width=420,
             accent="#283442",
             theme=self.config.theme,
+            theme_toggle=False,
             raw_css=[self._load_css()],
         )
 
@@ -126,10 +137,13 @@ class GripLabApp:
             ("TTC Forum", "ttc"),
         ]
         self.help_menu = pn.widgets.MenuButton(
-            name="Help", items=menu_items, button_type="primary", width=100
+            name="Help", items=menu_items, button_type="primary", width=100,
         )
         self.settings_btn = pn.widgets.Button(
             name="Settings", button_type="primary", width=100
+        )
+        self.version_icon = pn.widgets.TooltipIcon(value=Tooltip(
+            content=f"v{__version__}",  position="bottom")
         )
 
     def _init_sidebar_widgets(self):
@@ -164,7 +178,8 @@ class GripLabApp:
 
         header_object = cast(list, self.template.header)
         header_object.append(
-            pn.Row(pn.layout.HSpacer(), self.settings_btn, self.help_menu)
+            pn.Row(pn.layout.HSpacer(), self.settings_btn, self.help_menu, 
+                   self.version_icon)
         )
 
         # Sidebar - Plot tab
@@ -656,8 +671,8 @@ class GripLabApp:
             def on_session_destroyed(session_context):
                 logger.info("Shutting down server...")
                 server.stop()
-
-            pn.state.on_session_destroyed(on_session_destroyed)
+            # Need to prevent shutting down on page refresh
+            #pn.state.on_session_destroyed(on_session_destroyed)
         else:
             # Running in development mode
             self.template.servable(title="GripLab")
