@@ -14,11 +14,11 @@ shell_handler = RichHandler()
 
 if getattr(sys, "frozen", False):
     # If running as a frozen executable, set the log file to the same directory
-    program_dir = Path(sys.executable).parent
+    local_dir = Path(sys.executable).parent
 else:
-    program_dir = Path(__file__).parent
+    local_dir = Path(__file__).parent.parent
 
-file_handler = logging.FileHandler(Path(program_dir, "debug.log"))
+file_handler = logging.FileHandler(Path(local_dir, "debug.log"))
 
 # Set the logging level
 logger.setLevel(logging.DEBUG)
