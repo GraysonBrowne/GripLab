@@ -6,7 +6,6 @@ GripLab - Tire Data Analysis Application
 import sys
 import tomllib
 import webbrowser
-from importlib.metadata import version
 from pathlib import Path
 from typing import Any, cast
 
@@ -38,12 +37,15 @@ from ui.modals import (
 from utils.dialogs import Tk_utils
 from utils.logger import logger
 
+
 def _read_version() -> str:
     pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
     with open(pyproject_path, "rb") as f:
         return tomllib.load(f)["project"]["version"]
-    
+
+
 __version__ = _read_version()
+
 
 class GripLabApp:
     """Main application orchestrator."""
@@ -137,13 +139,16 @@ class GripLabApp:
             ("TTC Forum", "ttc"),
         ]
         self.help_menu = pn.widgets.MenuButton(
-            name="Help", items=menu_items, button_type="primary", width=100,
+            name="Help",
+            items=menu_items,
+            button_type="primary",
+            width=100,
         )
         self.settings_btn = pn.widgets.Button(
             name="Settings", button_type="primary", width=100
         )
-        self.version_icon = pn.widgets.TooltipIcon(value=Tooltip(
-            content=f"v{__version__}",  position="bottom")
+        self.version_icon = pn.widgets.TooltipIcon(
+            value=Tooltip(content=f"v{__version__}", position="bottom")
         )
 
     def _init_sidebar_widgets(self):
@@ -178,8 +183,12 @@ class GripLabApp:
 
         header_object = cast(list, self.template.header)
         header_object.append(
-            pn.Row(pn.layout.HSpacer(), self.settings_btn, self.help_menu, 
-                   self.version_icon)
+            pn.Row(
+                pn.layout.HSpacer(),
+                self.settings_btn,
+                self.help_menu,
+                self.version_icon,
+            )
         )
 
         # Sidebar - Plot tab
@@ -671,8 +680,9 @@ class GripLabApp:
             def on_session_destroyed(session_context):
                 logger.info("Shutting down server...")
                 server.stop()
+
             # Need to prevent shutting down on page refresh
-            #pn.state.on_session_destroyed(on_session_destroyed)
+            # pn.state.on_session_destroyed(on_session_destroyed)
         else:
             # Running in development mode
             self.template.servable(title="GripLab")
