@@ -1,5 +1,5 @@
 ![GripLab](images/GripLab_Banner.png)
-# Developer Guide (v2025.10.1.0)
+# Developer Guide (v2026.06.1)
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
@@ -737,24 +737,22 @@ python scripts/build_exe.py
 ## Version History
 
 ### Versioning Scheme
-GripLab uses a date-based versioning structure: **`YYYY.MM.Major.Minor`**
+GripLab uses a date-based versioning structure: **`YYYY.MM.Build`**
 
 - **YYYY**: Year of release
-- **MM**: Month of release
-- **Major**: Major version within that month (breaking changes, significant features)
-- **Minor**: Minor version/patch (bug fixes, small improvements)
+- **MM**: Month of release  
+- **Build**: Build number within that month, starting at 1
 
 Examples:
-- `2025.10.1.0` - First major release in October 2025
-- `2025.10.1.1` - Bug fix for the above release
-- `2025.10.2.0` - Second major release in October 2025
-- `2026.01.1.0` - First major release in January 2026
+- `2025.10.1` - First release in October 2025
+- `2025.10.2` - Second release in October 2025
+- `2026.01.1` - First release in January 2026
 
 ### Release History
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 2025.10.1.0 | 2025-10-19 | Initial release |
+| 2026.05.1 | 2026-05-06 | Initial release |
 
 ---
 
