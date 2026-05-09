@@ -14,6 +14,8 @@ Compiled executables for Windows are available under [**Releases**](https://gith
 
 For full usage instructions, see the [**User Guide**](docs/USER_GUIDE.md).
 
+To stay in the loop and receive notifications when new releases are available, click Watch → Custom → Releases on the GitHub repository page.
+
 ---
 
 ## Features
