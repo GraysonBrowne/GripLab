@@ -1,6 +1,6 @@
 ![GripLab](images/GripLab_Banner.png)
 
-# GripLab User Guide - v2026.05.1
+# GripLab User Guide - v2026.05.2
 
 ## Table of Contents
 1. [Getting Started](#getting-started)

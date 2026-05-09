@@ -1,6 +1,6 @@
 ![GripLab](images/GripLab_Banner.png)
 
-# GripLab Developer Guide - v2026.05.1
+# GripLab Developer Guide - v2026.05.2
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
@@ -466,7 +466,8 @@ python scripts/build_exe.py
 The output executable is written to `dist/GripLab.exe`.
 
 ### Version File
-`version.txt` in the project root contains Windows VERSIONINFO metadata embedded by PyInstaller. Update it alongside `pyproject.toml` when releasing a new version.
+`version.txt` in the project root contains Windows VERSIONINFO metadata embedded by PyInstaller. Update it alongside `DEVELOPER_GUIDE.md`
+and `USER_GUIDE.md` headers, and `pyproject.toml` when releasing a new version.
 
 ---
 
