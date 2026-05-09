@@ -133,7 +133,7 @@ class GripLabApp:
         """Initialize header widgets."""
         menu_items = [
             ("Sign Convention", "signcon"),
-            ("GitHub Repository", "readme"),
+            ("User Guide", "userguide"),
             ("Discussion Board", "discuss"),
             ("Report An Issue", "issue"),
             ("TTC Forum", "ttc"),
@@ -531,8 +531,8 @@ class GripLabApp:
             "signcon": lambda: webbrowser.open_new(
                 str(Path(self.program_dir, "docs", "Sign_Convention.pdf"))
             ),
-            "readme": lambda: webbrowser.open_new(
-                "https://github.com/GraysonBrowne/GripLab/blob/main/README.md"
+            "userguide": lambda: webbrowser.open_new(
+                "https://github.com/GraysonBrowne/GripLab/blob/main/docs/USER_GUIDE.md"
             ),
             "discuss": lambda: webbrowser.open_new(
                 "https://github.com/GraysonBrowne/GripLab/discussions"

@@ -1,58 +1,48 @@
+![GripLab](docs/images/GripLab_Banner.png)
+
 # GripLab
 
-An open-source Python tool for FSAE/Formula Student teams to process and analyze tire test data, fit tire models, and visualize results. The goal is to lower the barrier for students to use TTC data effectively in vehicle simulations by providing clear, accessible tools for data handling and modeling.
+An open-source tire data analysis tool built for Formula SAE / Formula Student teams. GripLab provides an interactive interface for importing, filtering, and visualizing TTC tire test data.
+
+![overview](docs/images/overview.png)
+
+---
+
+## Download
+
+Compiled executables for Windows are available under [**Releases**](https://github.com/GraysonBrowne/GripLab/releases). Download the latest version, place it in its own folder, and run it — no installation needed.
+
+For full usage instructions, see the [**User Guide**](docs/USER_GUIDE.md).
 
 ---
 
 ## Features
-- Import TTC and CSV tire test data  
-- Process and manipulate datasets (filtering, unit conversions, subsets)  
-- 2D and 3D plotting of tire data and fitted models  
-- Fit common tire models (e.g., Pacejka, polynomial)  
-- Export fitted parameters for use in simulations  
 
----
-
-## Installation
-Clone the repository and install dependencies:
-
-```bash
-git clone https://github.com/GraysonBrowne/GripLab.git
-cd GripLab
-pip install -r requirements.txt
-```
-
----
-
-## Usage
-Example (Python script or Jupyter notebook):
-
----
-
-## Roadmap
-- [x] Define requirements  
-- [ ] Implement core data import  
-- [ ] Add 2D plotting functions  
-- [ ] Add 3D visualization  
-- [ ] Implement model fitting (PAC2002, MF6.2)  
-- [ ] Documentation and tutorials  
-
-See [project_requirements.md](project_requirements.md) for full details.  
+- Import TTC tire test data in `.mat` and `.dat` formats
+- 2D and 3D interactive scatter plots with Plotly
+- Filter data by test condition using auto-generated command channels
+- Unit system conversion (USCS / Metric)
+- Sign convention conversion (SAE, Adapted SAE, ISO, Adapted ISO)
+- Configurable themes, color sequences, and plot styling
 
 ---
 
 ## Contributing
-Contributions are welcome! Please open an issue or submit a pull request.  
-Make sure to follow the coding style and include documentation with your changes.  
+
+Contributions are welcome. See the [**Developer Guide**](docs/DEVELOPER_GUIDE.md) for environment setup, architecture overview, and contribution guidelines.
 
 ---
 
 ## License
-This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.  
+
+MIT License — see [LICENSE](LICENSE) for details.  
+Copyright 2025–2026 Grayson Browne.
 
 ---
 
 ## Acknowledgments
-- Formula SAE / Formula Student community  
-- Tire Test Consortium (TTC)  
-- Open-source Python ecosystem (NumPy, pandas, matplotlib, SciPy, etc.)  
+
+- [Formula SAE / Formula Student](https://www.fsaeonline.com/) community
+- [Tire Test Consortium (TTC)](https://www.fsaettc.org/)
+- Pacejka, H. B. (2012). *Tyre and Vehicle Dynamics* (3rd ed.). Butterworth-Heinemann.
+- [HoloViz Panel](https://panel.holoviz.org/), [Plotly](https://plotly.com/python/), [NumPy](https://numpy.org/), [SciPy](https://scipy.org/)
