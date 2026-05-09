@@ -1,13 +1,13 @@
 # main.py
 """GripLab - Tire Data Analysis Application"""
 
-import importlib
+import importlib.util
 import os
 
 from app.app import GripLabApp
 
 if "_PYI_SPLASH_IPC" in os.environ and importlib.util.find_spec("pyi_splash"):
-    import pyi_splash
+    import pyi_splash  # type: ignore
 
     pyi_splash.update_text("UI Loaded ...")
     pyi_splash.close()
