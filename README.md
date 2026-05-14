@@ -31,7 +31,14 @@ To stay in the loop and receive notifications when new releases are available, c
 
 ## Contributing
 
-Contributions are welcome. See the [**Developer Guide**](docs/DEVELOPER_GUIDE.md) for environment setup, architecture overview, and contribution guidelines.
+Want to launch the app from the Python source code and make your own contributions? 
+Check out the [**Developer Guide**](docs/DEVELOPER_GUIDE.md) for environment setup, architecture overview, and contribution guidelines.
+
+---
+
+## Discourse
+
+Have questions, comments, or concerns? Head over to [**Discussions**](https://github.com/GraysonBrowne/GripLab/discussions) and start a conversation.
 
 ---
 
@@ -48,3 +55,15 @@ Copyright 2025–2026 Grayson Browne.
 - [Tire Test Consortium (TTC)](https://www.fsaettc.org/)
 - Pacejka, H. B. (2012). *Tyre and Vehicle Dynamics* (3rd ed.). Butterworth-Heinemann.
 - [HoloViz Panel](https://panel.holoviz.org/), [Plotly](https://plotly.com/python/), [NumPy](https://numpy.org/), [SciPy](https://scipy.org/)
+
+---
+
+## Additional Resources
+
+- [How to Navigate the Tire Test Consortium (TTC)](https://www.youtube.com/watch?v=YavRW3cShrg)
+- Gillespie, T. D. (1992). *Fundamentals of Vehicle Dynamics*. SAE International.
+- Milliken, W. F., & Milliken, D. L. (1995). *Race Car Vehicle Dynamics*. SAE International.
+- Guiggiani, M. (2014). *The Science of Vehicle Dynamics: Handling, Braking, and Ride of Road and Race Cars*. Springer.
+- Seward, D. (2014). *Race Car Design*. Palgrave Macmillan.
+- Smith, C. (1978). *Tune to Win*. Aero Publishers.
+- Segers, J. (2014). *Analysis Techniques for Racecar Data Acquisition* (2nd ed.). SAE International.
