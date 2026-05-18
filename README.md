@@ -60,6 +60,7 @@ Copyright 2025–2026 Grayson Browne.
 
 ## Additional Resources
 
+- [DesignJudges.com](https://www.designjudges.com/)
 - [How to Navigate the Tire Test Consortium (TTC)](https://www.youtube.com/watch?v=YavRW3cShrg)
 - Gillespie, T. D. (1992). *Fundamentals of Vehicle Dynamics*. SAE International.
 - Milliken, W. F., & Milliken, D. L. (1995). *Race Car Vehicle Dynamics*. SAE International.
