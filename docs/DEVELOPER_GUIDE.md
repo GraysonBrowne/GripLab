@@ -527,6 +527,7 @@ When releasing, update the version in **both** `pyproject.toml` and `version.txt
 | Version | Date | Notes |
 |---|---|---|
 | 2026.05.1 | 2026-05-06 | Initial release |
+| 2026.05.2 | 2026-05-09 | Documentation Update |
 
 ---
 
