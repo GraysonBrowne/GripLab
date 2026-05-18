@@ -470,6 +470,9 @@ class GripLabApp:
             self._refresh_data_table()
             self._update_data_select_options()
             self.data_widgets.data_select.value = updates["name"]
+        else:
+            self._refresh_data_table()
+            self.data_widgets.name_input.value = dataset_name
 
     def _on_demo_mode_change(self, demo_mode):
         """Handle demo mode toggle."""
