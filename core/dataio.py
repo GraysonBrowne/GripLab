@@ -158,7 +158,7 @@ class DataManager:
             return False
 
         if old_name != new_name:
-            if new_name in self._datasets:                          # <-- added
+            if new_name in self._datasets:
                 logger.warning(f"Dataset name '{new_name}' is already in use")
                 return False
             updated_dict = {}

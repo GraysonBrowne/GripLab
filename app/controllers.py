@@ -100,7 +100,11 @@ class DataController:
 
                 # Validate name uniqueness before making any changes
                 new_name = updates.get("name")
-                if new_name and new_name != original_name and new_name in self.dm.list_datasets():
+                if (
+                    new_name
+                    and new_name != original_name
+                    and new_name in self.dm.list_datasets()
+                ):
                     raise ValueError(f"Dataset name '{new_name}' is already in use")
 
                 # Update attributes
