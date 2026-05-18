@@ -470,6 +470,13 @@ class GripLabApp:
             self._refresh_data_table()
             self._update_data_select_options()
             self.data_widgets.data_select.value = updates["name"]
+        else:
+            self._refresh_data_table()
+            self.data_widgets.name_input.value = dataset_name
+            if pn.state.notifications:
+                pn.state.notifications.warning(
+                    "Dataset name must be unique", duration=4000
+                )
 
     def _on_demo_mode_change(self, demo_mode):
         """Handle demo mode toggle."""
