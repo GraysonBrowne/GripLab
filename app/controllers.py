@@ -98,6 +98,11 @@ class DataController:
                     raise ValueError(f"No dataset found for {dataset_name}")
                 original_name = dataset.name
 
+                # Validate name uniqueness before making any changes
+                new_name = updates.get("name")
+                if new_name and new_name != original_name and new_name in self.dm.list_datasets():
+                    raise ValueError(f"Dataset name '{new_name}' is already in use")
+
                 # Update attributes
                 for key, value in updates.items():
                     setattr(dataset, key, value)
