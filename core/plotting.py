@@ -580,13 +580,15 @@ class PlotMetadataBuilder:
         return " | ".join(parts)
 
     @staticmethod
-    def build_axis_label(channel: str, unit: str, custom_label: str = "") -> str:
+    def build_axis_label(channel: str, unit: str, custom_label: str = "", 
+                         axis_visibility: bool = True) -> str:
         """Build axis label with channel and unit."""
         if custom_label:
             return custom_label
 
         label = ChannelMetadata.get_label(channel)
-        return f"{label} [{unit}]" if unit else label
+        logger.debug(f"Building label for channel {channel} with unit {unit} and axis_visibility={axis_visibility}")
+        return f"{label} [{unit}]" if (unit and not axis_visibility) else label
 
 
 class PlottingUtils:
@@ -724,10 +726,10 @@ class PlottingUtils:
             ]
 
             config.x_label = PlotMetadataBuilder.build_axis_label(
-                config.x_channel, config.x_unit, config.x_label
+                config.x_channel, config.x_unit, config.x_label, axis_visibility
             )
             config.y_label = PlotMetadataBuilder.build_axis_label(
-                config.y_channel, config.y_unit, config.y_label
+                config.y_channel, config.y_unit, config.y_label, axis_visibility
             )
 
             if config.z_channel:
@@ -735,7 +737,7 @@ class PlottingUtils:
                     datasets[0].channels.index(config.z_channel)
                 ]
                 config.z_label = PlotMetadataBuilder.build_axis_label(
-                    config.z_channel, config.z_unit, config.z_label
+                    config.z_channel, config.z_unit, config.z_label, axis_visibility
                 )
 
             if config.color_channel:
@@ -743,7 +745,7 @@ class PlottingUtils:
                     datasets[0].channels.index(config.color_channel)
                 ]
                 config.color_label = PlotMetadataBuilder.build_axis_label(
-                    config.color_channel, config.color_unit, config.color_label
+                    config.color_channel, config.color_unit, config.color_label, axis_visibility
                 )
 
         # Add traces
