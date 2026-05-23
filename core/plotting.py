@@ -559,11 +559,12 @@ class PlotMetadataBuilder:
                 continue
 
             unique_vals: List[Any] = [int(x) for x in list(set(values))]
-            if not config.show_axes:
-                unique_vals[0] = "X"
             if len(unique_vals) == 1:
                 if key == "rim_width":
-                    parts.append(f"Rim Width: {unique_vals[0]} in")
+                    if not config.show_axes:
+                        parts.append(f"Rim Width: X")
+                    else:
+                        parts.append(f"Rim Width: {unique_vals[0]} in")
                 elif key == "SL":
                     if dataset:
                         unit = dataset.units[dataset.channels.index(key)]
@@ -575,7 +576,11 @@ class PlotMetadataBuilder:
                             f"{key.replace('Cmd', '')}: {unique_vals[0]} {unit}"
                         )
             else:
-                parts.append(f"{key.replace('Cmd', '')}: VAR")
+                if not config.show_axes and key == "rim_width":
+                    parts.append(f"Rim Width: X")
+                else:
+                    parts.append(f"{key.replace('Cmd', '')}: VAR")
+
 
         return " | ".join(parts)
 
@@ -587,7 +592,6 @@ class PlotMetadataBuilder:
             return custom_label
 
         label = ChannelMetadata.get_label(channel)
-        logger.debug(f"Building label for channel {channel} with unit {unit} and axis_visibility={axis_visibility}")
         return f"{label} [{unit}]" if (unit and not axis_visibility) else label
 
 
