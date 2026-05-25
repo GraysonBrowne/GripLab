@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 import panel as pn
 import plotly.express as px
-from bokeh.models import Tooltip
 from panel.io import hold
 
 from app.config import AppConfig
@@ -191,9 +190,6 @@ class GripLabApp:
         self.settings_btn = pn.widgets.Button(
             name="Settings", button_type="primary", width=100
         )
-        self.version_icon = pn.widgets.TooltipIcon(
-            value=Tooltip(content=f"v{__version__}", position="bottom")
-        )
 
     def _init_sidebar_widgets(self):
         """Initialize sidebar widgets."""
@@ -235,7 +231,6 @@ class GripLabApp:
                 pn.layout.HSpacer(),
                 self.settings_btn,
                 self.help_menu,
-                self.version_icon,
             )
         )
 
