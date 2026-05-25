@@ -562,7 +562,7 @@ class PlotMetadataBuilder:
             if len(unique_vals) == 1:
                 if key == "rim_width":
                     if not config.show_axes:
-                        parts.append(f"Rim Width: X")
+                        parts.append("Rim Width: X")
                     else:
                         parts.append(f"Rim Width: {unique_vals[0]} in")
                 elif key == "SL":
@@ -577,16 +577,16 @@ class PlotMetadataBuilder:
                         )
             else:
                 if not config.show_axes and key == "rim_width":
-                    parts.append(f"Rim Width: X")
+                    parts.append("Rim Width: X")
                 else:
                     parts.append(f"{key.replace('Cmd', '')}: VAR")
-
 
         return " | ".join(parts)
 
     @staticmethod
-    def build_axis_label(channel: str, unit: str, custom_label: str = "", 
-                         axis_visibility: bool = True) -> str:
+    def build_axis_label(
+        channel: str, unit: str, custom_label: str = "", axis_visibility: bool = True
+    ) -> str:
         """Build axis label with channel and unit."""
         if custom_label:
             return custom_label
@@ -749,7 +749,10 @@ class PlottingUtils:
                     datasets[0].channels.index(config.color_channel)
                 ]
                 config.color_label = PlotMetadataBuilder.build_axis_label(
-                    config.color_channel, config.color_unit, config.color_label, axis_visibility
+                    config.color_channel,
+                    config.color_unit,
+                    config.color_label,
+                    axis_visibility,
                 )
 
         # Add traces

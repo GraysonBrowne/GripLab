@@ -184,13 +184,12 @@ class DataManager:
 
         if old_name != new_name:
             existing_demo_names = [ds.demo_name for ds in self._datasets.values()]
-            if new_name in existing_demo_names:             # <-- added
+            if new_name in existing_demo_names:  # <-- added
                 logger.warning(f"Demo name '{new_name}' is already in use")
                 return False
             dataset.demo_name = new_name
 
         return True
-
 
 
 class DataImporter:
