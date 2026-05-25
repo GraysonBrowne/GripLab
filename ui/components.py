@@ -114,6 +114,40 @@ class PlotControlWidgets:
         self.z_axis.disabled = state["z"]
         self.color_axis.disabled = state["c"]
 
+    def restore(self, session: dict):
+        """Restore widget values from a cached session state."""
+        if not session:
+            return
+
+        self.plot_type.value = session.get("plot_type", "2D")
+        self.downsample_slider.value = session.get("downsample", 5)
+
+        # Channels are restored after options are populated — only set if valid
+        for widget, key in [
+            (self.x_axis, "x_channel"),
+            (self.y_axis, "y_channel"),
+            (self.z_axis, "z_channel"),
+            (self.color_axis, "c_channel"),
+        ]:
+            value = session.get(key)
+            if value and value in widget.options:
+                widget.value = value
+
+        # Restore command channel selectors and multi-selects
+        cmd_channels = session.get("cmd_channels", [])
+        cmd_options  = session.get("cmd_options", [])
+        cmd_values   = session.get("cmd_values", [])
+
+        for i, (sel, multi) in enumerate(zip(self.cmd_selects, self.cmd_multi_selects)):
+            if i < len(cmd_channels) and cmd_channels[i] in sel.options:
+                sel.value = cmd_channels[i]
+            if i < len(cmd_options):
+                multi.options = cmd_options[i]
+            if i < len(cmd_values):
+                multi.value = cmd_values[i]
+
+        self.update_plot_type_state(self.plot_type.value)
+
 
 class DataInfoWidgets:
     """Container for dataset information widgets."""

@@ -64,8 +64,15 @@ class GripLabApp:
         self.config_path = str(Path(self.local_dir, "config.yaml"))
         self.config = AppConfig.from_yaml(self.config_path)
 
-        # Initialize data manager and controllers
-        self.dm = DataManager()
+        # Initialize data manager — restore from cache if available
+        if "dm" not in pn.state.cache:
+            pn.state.cache["dm"] = DataManager()
+            pn.state.cache["session"] = {}
+            logger.info("New session — initialized fresh DataManager")
+        else:
+            logger.info("Reconnected — restoring session from cache")
+
+        self.dm = pn.state.cache["dm"]
         self.data_controller = DataController(self.dm, self.config)
         self.plot_controller = PlotController(self.dm, self.config)
 
@@ -76,6 +83,7 @@ class GripLabApp:
         self._initialize_ui()
         self._layout_ui()
         self._setup_callbacks()
+        self._restore_session()
 
         # State tracking
         self.removal_target = ""
@@ -129,6 +137,42 @@ class GripLabApp:
         # Modal container
         self.modal_content = pn.Column()
 
+    def _restore_session(self):
+        """Restore widget state and re-plot from cached session."""
+        session = pn.state.cache.get("session", {})
+        if not session or not self.dm.list_datasets():
+            return
+
+        logger.info("Restoring session state from cache")
+
+        # Populate options first, then restore values
+        self._update_channel_options()
+        self._update_data_select_options()
+        self.plot_widgets.restore(session)
+
+        # Restore table selection — guard against stale indices
+        cached_selection = session.get("data_selection", [])
+        table_len = len(self.dm.list_datasets())
+        self.data_table.selection = [i for i in cached_selection if i < table_len]
+
+        # Re-plot
+        self._on_plot_data(clicks=None)
+
+    def _save_session(self):
+        """Save current widget state to cache."""
+        pn.state.cache["session"] = {
+            "plot_type":     self.plot_widgets.plot_type.value,
+            "x_channel":    self.plot_widgets.x_axis.value,
+            "y_channel":    self.plot_widgets.y_axis.value,
+            "z_channel":    self.plot_widgets.z_axis.value,
+            "c_channel":    self.plot_widgets.color_axis.value,
+            "downsample":   self.plot_widgets.downsample_slider.value,
+            "cmd_channels": [s.value for s in self.plot_widgets.cmd_selects],
+            "cmd_options":  [m.options for m in self.plot_widgets.cmd_multi_selects],
+            "cmd_values":   [m.value for m in self.plot_widgets.cmd_multi_selects],
+            "data_selection": self.data_table.selection,
+        }
+
     def _init_header_widgets(self):
         """Initialize header widgets."""
         menu_items = [
@@ -166,6 +210,10 @@ class GripLabApp:
             editors={"": None, "trash": None},
             widths={"Dataset": 279, "": 40, "trash": 40},
         )
+
+        # Repopulate table if dm has cached datasets
+        if self.dm.list_datasets():
+            self._refresh_data_table()
 
     def _init_main_view(self):
         """Initialize main view with plot pane."""
@@ -389,11 +437,9 @@ class GripLabApp:
     def _on_plot_data(self, clicks):
         """Handle plot data button click."""
         if not self.data_table.selection:
-            logger.warning("No datasets selected to plot")
-            if pn.state.notifications:
-                pn.state.notifications.warning(
-                    "Select a dataset to plot", duration=4000
-                )
+            if clicks is not None:      # only notify on user action, not restore
+                if pn.state.notifications:
+                    pn.state.notifications.warning("Select a dataset to plot", duration=4000)
             return
 
         # Collect all widget references for the plot controller
@@ -410,6 +456,7 @@ class GripLabApp:
         if fig:
             self.plot_pane.object = fig
             self.plot_widgets.node_count.value = str(node_count)
+            self._save_session()
 
     def _on_plot_settings(self, clicks):
         """Open plot settings modal."""
