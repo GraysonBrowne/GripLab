@@ -559,11 +559,12 @@ class PlotMetadataBuilder:
                 continue
 
             unique_vals: List[Any] = [int(x) for x in list(set(values))]
-            if not config.show_axes:
-                unique_vals[0] = "X"
             if len(unique_vals) == 1:
                 if key == "rim_width":
-                    parts.append(f"Rim Width: {unique_vals[0]} in")
+                    if not config.show_axes:
+                        parts.append("Rim Width: X")
+                    else:
+                        parts.append(f"Rim Width: {unique_vals[0]} in")
                 elif key == "SL":
                     if dataset:
                         unit = dataset.units[dataset.channels.index(key)]
@@ -575,18 +576,23 @@ class PlotMetadataBuilder:
                             f"{key.replace('Cmd', '')}: {unique_vals[0]} {unit}"
                         )
             else:
-                parts.append(f"{key.replace('Cmd', '')}: VAR")
+                if not config.show_axes and key == "rim_width":
+                    parts.append("Rim Width: X")
+                else:
+                    parts.append(f"{key.replace('Cmd', '')}: VAR")
 
         return " | ".join(parts)
 
     @staticmethod
-    def build_axis_label(channel: str, unit: str, custom_label: str = "") -> str:
+    def build_axis_label(
+        channel: str, unit: str, custom_label: str = "", axis_visibility: bool = True
+    ) -> str:
         """Build axis label with channel and unit."""
         if custom_label:
             return custom_label
 
         label = ChannelMetadata.get_label(channel)
-        return f"{label} [{unit}]" if unit else label
+        return f"{label} [{unit}]" if (unit and not axis_visibility) else label
 
 
 class PlottingUtils:
@@ -724,10 +730,10 @@ class PlottingUtils:
             ]
 
             config.x_label = PlotMetadataBuilder.build_axis_label(
-                config.x_channel, config.x_unit, config.x_label
+                config.x_channel, config.x_unit, config.x_label, axis_visibility
             )
             config.y_label = PlotMetadataBuilder.build_axis_label(
-                config.y_channel, config.y_unit, config.y_label
+                config.y_channel, config.y_unit, config.y_label, axis_visibility
             )
 
             if config.z_channel:
@@ -735,7 +741,7 @@ class PlottingUtils:
                     datasets[0].channels.index(config.z_channel)
                 ]
                 config.z_label = PlotMetadataBuilder.build_axis_label(
-                    config.z_channel, config.z_unit, config.z_label
+                    config.z_channel, config.z_unit, config.z_label, axis_visibility
                 )
 
             if config.color_channel:
@@ -743,7 +749,10 @@ class PlottingUtils:
                     datasets[0].channels.index(config.color_channel)
                 ]
                 config.color_label = PlotMetadataBuilder.build_axis_label(
-                    config.color_channel, config.color_unit, config.color_label
+                    config.color_channel,
+                    config.color_unit,
+                    config.color_label,
+                    axis_visibility,
                 )
 
         # Add traces
