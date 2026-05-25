@@ -55,7 +55,8 @@ class PlotControlWidgets:
 
         # Plot type selection
         self.plot_type = pn.widgets.RadioBoxGroup(
-            name="Plot Type", options=["2D", "2D Color", "3D", "3D Color"], inline=True
+            name="Plot Type", options=["2D", "2D Color", "3D", "3D Color"], inline=True,
+            margin=(12, 10, 5, 10)
         )
 
         # Axis selectors
@@ -278,6 +279,23 @@ class PlotSettingsWidgets:
 
         self.z_label.disabled = z_disabled
         self.c_label.disabled = c_disabled
+
+    def restore(self, session: dict):
+        """Restore widget values from a cached session state."""
+        if not session:
+            return
+
+        # Restore plot settings
+        self.title.value = session.get("title", "")
+        self.subtitle.value = session.get("subtitle", "")
+        self.x_label.value = session.get("x_label", "")
+        self.y_label.value = session.get("y_label", "")
+        self.z_label.value = session.get("z_label", "")
+        self.c_label.value = session.get("color_label", "")
+        self.color_map.value = session.get("color_map", "Jet")
+        self.font_size.value = session.get("font_size", 18)
+        self.marker_size.value = session.get("marker_size", 10)
+        self.marker_opacity.value = session.get("marker_opacity", 0.3 )
 
 
 class AppSettingsWidgets:

@@ -148,6 +148,7 @@ class GripLabApp:
         self._update_channel_options()
         self._update_data_select_options()
         self.plot_widgets.restore(session)
+        self.plot_settings_widgets.restore(session)
 
         # Restore table selection — guard against stale indices
         cached_selection = session.get("data_selection", [])
@@ -170,6 +171,16 @@ class GripLabApp:
             "cmd_options":  [m.options for m in self.plot_widgets.cmd_multi_selects],
             "cmd_values":   [m.value for m in self.plot_widgets.cmd_multi_selects],
             "data_selection": self.data_table.selection,
+            "title": self.plot_settings_widgets.title.value,
+            "subtitle": self.plot_settings_widgets.subtitle.value,
+            "x_label": self.plot_settings_widgets.x_label.value,
+            "y_label": self.plot_settings_widgets.y_label.value,
+            "z_label": self.plot_settings_widgets.z_label.value,
+            "color_label": self.plot_settings_widgets.c_label.value,
+            "color_map": self.plot_settings_widgets.color_map.value,
+            "font_size": self.plot_settings_widgets.font_size.value,
+            "marker_size": self.plot_settings_widgets.marker_size.value,
+            "marker_opacity": self.plot_settings_widgets.marker_opacity.value,
         }
 
     def _init_header_widgets(self):
