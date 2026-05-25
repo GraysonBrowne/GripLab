@@ -180,6 +180,8 @@ class GripLabApp:
             ("Discussion Board", "discuss"),
             ("Report An Issue", "issue"),
             ("TTC Forum", "ttc"),
+            None,
+            (f"v{__version__}", "version"),
         ]
         self.help_menu = pn.widgets.MenuButton(
             name="Help",
