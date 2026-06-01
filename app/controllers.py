@@ -4,7 +4,7 @@
 import pickle
 import tomllib
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, cast, List, Optional, Tuple
 
 import panel as pn
 import plotly.express as px
@@ -22,6 +22,8 @@ def _read_version() -> str:
         return tomllib.load(f)["project"]["version"]
 
 __version__ = _read_version()
+
+_cache: Dict[str, Any] = cast(Dict[str, Any], pn.state.cache)
 
 
 class DataController:
@@ -184,7 +186,7 @@ class DataController:
             payload = {
                 "version": __version__,
                 "dm": self.dm.to_dict(),
-                "session": pn.state.cache.get("session", {}),
+                "session": _cache.get("session", {}),
             }
             with open(path, "wb") as f:
                 pickle.dump(payload, f)
@@ -212,9 +214,9 @@ class DataController:
                     )
 
             dm = DataManager.from_dict(payload["dm"])   # reconstruct fresh instance
-            pn.state.cache["dm"] = dm
+            _cache["dm"] = dm
             self.dm = dm
-            pn.state.cache["session"] = payload.get("session", {})
+            _cache["session"] = payload.get("session", {})
             logger.info(f"Session imported from {path}")
             return payload.get("session", {})
         except Exception as e:

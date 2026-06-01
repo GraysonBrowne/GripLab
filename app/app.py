@@ -7,7 +7,7 @@ import sys
 import tomllib
 import webbrowser
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Dict, cast
 
 import numpy as np
 import pandas as pd
@@ -45,6 +45,8 @@ def _read_version() -> str:
 
 __version__ = _read_version()
 
+_cache: Dict[str, Any] = cast(Dict[str, Any], pn.state.cache)
+
 
 class GripLabApp:
     """Main application orchestrator."""
@@ -64,14 +66,14 @@ class GripLabApp:
         self.config = AppConfig.from_yaml(self.config_path)
 
         # Initialize data manager — restore from cache if available
-        if "dm" not in pn.state.cache:
-            pn.state.cache["dm"] = DataManager()
-            pn.state.cache["session"] = {}
+        if "dm" not in _cache:
+            _cache["dm"] = DataManager()
+            _cache["session"] = {}
             logger.info("New session — initialized fresh DataManager")
         else:
             logger.info("Reconnected — restoring session from cache")
 
-        self.dm = pn.state.cache["dm"]
+        self.dm = _cache["dm"]
         self.data_controller = DataController(self.dm, self.config)
         self.plot_controller = PlotController(self.dm, self.config)
 
@@ -138,7 +140,7 @@ class GripLabApp:
 
     def _restore_session(self):
         """Restore widget state and re-plot from cached session."""
-        session = pn.state.cache.get("session", {})
+        session = _cache.get("session", {})
         if not session or not self.dm.list_datasets():
             return
 
@@ -160,7 +162,7 @@ class GripLabApp:
 
     def _save_session(self):
         """Save current widget state to cache."""
-        pn.state.cache["session"] = {
+        _cache["session"] = {
             "plot_type":     self.plot_widgets.plot_type.value,
             "x_channel":    self.plot_widgets.x_axis.value,
             "y_channel":    self.plot_widgets.y_axis.value,
