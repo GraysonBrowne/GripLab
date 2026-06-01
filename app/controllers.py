@@ -20,7 +20,7 @@ class DataController:
     def __init__(self, data_manager: DataManager, config: AppConfig):
         self.dm = data_manager
         self.config = config
-        self.import_counter = 0
+        self.import_counter = len(data_manager.list_datasets())
 
     def import_data(self, file_paths: List[str]) -> List[str]:
         """Import data files and return list of imported dataset names."""
