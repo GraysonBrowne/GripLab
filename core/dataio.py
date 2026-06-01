@@ -184,13 +184,62 @@ class DataManager:
 
         if old_name != new_name:
             existing_demo_names = [ds.demo_name for ds in self._datasets.values()]
-            if new_name in existing_demo_names:  # <-- added
+            if new_name in existing_demo_names:
                 logger.warning(f"Demo name '{new_name}' is already in use")
                 return False
             dataset.demo_name = new_name
 
         return True
+    
+    def to_dict(self) -> dict:
+        """Serialize all datasets to a plain dictionary."""
+        return {
+            name: {
+                "path":             str(ds.path),
+                "name":             ds.name,
+                "channels":         ds.channels,
+                "units":            ds.units,
+                "unit_types":       ds.unit_types,
+                "data":             ds.data,
+                "tire_id":          ds.tire_id,
+                "rim_width":        ds.rim_width,
+                "unit_system":      str(ds.unit_system),
+                "sign_convention":  str(ds.sign_convention),
+                "node_color":       ds.node_color,
+                "notes":            ds.notes,
+                "demo_name":        ds.demo_name,
+                "demo_tire_id":     ds.demo_tire_id,
+                "demo_rim_width":   ds.demo_rim_width,
+                "demo_notes":       ds.demo_notes,
+            }
+            for name, ds in self._datasets.items()
+        }
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "DataManager":
+        """Reconstruct a DataManager from a serialized dictionary."""
+        dm = cls()
+        for name, d in data.items():
+            dataset = Dataset(
+                path=Path(d["path"]),
+                name=d["name"],
+                channels=d["channels"],
+                units=d["units"],
+                unit_types=d["unit_types"],
+                data=d["data"],
+                tire_id=d["tire_id"],
+                rim_width=d["rim_width"],
+                unit_system=UnitSystem(d["unit_system"]),
+                sign_convention=SignConvention(d["sign_convention"]),
+                node_color=d["node_color"],
+                notes=d["notes"],
+                demo_name=d["demo_name"],
+                demo_tire_id=d["demo_tire_id"],
+                demo_rim_width=d["demo_rim_width"],
+                demo_notes=d["demo_notes"],
+            )
+            dm.add_dataset(name, dataset)
+        return dm
 
 class DataImporter:
     """Handles importing data from various file formats."""

@@ -1,9 +1,12 @@
 # app/controllers.py
 """Business logic controllers for GripLab application."""
 
+import pickle
+import tomllib
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import panel as pn
 import plotly.express as px
 from plotly.graph_objects import Figure
 
@@ -12,6 +15,13 @@ from core.plotting import PlottingUtils
 from utils.logger import logger
 
 from .config import AppConfig
+
+def _read_version() -> str:
+    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+    with open(pyproject_path, "rb") as f:
+        return tomllib.load(f)["project"]["version"]
+
+__version__ = _read_version()
 
 
 class DataController:
@@ -166,6 +176,50 @@ class DataController:
                 f"Failed to get dataset info for {dataset_name}: {e}", exc_info=True
             )
             return None
+        
+
+    def export_session(self, path: str) -> bool:
+        """Export the current session to a binary file."""
+        try:
+            payload = {
+                "version": __version__,
+                "dm": self.dm.to_dict(),
+                "session": pn.state.cache.get("session", {}),
+            }
+            with open(path, "wb") as f:
+                pickle.dump(payload, f)
+            logger.info(f"Session exported to {path}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to export session: {e}", exc_info=True)
+            return False
+
+    def import_session(self, path: str) -> Optional[dict]:
+        """Import a session from a binary file. Returns session state dict on success."""
+        try:
+            with open(path, "rb") as f:
+                payload = pickle.load(f)
+
+            file_version = payload.get("version", "unknown")
+            if file_version != __version__:
+                logger.warning(
+                    f"Session file version mismatch: file is v{file_version}, app is v{__version__}"
+                )
+                if pn.state.notifications:
+                    pn.state.notifications.warning(
+                        f"Session created with v{file_version} — some settings may not restore correctly.",
+                        duration=6000,
+                    )
+
+            dm = DataManager.from_dict(payload["dm"])   # reconstruct fresh instance
+            pn.state.cache["dm"] = dm
+            self.dm = dm
+            pn.state.cache["session"] = payload.get("session", {})
+            logger.info(f"Session imported from {path}")
+            return payload.get("session", {})
+        except Exception as e:
+            logger.error(f"Failed to import session: {e}", exc_info=True)
+            return None
 
     def _generate_unique_name(self, base_name: str) -> str:
         """Generate a unique dataset name."""
@@ -187,9 +241,14 @@ class DataController:
         return name
 
     def _get_next_color(self) -> str:
-        """Get the next color from the configured colorway."""
+        """Get the next color from the configured colorway, normalized to hex."""
         colorway = getattr(px.colors.qualitative, self.config.colorway)
-        return colorway[self.import_counter % len(colorway)]
+        color = colorway[self.import_counter % len(colorway)]
+        if color.startswith("rgb"):
+            parts = color[color.index("(") + 1 : color.index(")")].split(",")
+            r, g, b = int(parts[0]), int(parts[1]), int(parts[2])
+            color = f"#{r:02x}{g:02x}{b:02x}"
+        return color
 
 
 class PlotController:
