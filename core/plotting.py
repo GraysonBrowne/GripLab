@@ -18,19 +18,26 @@ from core.processing import DataDownsampler
 from utils.logger import logger
 
 
-def hex_to_rgba(hex_color: str, alpha: float = 1.0) -> str:
+def hex_to_rgba(color: str, alpha: float = 1.0) -> str:
     """
-    Convert a hex color string to an RGBA string.
+    Convert a hex or rgb color string to an RGBA string.
 
     Args:
-        hex_color: Hex color string (e.g. "#FF5733" or "FF5733")
+        color: Hex color string (e.g. "#FF5733" or "FF5733") or RGB string (e.g. "rgb(255, 87, 51)")
         alpha: Opacity value between 0.0 and 1.0
 
     Returns:
         RGBA string (e.g. "rgba(255, 87, 51, 0.8)")
     """
-    hex_color = hex_color.lstrip("#")
-    r, g, b = (int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+    color = color.strip()
+    if color.startswith("rgb"):
+        # Handle rgb(r, g, b) format
+        parts = color[color.index("(") + 1 : color.index(")")].split(",")
+        r, g, b = int(parts[0]), int(parts[1]), int(parts[2])
+    else:
+        # Handle #rrggbb format
+        hex_color = color.lstrip("#")
+        r, g, b = (int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
     return f"rgba({r}, {g}, {b}, {alpha})"
 
 

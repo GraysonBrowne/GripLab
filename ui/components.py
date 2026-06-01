@@ -5,6 +5,7 @@ from typing import List, Optional
 
 import panel as pn
 import plotly.express as px
+from requests import session
 
 from converters.conventions import SignConvention
 from converters.units import UnitSystem
@@ -292,10 +293,12 @@ class PlotSettingsWidgets:
         self.y_label.value = session.get("y_label", "")
         self.z_label.value = session.get("z_label", "")
         self.c_label.value = session.get("color_label", "")
-        self.color_map.value = session.get("color_map", "Jet")
         self.font_size.value = session.get("font_size", 18)
         self.marker_size.value = session.get("marker_size", 10)
-        self.marker_opacity.value = session.get("marker_opacity", 0.3 )
+        self.marker_opacity.value = session.get("marker_opacity", 0.3)
+
+        if "color_map" in session:
+            self.color_map.value = session["color_map"]
 
 
 class AppSettingsWidgets:
