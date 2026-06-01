@@ -185,7 +185,20 @@ class GripLabApp:
 
     def _init_header_widgets(self):
         """Initialize header widgets."""
-        menu_items = [
+        file_menu_items = [
+            ("Save Session", "save_session"),
+            ("Import Session", "import_session"),
+        ]
+        self.file_menu = pn.widgets.MenuButton(
+            name="File",
+            items=file_menu_items,
+            button_type="primary",
+            width=100,
+        )
+        self.settings_btn = pn.widgets.Button(
+            name="Settings", button_type="primary", width=100
+        )
+        help_menu_items = [
             ("Sign Convention", "signcon"),
             ("User Guide", "userguide"),
             ("Discussion Board", "discuss"),
@@ -196,12 +209,9 @@ class GripLabApp:
         ]
         self.help_menu = pn.widgets.MenuButton(
             name="Help",
-            items=menu_items,
+            items=help_menu_items,
             button_type="primary",
             width=100,
-        )
-        self.settings_btn = pn.widgets.Button(
-            name="Settings", button_type="primary", width=100
         )
 
     def _init_sidebar_widgets(self):
@@ -242,6 +252,7 @@ class GripLabApp:
         header_object.append(
             pn.Row(
                 pn.layout.HSpacer(),
+                self.file_menu,
                 self.settings_btn,
                 self.help_menu,
             )
@@ -343,6 +354,9 @@ class GripLabApp:
         self.data_table.on_click(self._on_table_color_click, column="")
         self.data_table.on_edit(self._on_table_edit)
         self._apply_table_styling()
+
+        # File menu callback
+        pn.bind(self._on_file_menu, self.file_menu.param.clicked, watch=True)
 
         # Help menu callback
         pn.bind(self._on_help_menu, self.help_menu.param.clicked, watch=True)
@@ -586,6 +600,48 @@ class GripLabApp:
     # ===========================
     # Helper Methods
     # ===========================
+    def _on_export_session(self):
+        path = Tk_utils().save_file(
+            defaultextension=".grip",
+            filetypes=[("GripLab Session", "*.grip")],
+            initialdir=self.config.data_dir,
+            icon=str(Path(self.program_dir, "docs", "images", "GripLab_Icon.ico")),
+        )
+        if path:
+            self._save_session()
+            self.data_controller.export_session(path)
+
+    def _on_import_session(self):
+        files = Tk_utils().select_file(
+            filetypes=[("GripLab Session", "*.grip")],
+            initialdir=self.config.data_dir,
+            icon=str(Path(self.program_dir, "docs", "images", "GripLab_Icon.ico")),
+        )
+        if files:
+            session = self.data_controller.import_session(str(files[0]))
+            if session is not None:
+                self.dm = self.data_controller.dm       # sync GripLabApp reference
+                self.plot_controller.dm = self.data_controller.dm  # sync PlotController reference
+                self._refresh_data_table()
+                self._update_channel_options()
+                self._update_data_select_options()
+                self.plot_widgets.restore(session)
+                self.plot_settings_widgets.restore(session)
+                cached_selection = session.get("data_selection", [])
+                table_len = len(self.dm.list_datasets())
+                self.data_table.selection = [i for i in cached_selection if i < table_len]
+                self._on_plot_data(clicks=None)
+    
+    def _on_file_menu(self, clicked):
+        """Handle file menu selection."""
+        actions = {
+            "save_session": self._on_export_session,
+            "import_session": self._on_import_session,
+        }
+        action = actions.get(clicked)
+        if action:
+            logger.info(f"File menu action: {clicked}")
+            action()
 
     def _on_help_menu(self, clicked):
         """Handle help menu selection."""
