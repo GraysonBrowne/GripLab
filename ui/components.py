@@ -55,7 +55,10 @@ class PlotControlWidgets:
 
         # Plot type selection
         self.plot_type = pn.widgets.RadioBoxGroup(
-            name="Plot Type", options=["2D", "2D Color", "3D", "3D Color"], inline=True
+            name="Plot Type",
+            options=["2D", "2D Color", "3D", "3D Color"],
+            inline=True,
+            margin=(12, 10, 5, 10),
         )
 
         # Axis selectors
@@ -113,6 +116,40 @@ class PlotControlWidgets:
         state = states.get(plot_type, states["2D"])
         self.z_axis.disabled = state["z"]
         self.color_axis.disabled = state["c"]
+
+    def restore(self, session: dict):
+        """Restore widget values from a cached session state."""
+        if not session:
+            return
+
+        self.plot_type.value = session.get("plot_type", "2D")
+        self.downsample_slider.value = session.get("downsample", 5)
+
+        # Channels are restored after options are populated — only set if valid
+        for widget, key in [
+            (self.x_axis, "x_channel"),
+            (self.y_axis, "y_channel"),
+            (self.z_axis, "z_channel"),
+            (self.color_axis, "c_channel"),
+        ]:
+            value = session.get(key)
+            if value and value in widget.options:
+                widget.value = value
+
+        # Restore command channel selectors and multi-selects
+        cmd_channels = session.get("cmd_channels", [])
+        cmd_options = session.get("cmd_options", [])
+        cmd_values = session.get("cmd_values", [])
+
+        for i, (sel, multi) in enumerate(zip(self.cmd_selects, self.cmd_multi_selects)):
+            if i < len(cmd_channels) and cmd_channels[i] in sel.options:
+                sel.value = cmd_channels[i]
+            if i < len(cmd_options):
+                multi.options = cmd_options[i]
+            if i < len(cmd_values):
+                multi.value = cmd_values[i]
+
+        self.update_plot_type_state(self.plot_type.value)
 
 
 class DataInfoWidgets:
@@ -244,6 +281,25 @@ class PlotSettingsWidgets:
 
         self.z_label.disabled = z_disabled
         self.c_label.disabled = c_disabled
+
+    def restore(self, session: dict):
+        """Restore widget values from a cached session state."""
+        if not session:
+            return
+
+        # Restore plot settings
+        self.title.value = session.get("title", "")
+        self.subtitle.value = session.get("subtitle", "")
+        self.x_label.value = session.get("x_label", "")
+        self.y_label.value = session.get("y_label", "")
+        self.z_label.value = session.get("z_label", "")
+        self.c_label.value = session.get("c_label", "")
+        self.font_size.value = session.get("font_size", 18)
+        self.marker_size.value = session.get("marker_size", 10)
+        self.marker_opacity.value = session.get("marker_opacity", 0.3)
+
+        if "color_map" in session:
+            self.color_map.value = session["color_map"]
 
 
 class AppSettingsWidgets:

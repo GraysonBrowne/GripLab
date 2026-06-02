@@ -4,16 +4,14 @@ GripLab - Tire Data Analysis Application
 """
 
 import sys
-import tomllib
 import webbrowser
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Dict, cast
 
 import numpy as np
 import pandas as pd
 import panel as pn
 import plotly.express as px
-from bokeh.models import Tooltip
 from panel.io import hold
 
 from app.config import AppConfig
@@ -37,21 +35,15 @@ from ui.modals import (
 from utils.dialogs import Tk_utils
 from utils.logger import logger
 
-
-def _read_version() -> str:
-    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
-    with open(pyproject_path, "rb") as f:
-        return tomllib.load(f)["project"]["version"]
-
-
-__version__ = _read_version()
+_cache: Dict[str, Any] = cast(Dict[str, Any], pn.state.cache)
 
 
 class GripLabApp:
     """Main application orchestrator."""
 
     def __init__(self):
-        logger.info(f"GripLab v{__version__} starting")
+        logger.info(f"GripLab v{AppConfig.version} starting")
+
         # Determine program directory
         if getattr(sys, "frozen", False):
             # Adjust working directory for frozen executable
@@ -64,8 +56,15 @@ class GripLabApp:
         self.config_path = str(Path(self.local_dir, "config.yaml"))
         self.config = AppConfig.from_yaml(self.config_path)
 
-        # Initialize data manager and controllers
-        self.dm = DataManager()
+        # Initialize data manager — restore from cache if available
+        if "dm" not in _cache:
+            _cache["dm"] = DataManager()
+            _cache["session"] = {}
+            logger.info("New session — initialized fresh DataManager")
+        else:
+            logger.info("Reconnected — restoring session from cache")
+
+        self.dm = _cache["dm"]
         self.data_controller = DataController(self.dm, self.config)
         self.plot_controller = PlotController(self.dm, self.config)
 
@@ -76,6 +75,7 @@ class GripLabApp:
         self._initialize_ui()
         self._layout_ui()
         self._setup_callbacks()
+        self._restore_session()
 
         # State tracking
         self.removal_target = ""
@@ -129,26 +129,88 @@ class GripLabApp:
         # Modal container
         self.modal_content = pn.Column()
 
+    def _restore_session(self):
+        """Restore widget state and re-plot from cached session."""
+        session = _cache.get("session", {})
+        if not session or not self.dm.list_datasets():
+            return
+
+        logger.info("Restoring session state from cache")
+
+        # Restore table selection — guard against stale indices
+        cached_selection = session.get("data_selection", [])
+        table_len = len(self.dm.list_datasets())
+        self.data_table.selection = [i for i in cached_selection if i < table_len]
+
+        # Populate options
+        self._update_channel_options()
+        self._update_data_select_options()
+        self.plot_widgets.restore(session)
+        self.plot_settings_widgets.restore(session)
+
+        # Re-plot
+        self._on_plot_data(clicks=None)
+
+    def _save_session(self):
+        """Save current widget state to cache."""
+        _cache["session"] = {
+            "plot_type": self.plot_widgets.plot_type.value,
+            "x_channel": self.plot_widgets.x_axis.value,
+            "y_channel": self.plot_widgets.y_axis.value,
+            "z_channel": self.plot_widgets.z_axis.value,
+            "c_channel": self.plot_widgets.color_axis.value,
+            "downsample": self.plot_widgets.downsample_slider.value,
+            "cmd_channels": [s.value for s in self.plot_widgets.cmd_selects],
+            "cmd_options": [m.options for m in self.plot_widgets.cmd_multi_selects],
+            "cmd_values": [m.value for m in self.plot_widgets.cmd_multi_selects],
+            "data_selection": self.data_table.selection,
+            "title": self.plot_settings_widgets.title.value,
+            "subtitle": self.plot_settings_widgets.subtitle.value,
+            "x_label": self.plot_settings_widgets.x_label.value,
+            "y_label": self.plot_settings_widgets.y_label.value,
+            "z_label": self.plot_settings_widgets.z_label.value,
+            "c_label": self.plot_settings_widgets.c_label.value,
+            "color_map": self.plot_settings_widgets.color_map.value,
+            "font_size": self.plot_settings_widgets.font_size.value,
+            "marker_size": self.plot_settings_widgets.marker_size.value,
+            "marker_opacity": self.plot_settings_widgets.marker_opacity.value,
+        }
+
     def _init_header_widgets(self):
         """Initialize header widgets."""
-        menu_items = [
+        file_menu_items = [
+            ("Import Data", "import_data"),
+            ("Save Session", "save_session"),
+            ("Import Session", "import_session"),
+        ]
+        self.file_menu = pn.widgets.MenuButton(
+            name="File",
+            items=file_menu_items,
+            button_type="primary",
+            width=100,
+            margin=(5, 5),
+        )
+        self.settings_btn = pn.widgets.Button(
+            name="Settings",
+            button_type="primary",
+            width=100,
+            margin=(5, 5),
+        )
+        help_menu_items = [
             ("Sign Convention", "signcon"),
             ("User Guide", "userguide"),
             ("Discussion Board", "discuss"),
             ("Report An Issue", "issue"),
             ("TTC Forum", "ttc"),
+            None,
+            (f"v{AppConfig.version}", "version"),
         ]
         self.help_menu = pn.widgets.MenuButton(
             name="Help",
-            items=menu_items,
+            items=help_menu_items,
             button_type="primary",
             width=100,
-        )
-        self.settings_btn = pn.widgets.Button(
-            name="Settings", button_type="primary", width=100
-        )
-        self.version_icon = pn.widgets.TooltipIcon(
-            value=Tooltip(content=f"v{__version__}", position="bottom")
+            margin=(5, 5),
         )
 
     def _init_sidebar_widgets(self):
@@ -166,6 +228,10 @@ class GripLabApp:
             editors={"": None, "trash": None},
             widths={"Dataset": 279, "": 40, "trash": 40},
         )
+
+        # Repopulate table if dm has cached datasets
+        if self.dm.list_datasets():
+            self._refresh_data_table()
 
     def _init_main_view(self):
         """Initialize main view with plot pane."""
@@ -185,9 +251,9 @@ class GripLabApp:
         header_object.append(
             pn.Row(
                 pn.layout.HSpacer(),
+                self.file_menu,
                 self.settings_btn,
                 self.help_menu,
-                self.version_icon,
             )
         )
 
@@ -287,6 +353,9 @@ class GripLabApp:
         self.data_table.on_click(self._on_table_color_click, column="")
         self.data_table.on_edit(self._on_table_edit)
         self._apply_table_styling()
+
+        # File menu callback
+        pn.bind(self._on_file_menu, self.file_menu.param.clicked, watch=True)
 
         # Help menu callback
         pn.bind(self._on_help_menu, self.help_menu.param.clicked, watch=True)
@@ -389,11 +458,11 @@ class GripLabApp:
     def _on_plot_data(self, clicks):
         """Handle plot data button click."""
         if not self.data_table.selection:
-            logger.warning("No datasets selected to plot")
-            if pn.state.notifications:
-                pn.state.notifications.warning(
-                    "Select a dataset to plot", duration=4000
-                )
+            if clicks is not None:  # only notify on user action, not restore
+                if pn.state.notifications:
+                    pn.state.notifications.warning(
+                        "Select a dataset to plot", duration=4000
+                    )
             return
 
         # Collect all widget references for the plot controller
@@ -410,6 +479,7 @@ class GripLabApp:
         if fig:
             self.plot_pane.object = fig
             self.plot_widgets.node_count.value = str(node_count)
+            self._save_session()
 
     def _on_plot_settings(self, clicks):
         """Open plot settings modal."""
@@ -531,6 +601,73 @@ class GripLabApp:
     # ===========================
     # Helper Methods
     # ===========================
+    def _on_export_session(self):
+        path = Tk_utils().save_file(
+            defaultextension=".grip",
+            filetypes=[("GripLab Session", "*.grip")],
+            initialdir=self.config.data_dir,
+            icon=str(Path(self.program_dir, "docs", "images", "GripLab_Icon.ico")),
+        )
+        if not path:
+            return
+        else:
+            self._save_session()
+            if self.data_controller.export_session(path):
+                if pn.state.notifications:
+                    pn.state.notifications.success(
+                        f"Session exported as {Path(path).name}", duration=4000
+                    )
+            else:
+                if pn.state.notifications:
+                    pn.state.notifications.error(
+                        "Failed to export session.", duration=4000
+                    )
+
+    def _on_import_session(self):
+        files = Tk_utils().select_file(
+            filetypes=[("GripLab Session", "*.grip")],
+            initialdir=self.config.data_dir,
+            icon=str(Path(self.program_dir, "docs", "images", "GripLab_Icon.ico")),
+        )
+        if files:
+            session = self.data_controller.import_session(str(files[0]))
+            if session is not None:
+                self.dm = self.data_controller.dm  # sync GripLabApp reference
+                self.plot_controller.dm = (
+                    self.data_controller.dm
+                )  # sync PlotController reference
+                cached_selection = session.get("data_selection", [])
+                table_len = len(self.dm.list_datasets())
+                self.data_table.selection = [
+                    i for i in cached_selection if i < table_len
+                ]
+                self._refresh_data_table()
+                self._update_channel_options()
+                self._update_data_select_options()
+                self.plot_widgets.restore(session)
+                self.plot_settings_widgets.restore(session)
+                self._on_plot_data(clicks=None)
+                if pn.state.notifications:
+                    pn.state.notifications.success(
+                        f"Session imported from {Path(files[0]).name}", duration=4000
+                    )
+            else:
+                if pn.state.notifications:
+                    pn.state.notifications.error(
+                        "Failed to import session.", duration=4000
+                    )
+
+    def _on_file_menu(self, clicked):
+        """Handle file menu selection."""
+        actions = {
+            "import_data": lambda: self._on_import_data(clicks=None),
+            "save_session": self._on_export_session,
+            "import_session": self._on_import_session,
+        }
+        action = actions.get(clicked)
+        if action:
+            logger.info(f"File menu action: {clicked}")
+            action()
 
     def _on_help_menu(self, clicked):
         """Handle help menu selection."""
@@ -688,8 +825,7 @@ class GripLabApp:
                 logger.info("Shutting down server...")
                 server.stop()
 
-            # Need to prevent shutting down on page refresh
-            # pn.state.on_session_destroyed(on_session_destroyed)
+            pn.state.on_session_destroyed(on_session_destroyed)
         else:
             # Running in development mode
             self.template.servable(title="GripLab")
