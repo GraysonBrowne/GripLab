@@ -825,8 +825,7 @@ class GripLabApp:
                 logger.info("Shutting down server...")
                 server.stop()
 
-            # Need to prevent shutting down on page refresh
-            # pn.state.on_session_destroyed(on_session_destroyed)
+            pn.state.on_session_destroyed(on_session_destroyed)
         else:
             # Running in development mode
             self.template.servable(title="GripLab")
