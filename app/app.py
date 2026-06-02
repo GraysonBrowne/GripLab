@@ -609,12 +609,19 @@ class GripLabApp:
             initialdir=self.config.data_dir,
             icon=str(Path(self.program_dir, "docs", "images", "GripLab_Icon.ico")),
         )
-        if not self.data_controller.export_session(path):
-            if pn.state.notifications:
-                pn.state.notifications.error("Failed to export session.", duration=4000)
-        elif path:
+        if not path:
+            return
+        else:
             self._save_session()
-            self.data_controller.export_session(path)
+            if self.data_controller.export_session(path):
+                if pn.state.notifications:
+                    pn.state.notifications.success(f"Session exported as"
+                                                   f" {Path(path).name}", 
+                                                   duration=4000)
+            else:
+                if pn.state.notifications:
+                    pn.state.notifications.error("Failed to export session.", 
+                                                 duration=4000)
 
     def _on_import_session(self):
         files = Tk_utils().select_file(
@@ -640,6 +647,14 @@ class GripLabApp:
                     i for i in cached_selection if i < table_len
                 ]
                 self._on_plot_data(clicks=None)
+                if pn.state.notifications:
+                    pn.state.notifications.success(f"Session imported from"
+                                                   f" {Path(files[0]).name}", 
+                                                   duration=4000)
+            else:
+                if pn.state.notifications:
+                    pn.state.notifications.error("Failed to import session.", 
+                                                 duration=4000)
 
     def _on_file_menu(self, clicked):
         """Handle file menu selection."""
