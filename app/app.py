@@ -179,6 +179,7 @@ class GripLabApp:
     def _init_header_widgets(self):
         """Initialize header widgets."""
         file_menu_items = [
+            ("Import Data", "import_data"),
             ("Save Session", "save_session"),
             ("Import Session", "import_session"),
         ]
@@ -187,9 +188,10 @@ class GripLabApp:
             items=file_menu_items,
             button_type="primary",
             width=100,
+            margin=(5,5),
         )
         self.settings_btn = pn.widgets.Button(
-            name="Settings", button_type="primary", width=100
+            name="Settings", button_type="primary", width=100, margin=(5,5),
         )
         help_menu_items = [
             ("Sign Convention", "signcon"),
@@ -205,6 +207,7 @@ class GripLabApp:
             items=help_menu_items,
             button_type="primary",
             width=100,
+            margin=(5,5),
         )
 
     def _init_sidebar_widgets(self):
@@ -628,6 +631,7 @@ class GripLabApp:
     def _on_file_menu(self, clicked):
         """Handle file menu selection."""
         actions = {
+            "import_data": self._on_import_data(clicked),
             "save_session": self._on_export_session,
             "import_session": self._on_import_session,
         }
