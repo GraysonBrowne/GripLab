@@ -615,13 +615,14 @@ class GripLabApp:
             self._save_session()
             if self.data_controller.export_session(path):
                 if pn.state.notifications:
-                    pn.state.notifications.success(f"Session exported as"
-                                                   f" {Path(path).name}", 
-                                                   duration=4000)
+                    pn.state.notifications.success(
+                        f"Session exported as {Path(path).name}", duration=4000
+                    )
             else:
                 if pn.state.notifications:
-                    pn.state.notifications.error("Failed to export session.", 
-                                                 duration=4000)
+                    pn.state.notifications.error(
+                        "Failed to export session.", duration=4000
+                    )
 
     def _on_import_session(self):
         files = Tk_utils().select_file(
@@ -648,13 +649,14 @@ class GripLabApp:
                 ]
                 self._on_plot_data(clicks=None)
                 if pn.state.notifications:
-                    pn.state.notifications.success(f"Session imported from"
-                                                   f" {Path(files[0]).name}", 
-                                                   duration=4000)
+                    pn.state.notifications.success(
+                        f"Session imported from {Path(files[0]).name}", duration=4000
+                    )
             else:
                 if pn.state.notifications:
-                    pn.state.notifications.error("Failed to import session.", 
-                                                 duration=4000)
+                    pn.state.notifications.error(
+                        "Failed to import session.", duration=4000
+                    )
 
     def _on_file_menu(self, clicked):
         """Handle file menu selection."""
