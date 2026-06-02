@@ -15,8 +15,6 @@ from utils.logger import logger
 
 from .config import AppConfig
 
-__version__ = AppConfig.read_version()
-
 _cache: Dict[str, Any] = cast(Dict[str, Any], pn.state.cache)
 
 
@@ -177,7 +175,7 @@ class DataController:
         """Export the current session to a binary file."""
         try:
             payload = {
-                "version": __version__,
+                "version": AppConfig.version,
                 "dm": self.dm.to_dict(),
                 "session": _cache.get("session", {}),
             }
@@ -197,10 +195,10 @@ class DataController:
                 payload = pickle.load(f)
 
             file_version = payload.get("version", "unknown")
-            if file_version != __version__:
+            if file_version != AppConfig.version:
                 logger.warning(
                     f"Session file version mismatch: file is v{file_version},"
-                    f" app is v{__version__}"
+                    f" app is v{AppConfig.version}"
                 )
                 if pn.state.notifications:
                     pn.state.notifications.warning(

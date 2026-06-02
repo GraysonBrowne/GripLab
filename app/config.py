@@ -4,13 +4,19 @@
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict
+from typing import ClassVar, Dict
 
 import yaml
 
 from converters.conventions import SignConvention
 from converters.units import UnitSystem
 from utils.logger import logger
+
+
+def _read_version() -> str:
+    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+    with open(pyproject_path, "rb") as f:
+        return tomllib.load(f)["project"]["version"]
 
 
 @dataclass
@@ -24,6 +30,7 @@ class AppConfig:
     colorway: str = "G10"
     colormap: str = "Jet"
     data_dir: str = ""
+    version: ClassVar[str] = _read_version()
 
     @classmethod
     def from_yaml(cls, filepath: str) -> "AppConfig":
@@ -71,9 +78,3 @@ class AppConfig:
             logger.info(f"Settings saved to {filepath}")
         except Exception as e:
             logger.error(f"Error saving settings: {e}", exc_info=True)
-
-    @staticmethod
-    def read_version() -> str:
-        pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
-        with open(pyproject_path, "rb") as f:
-            return tomllib.load(f)["project"]["version"]

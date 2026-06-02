@@ -35,8 +35,6 @@ from ui.modals import (
 from utils.dialogs import Tk_utils
 from utils.logger import logger
 
-__version__ = AppConfig.read_version()
-
 _cache: Dict[str, Any] = cast(Dict[str, Any], pn.state.cache)
 
 
@@ -44,7 +42,8 @@ class GripLabApp:
     """Main application orchestrator."""
 
     def __init__(self):
-        logger.info(f"GripLab v{__version__} starting")
+        logger.info(f"GripLab v{AppConfig.version} starting")
+
         # Determine program directory
         if getattr(sys, "frozen", False):
             # Adjust working directory for frozen executable
@@ -204,7 +203,7 @@ class GripLabApp:
             ("Report An Issue", "issue"),
             ("TTC Forum", "ttc"),
             None,
-            (f"v{__version__}", "version"),
+            (f"v{AppConfig.version}", "version"),
         ]
         self.help_menu = pn.widgets.MenuButton(
             name="Help",
@@ -637,16 +636,16 @@ class GripLabApp:
                 self.plot_controller.dm = (
                     self.data_controller.dm
                 )  # sync PlotController reference
-                self._refresh_data_table()
-                self._update_channel_options()
-                self._update_data_select_options()
-                self.plot_widgets.restore(session)
-                self.plot_settings_widgets.restore(session)
                 cached_selection = session.get("data_selection", [])
                 table_len = len(self.dm.list_datasets())
                 self.data_table.selection = [
                     i for i in cached_selection if i < table_len
                 ]
+                self._refresh_data_table()
+                self._update_channel_options()
+                self._update_data_select_options()
+                self.plot_widgets.restore(session)
+                self.plot_settings_widgets.restore(session)
                 self._on_plot_data(clicks=None)
                 if pn.state.notifications:
                     pn.state.notifications.success(
