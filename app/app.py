@@ -4,7 +4,6 @@ GripLab - Tire Data Analysis Application
 """
 
 import sys
-import tomllib
 import webbrowser
 from pathlib import Path
 from typing import Any, Dict, cast
@@ -37,14 +36,6 @@ from utils.dialogs import Tk_utils
 from utils.logger import logger
 
 
-def _read_version() -> str:
-    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
-    with open(pyproject_path, "rb") as f:
-        return tomllib.load(f)["project"]["version"]
-
-
-__version__ = _read_version()
-
 _cache: Dict[str, Any] = cast(Dict[str, Any], pn.state.cache)
 
 
@@ -52,7 +43,7 @@ class GripLabApp:
     """Main application orchestrator."""
 
     def __init__(self):
-        logger.info(f"GripLab v{__version__} starting")
+        logger.info(f"GripLab v{AppConfig.read_version()} starting")
         # Determine program directory
         if getattr(sys, "frozen", False):
             # Adjust working directory for frozen executable
@@ -207,7 +198,7 @@ class GripLabApp:
             ("Report An Issue", "issue"),
             ("TTC Forum", "ttc"),
             None,
-            (f"v{__version__}", "version"),
+            (f"v{AppConfig.read_version()}", "version"),
         ]
         self.help_menu = pn.widgets.MenuButton(
             name="Help",

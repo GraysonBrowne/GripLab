@@ -2,7 +2,6 @@
 """Business logic controllers for GripLab application."""
 
 import pickle
-import tomllib
 from pathlib import Path
 from typing import Any, Dict, cast, List, Optional, Tuple
 
@@ -16,12 +15,7 @@ from utils.logger import logger
 
 from .config import AppConfig
 
-def _read_version() -> str:
-    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
-    with open(pyproject_path, "rb") as f:
-        return tomllib.load(f)["project"]["version"]
-
-__version__ = _read_version()
+__version__ = AppConfig.read_version()
 
 _cache: Dict[str, Any] = cast(Dict[str, Any], pn.state.cache)
 
@@ -184,7 +178,7 @@ class DataController:
         """Export the current session to a binary file."""
         try:
             payload = {
-                "version": __version__,
+                "version": AppConfig.read_version(),
                 "dm": self.dm.to_dict(),
                 "session": _cache.get("session", {}),
             }
@@ -203,9 +197,9 @@ class DataController:
                 payload = pickle.load(f)
 
             file_version = payload.get("version", "unknown")
-            if file_version != __version__:
+            if file_version != AppConfig.read_version():
                 logger.warning(
-                    f"Session file version mismatch: file is v{file_version}, app is v{__version__}"
+                    f"Session file version mismatch: file is v{file_version}, app is v{AppConfig.read_version()}"
                 )
                 if pn.state.notifications:
                     pn.state.notifications.warning(
