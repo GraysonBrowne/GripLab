@@ -5,7 +5,6 @@ from typing import List, Optional
 
 import panel as pn
 import plotly.express as px
-from requests import session
 
 from converters.conventions import SignConvention
 from converters.units import UnitSystem
@@ -56,8 +55,10 @@ class PlotControlWidgets:
 
         # Plot type selection
         self.plot_type = pn.widgets.RadioBoxGroup(
-            name="Plot Type", options=["2D", "2D Color", "3D", "3D Color"], inline=True,
-            margin=(12, 10, 5, 10)
+            name="Plot Type",
+            options=["2D", "2D Color", "3D", "3D Color"],
+            inline=True,
+            margin=(12, 10, 5, 10),
         )
 
         # Axis selectors
@@ -137,8 +138,8 @@ class PlotControlWidgets:
 
         # Restore command channel selectors and multi-selects
         cmd_channels = session.get("cmd_channels", [])
-        cmd_options  = session.get("cmd_options", [])
-        cmd_values   = session.get("cmd_values", [])
+        cmd_options = session.get("cmd_options", [])
+        cmd_values = session.get("cmd_values", [])
 
         for i, (sel, multi) in enumerate(zip(self.cmd_selects, self.cmd_multi_selects)):
             if i < len(cmd_channels) and cmd_channels[i] in sel.options:

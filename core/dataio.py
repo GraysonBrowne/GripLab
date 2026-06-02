@@ -190,27 +190,27 @@ class DataManager:
             dataset.demo_name = new_name
 
         return True
-    
+
     def to_dict(self) -> dict:
         """Serialize all datasets to a plain dictionary."""
         return {
             name: {
-                "path":             str(ds.path),
-                "name":             ds.name,
-                "channels":         ds.channels,
-                "units":            ds.units,
-                "unit_types":       ds.unit_types,
-                "data":             ds.data,
-                "tire_id":          ds.tire_id,
-                "rim_width":        ds.rim_width,
-                "unit_system":      str(ds.unit_system),
-                "sign_convention":  str(ds.sign_convention),
-                "node_color":       ds.node_color,
-                "notes":            ds.notes,
-                "demo_name":        ds.demo_name,
-                "demo_tire_id":     ds.demo_tire_id,
-                "demo_rim_width":   ds.demo_rim_width,
-                "demo_notes":       ds.demo_notes,
+                "path": str(ds.path),
+                "name": ds.name,
+                "channels": ds.channels,
+                "units": ds.units,
+                "unit_types": ds.unit_types,
+                "data": ds.data,
+                "tire_id": ds.tire_id,
+                "rim_width": ds.rim_width,
+                "unit_system": str(ds.unit_system),
+                "sign_convention": str(ds.sign_convention),
+                "node_color": ds.node_color,
+                "notes": ds.notes,
+                "demo_name": ds.demo_name,
+                "demo_tire_id": ds.demo_tire_id,
+                "demo_rim_width": ds.demo_rim_width,
+                "demo_notes": ds.demo_notes,
             }
             for name, ds in self._datasets.items()
         }
@@ -240,6 +240,7 @@ class DataManager:
             )
             dm.add_dataset(name, dataset)
         return dm
+
 
 class DataImporter:
     """Handles importing data from various file formats."""

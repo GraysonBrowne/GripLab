@@ -35,7 +35,6 @@ from ui.modals import (
 from utils.dialogs import Tk_utils
 from utils.logger import logger
 
-
 _cache: Dict[str, Any] = cast(Dict[str, Any], pn.state.cache)
 
 
@@ -154,15 +153,15 @@ class GripLabApp:
     def _save_session(self):
         """Save current widget state to cache."""
         _cache["session"] = {
-            "plot_type":     self.plot_widgets.plot_type.value,
-            "x_channel":    self.plot_widgets.x_axis.value,
-            "y_channel":    self.plot_widgets.y_axis.value,
-            "z_channel":    self.plot_widgets.z_axis.value,
-            "c_channel":    self.plot_widgets.color_axis.value,
-            "downsample":   self.plot_widgets.downsample_slider.value,
+            "plot_type": self.plot_widgets.plot_type.value,
+            "x_channel": self.plot_widgets.x_axis.value,
+            "y_channel": self.plot_widgets.y_axis.value,
+            "z_channel": self.plot_widgets.z_axis.value,
+            "c_channel": self.plot_widgets.color_axis.value,
+            "downsample": self.plot_widgets.downsample_slider.value,
             "cmd_channels": [s.value for s in self.plot_widgets.cmd_selects],
-            "cmd_options":  [m.options for m in self.plot_widgets.cmd_multi_selects],
-            "cmd_values":   [m.value for m in self.plot_widgets.cmd_multi_selects],
+            "cmd_options": [m.options for m in self.plot_widgets.cmd_multi_selects],
+            "cmd_values": [m.value for m in self.plot_widgets.cmd_multi_selects],
             "data_selection": self.data_table.selection,
             "title": self.plot_settings_widgets.title.value,
             "subtitle": self.plot_settings_widgets.subtitle.value,
@@ -188,10 +187,13 @@ class GripLabApp:
             items=file_menu_items,
             button_type="primary",
             width=100,
-            margin=(5,5),
+            margin=(5, 5),
         )
         self.settings_btn = pn.widgets.Button(
-            name="Settings", button_type="primary", width=100, margin=(5,5),
+            name="Settings",
+            button_type="primary",
+            width=100,
+            margin=(5, 5),
         )
         help_menu_items = [
             ("Sign Convention", "signcon"),
@@ -207,7 +209,7 @@ class GripLabApp:
             items=help_menu_items,
             button_type="primary",
             width=100,
-            margin=(5,5),
+            margin=(5, 5),
         )
 
     def _init_sidebar_widgets(self):
@@ -455,9 +457,11 @@ class GripLabApp:
     def _on_plot_data(self, clicks):
         """Handle plot data button click."""
         if not self.data_table.selection:
-            if clicks is not None:      # only notify on user action, not restore
+            if clicks is not None:  # only notify on user action, not restore
                 if pn.state.notifications:
-                    pn.state.notifications.warning("Select a dataset to plot", duration=4000)
+                    pn.state.notifications.warning(
+                        "Select a dataset to plot", duration=4000
+                    )
             return
 
         # Collect all widget references for the plot controller
@@ -616,8 +620,10 @@ class GripLabApp:
         if files:
             session = self.data_controller.import_session(str(files[0]))
             if session is not None:
-                self.dm = self.data_controller.dm       # sync GripLabApp reference
-                self.plot_controller.dm = self.data_controller.dm  # sync PlotController reference
+                self.dm = self.data_controller.dm  # sync GripLabApp reference
+                self.plot_controller.dm = (
+                    self.data_controller.dm
+                )  # sync PlotController reference
                 self._refresh_data_table()
                 self._update_channel_options()
                 self._update_data_select_options()
@@ -625,9 +631,11 @@ class GripLabApp:
                 self.plot_settings_widgets.restore(session)
                 cached_selection = session.get("data_selection", [])
                 table_len = len(self.dm.list_datasets())
-                self.data_table.selection = [i for i in cached_selection if i < table_len]
+                self.data_table.selection = [
+                    i for i in cached_selection if i < table_len
+                ]
                 self._on_plot_data(clicks=None)
-    
+
     def _on_file_menu(self, clicked):
         """Handle file menu selection."""
         actions = {

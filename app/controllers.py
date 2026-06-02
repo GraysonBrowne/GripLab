@@ -3,7 +3,7 @@
 
 import pickle
 from pathlib import Path
-from typing import Any, Dict, cast, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import panel as pn
 import plotly.express as px
@@ -172,7 +172,6 @@ class DataController:
                 f"Failed to get dataset info for {dataset_name}: {e}", exc_info=True
             )
             return None
-        
 
     def export_session(self, path: str) -> bool:
         """Export the current session to a binary file."""
@@ -191,7 +190,8 @@ class DataController:
             return False
 
     def import_session(self, path: str) -> Optional[dict]:
-        """Import a session from a binary file. Returns session state dict on success."""
+        """Import a session from a binary file.
+        Returns session state dict on success."""
         try:
             with open(path, "rb") as f:
                 payload = pickle.load(f)
@@ -199,15 +199,17 @@ class DataController:
             file_version = payload.get("version", "unknown")
             if file_version != AppConfig.read_version():
                 logger.warning(
-                    f"Session file version mismatch: file is v{file_version}, app is v{AppConfig.read_version()}"
+                    f"Session file version mismatch: file is v{file_version},"
+                    f" app is v{AppConfig.read_version()}"
                 )
                 if pn.state.notifications:
                     pn.state.notifications.warning(
-                        f"Session created with v{file_version} — some settings may not restore correctly.",
+                        f"Session created with v{file_version} —"
+                        f" some settings may not restore correctly.",
                         duration=6000,
                     )
 
-            dm = DataManager.from_dict(payload["dm"])   # reconstruct fresh instance
+            dm = DataManager.from_dict(payload["dm"])  # reconstruct fresh instance
             _cache["dm"] = dm
             self.dm = dm
             _cache["session"] = payload.get("session", {})

@@ -23,7 +23,8 @@ def hex_to_rgba(color: str, alpha: float = 1.0) -> str:
     Convert a hex or rgb color string to an RGBA string.
 
     Args:
-        color: Hex color string (e.g. "#FF5733" or "FF5733") or RGB string (e.g. "rgb(255, 87, 51)")
+        color: Hex color string (e.g. "#FF5733" or "FF5733") or
+            RGB string (e.g. "rgb(255, 87, 51)")
         alpha: Opacity value between 0.0 and 1.0
 
     Returns:
