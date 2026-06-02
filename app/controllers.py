@@ -177,7 +177,7 @@ class DataController:
         """Export the current session to a binary file."""
         try:
             payload = {
-                "version": AppConfig.read_version(),
+                "version": __version__,
                 "dm": self.dm.to_dict(),
                 "session": _cache.get("session", {}),
             }
@@ -197,10 +197,10 @@ class DataController:
                 payload = pickle.load(f)
 
             file_version = payload.get("version", "unknown")
-            if file_version != AppConfig.read_version():
+            if file_version != __version__:
                 logger.warning(
                     f"Session file version mismatch: file is v{file_version},"
-                    f" app is v{AppConfig.read_version()}"
+                    f" app is v{__version__}"
                 )
                 if pn.state.notifications:
                     pn.state.notifications.warning(
@@ -212,6 +212,7 @@ class DataController:
             dm = DataManager.from_dict(payload["dm"])  # reconstruct fresh instance
             _cache["dm"] = dm
             self.dm = dm
+            self.import_counter = len(dm.list_datasets())
             _cache["session"] = payload.get("session", {})
             logger.info(f"Session imported from {path}")
             return payload.get("session", {})

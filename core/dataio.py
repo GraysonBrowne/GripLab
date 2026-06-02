@@ -192,7 +192,7 @@ class DataManager:
         return True
 
     def to_dict(self) -> dict:
-        """Serialize all datasets to a plain dictionary."""
+        """Serialize all datasets to a pickle-safe dictionary."""
         return {
             name: {
                 "path": str(ds.path),

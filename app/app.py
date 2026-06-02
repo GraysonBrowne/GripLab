@@ -35,6 +35,8 @@ from ui.modals import (
 from utils.dialogs import Tk_utils
 from utils.logger import logger
 
+__version__ = AppConfig.read_version()
+
 _cache: Dict[str, Any] = cast(Dict[str, Any], pn.state.cache)
 
 
@@ -42,7 +44,7 @@ class GripLabApp:
     """Main application orchestrator."""
 
     def __init__(self):
-        logger.info(f"GripLab v{AppConfig.read_version()} starting")
+        logger.info(f"GripLab v{__version__} starting")
         # Determine program directory
         if getattr(sys, "frozen", False):
             # Adjust working directory for frozen executable
@@ -136,16 +138,16 @@ class GripLabApp:
 
         logger.info("Restoring session state from cache")
 
-        # Populate options first, then restore values
-        self._update_channel_options()
-        self._update_data_select_options()
-        self.plot_widgets.restore(session)
-        self.plot_settings_widgets.restore(session)
-
         # Restore table selection — guard against stale indices
         cached_selection = session.get("data_selection", [])
         table_len = len(self.dm.list_datasets())
         self.data_table.selection = [i for i in cached_selection if i < table_len]
+
+        # Populate options
+        self._update_channel_options()
+        self._update_data_select_options()
+        self.plot_widgets.restore(session)
+        self.plot_settings_widgets.restore(session)
 
         # Re-plot
         self._on_plot_data(clicks=None)
@@ -168,7 +170,7 @@ class GripLabApp:
             "x_label": self.plot_settings_widgets.x_label.value,
             "y_label": self.plot_settings_widgets.y_label.value,
             "z_label": self.plot_settings_widgets.z_label.value,
-            "color_label": self.plot_settings_widgets.c_label.value,
+            "c_label": self.plot_settings_widgets.c_label.value,
             "color_map": self.plot_settings_widgets.color_map.value,
             "font_size": self.plot_settings_widgets.font_size.value,
             "marker_size": self.plot_settings_widgets.marker_size.value,
@@ -202,7 +204,7 @@ class GripLabApp:
             ("Report An Issue", "issue"),
             ("TTC Forum", "ttc"),
             None,
-            (f"v{AppConfig.read_version()}", "version"),
+            (f"v{__version__}", "version"),
         ]
         self.help_menu = pn.widgets.MenuButton(
             name="Help",
@@ -607,7 +609,10 @@ class GripLabApp:
             initialdir=self.config.data_dir,
             icon=str(Path(self.program_dir, "docs", "images", "GripLab_Icon.ico")),
         )
-        if path:
+        if not self.data_controller.export_session(path):
+            if pn.state.notifications:
+                pn.state.notifications.error("Failed to export session.", duration=4000)
+        elif path:
             self._save_session()
             self.data_controller.export_session(path)
 
@@ -639,7 +644,7 @@ class GripLabApp:
     def _on_file_menu(self, clicked):
         """Handle file menu selection."""
         actions = {
-            "import_data": self._on_import_data(clicked),
+            "import_data": lambda: self._on_import_data(clicks=None),
             "save_session": self._on_export_session,
             "import_session": self._on_import_session,
         }

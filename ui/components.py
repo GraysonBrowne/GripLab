@@ -293,7 +293,7 @@ class PlotSettingsWidgets:
         self.x_label.value = session.get("x_label", "")
         self.y_label.value = session.get("y_label", "")
         self.z_label.value = session.get("z_label", "")
-        self.c_label.value = session.get("color_label", "")
+        self.c_label.value = session.get("c_label", "")
         self.font_size.value = session.get("font_size", 18)
         self.marker_size.value = session.get("marker_size", 10)
         self.marker_opacity.value = session.get("marker_opacity", 0.3)

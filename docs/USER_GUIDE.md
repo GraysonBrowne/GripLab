@@ -6,11 +6,12 @@
 1. [Getting Started](#getting-started)
 2. [Importing Data](#importing-data)
 3. [Managing Datasets](#managing-datasets)
-4. [Settings](#settings)
-5. [Plotting](#plotting)
-6. [Plot Settings](#plot-settings)
-7. [Tips and Tricks](#tips-and-tricks)
-8. [Troubleshooting](#troubleshooting)
+4. [Sessions](#sessions)
+5. [Settings](#settings)
+6. [Plotting](#plotting)
+7. [Plot Settings](#plot-settings)
+8. [Tips and Tricks](#tips-and-tricks)
+9. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -42,7 +43,7 @@ The terminal also displays log output and is a useful reference if something goe
 
 ## Importing Data
 
-Click **Import Data** in the sidebar to open a file selection dialog. Multiple files can be selected and imported at once.
+Click **Import Data** in the sidebar or under the **File Menu** to open a file selection dialog. Multiple files can be selected and imported at once.
 
 **Supported formats:**
 - `.mat` — MATLAB data files
@@ -117,6 +118,33 @@ Click **Update** to save changes.
 
 ### Removing a Dataset
 Click the trash icon next to a dataset in the table. A confirmation dialog will appear before removal.
+
+---
+
+## Sessions
+
+A session captures all imported datasets and the current plot state — selected channels, 
+filters, plot type, and plot settings. Sessions can be saved to a file and reloaded 
+later, making it easy to pick up where you left off.
+
+### Saving a Session
+Click **File → Save Session** to save the current session to a `.grip` file. Choose a 
+location and filename in the dialog that appears.
+
+### Loading a Session
+Click **File → Import Session** to load a previously saved `.grip` file. All datasets 
+and plot settings from the file will be restored and the plot will be regenerated 
+automatically. Any datasets currently loaded will be replaced.
+
+> **Note:** If a session file was created with a different version of GripLab, a warning 
+> will appear. The session will still load, but some settings may not restore correctly.
+
+### Automatic Session Recovery
+GripLab automatically preserves your session in memory while the local server is 
+running. If the browser tab is closed or the connection drops, reloading the page 
+will restore your datasets and the last plot without any action required. This only 
+works while the terminal window stays open — if the app is restarted, the in-memory 
+session is lost. Use **Save Session** to preserve work across restarts.
 
 ---
 
@@ -201,8 +229,6 @@ The Plotly toolbar appears in the top-right corner of the plot area and provides
 | **Reset axes** | Return to the default view |
 | **Download PNG** | Save the current plot as an image |
 
-> **Note:** Do not use the browser's refresh button or click the GripLab logo — this will crash the local server and require restarting the app.
-
 ---
 
 ## Plot Settings
@@ -247,5 +273,8 @@ The browser window should open automatically on launch. If it doesn't, check the
 ### The app stops responding
 Check that the terminal window is still open. If it has been closed, restart the app by double-clicking the executable again.
 
-### The browser was refreshed and the app crashed
-This is a known limitation. Close the terminal window and relaunch the executable to restart the app.
+### The page reloaded and my data is gone
+If the terminal window is still open, the session should restore automatically on 
+reload. If the app was fully restarted (terminal closed and reopened), the in-memory 
+session is lost. Use **File → Save Session** regularly to save a `.grip` file that can 
+be reloaded after a restart.
