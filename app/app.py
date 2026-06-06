@@ -703,7 +703,7 @@ class GripLabApp:
             name=f"Scatter {count}",
             controls=PlotControlWidgets(),
             settings=PlotSettingsWidgets(),
-            pane=pn.pane.Plotly(sizing_mode="stretch_both"),
+            pane=pn.pane.Plotly(px.scatter(),sizing_mode="stretch_both"),
         )
         self._wire_scatter_callbacks(page)
         self.pages.append(page)
