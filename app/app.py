@@ -321,15 +321,22 @@ class GripLabApp:
     def _load_sidebar_for_page(self, page: PageType):
         if isinstance(page, ScatterPage):
             self.plot_sidebar_tab.objects = [
-                page.controls.plot_type,
-                pn.Row(page.controls.x_axis, page.controls.y_axis),
-                page.controls.z_axis,
-                page.controls.color_axis,
-                *page.controls.cmd_selects,
-                *page.controls.cmd_multi_selects,
-                page.controls.downsample_slider,
-                pn.Row(page.controls.plot_button, page.controls.settings_button),
-                page.controls.node_count,
+                pn.Row(page.controls.plot_type, 
+                       page.controls.settings_button, 
+                       page.controls.plot_button
+                       ),
+                pn.Row(pn.GridBox(page.controls.x_axis, 
+                                  page.controls.y_axis,
+                                  page.controls.z_axis,
+                                  page.controls.color_axis,
+                                  ncols=2, sizing_mode="stretch_width"),
+                        pn.Column(page.controls.downsample_slider,
+                                  page.controls.node_count,
+                                  width=160)
+                        ),
+                pn.GridBox(*page.controls.cmd_selects,
+                           *page.controls.cmd_multi_selects,
+                           ncols=4)
             ]
 
     def _setup_callbacks(self):
