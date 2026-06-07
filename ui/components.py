@@ -369,3 +369,37 @@ class AppSettingsWidgets:
             margin=(10, 15, 0, 15),
             width=200,
         )
+
+class SubplotRowWidget:
+    def __init__(self, channels: list[str] = []):
+        wf = WidgetFactory()
+        self.channel_select = pn.widgets.MultiSelect(
+            options=channels, sizing_mode="stretch_width", size=4
+        )
+        self.label = wf.create_text_input("Y-Axis Label", placeholder="Channel [unit]")
+        self.remove_btn = wf.create_button("✕", button_type="danger", width=40)
+
+class TimeSeriesControlWidgets:
+    def __init__(self):
+        self.subplot_rows: List[SubplotRowWidget] = []
+        self.rows_column = pn.Column()
+        self.add_subplot_btn = WidgetFactory.create_button("+ Add Subplot", button_type="default")
+        self.plot_button = WidgetFactory.create_button("Plot Data", sizing_mode="stretch_width")
+
+    def add_row(self, channels=[]):
+        row = SubplotRowWidget(channels)
+        self.subplot_rows.append(row)
+        self.rows_column.append(pn.Row(row.channel_select, row.label, row.remove_btn))
+        return row
+
+    def remove_row(self, row: SubplotRowWidget):
+        idx = self.subplot_rows.index(row)
+        self.subplot_rows.pop(idx)
+        self.rows_column.pop(idx)
+
+    def update_channel_options(self, channels: list[str]):
+        for row in self.subplot_rows:
+            # preserve current selection if still valid
+            current = [c for c in row.channel_select.value if c in channels]
+            row.channel_select.options = channels
+            row.channel_select.value = current
