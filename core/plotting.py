@@ -815,11 +815,23 @@ class TimeSeriesBuilder:
         x_channel: str = "ET",
         unit_system: Optional[UnitSystem] = None,
         sign_convention: Optional[SignConvention] = None,
+        colorway: Optional[List[str]] = None,
     ) -> go.Figure:
         from plotly.subplots import make_subplots
 
         if not subplots or not datasets:
             return px.scatter()
+        
+        # Assign a colorway color to each unique channel in order of appearance
+        all_channels: list[str] = []
+        seen: set[str] = set()
+        for subplot in subplots:
+            for ch in subplot.channels:
+                if ch not in seen:
+                    all_channels.append(ch)
+                    seen.add(ch)
+
+        dash_styles = ["solid", "dash", "dot", "dashdot"]
 
         n = len(subplots)
         fig = make_subplots(
@@ -829,8 +841,15 @@ class TimeSeriesBuilder:
             vertical_spacing=0.05,
         )
 
+        dash_styles = ["solid", "dash", "dot", "dashdot"]
+        spacing = 0.05
+        subplot_height = (1.0 - (n - 1) * spacing) / n
+
+        legend_shown: dict[int, set] = {}
         x_label = x_channel
-        for dataset in datasets:
+        legend_layout: dict = {}
+
+        for ds_idx, dataset in enumerate(datasets):
             ds = dataset
             if unit_system is not None:
                 ds = UnitSystemConverter.convert_dataset(ds, to_system=unit_system)
@@ -847,8 +866,13 @@ class TimeSeriesBuilder:
                 x_unit = ds.get_channel_unit(x_channel) or ""
                 x_label = f"{x_channel} [{x_unit}]" if x_unit else x_channel
 
+            dash = dash_styles[ds_idx % len(dash_styles)]
+
             for row_idx, subplot in enumerate(subplots, start=1):
-                for channel in subplot.channels:
+                legend_shown.setdefault(row_idx, set())
+                legend_ref = "legend" if row_idx == 1 else f"legend{row_idx}"
+
+                for ch_idx, channel in enumerate(subplot.channels):
                     y_data = ds.get_channel_data(channel)
                     if y_data is None:
                         continue
@@ -857,19 +881,44 @@ class TimeSeriesBuilder:
                         f"{channel}: %{{y:.3f}} {y_unit}<br>"
                         f"{x_channel}: %{{x:.3f}}<extra>{ds.name}</extra>"
                     )
+                    color_idx = ch_idx % len(colorway) if colorway else 0
+                    color = colorway[color_idx] if colorway else ds.node_color
+                    legend_key = (ds.name, channel)
+                    show = legend_key not in legend_shown[row_idx]
+                    if show:
+                        legend_shown[row_idx].add(legend_key)
+
                     fig.add_trace(
                         go.Scatter(
                             x=x_data,
                             y=y_data,
                             mode="lines",
                             name=f"{ds.name} — {channel}",
-                            line=dict(color=ds.node_color),
+                            line=dict(color=color, dash=dash),
                             hovertemplate=hover,
                             legendgroup=ds.name,
-                            showlegend=(row_idx == 1),
+                            legend=legend_ref,
+                            showlegend=show,
                         ),
                         row=row_idx,
                         col=1,
+                    )
+
+                y_axis_title = subplot.label or ", ".join(subplot.channels)
+                fig.update_yaxes(title_text=y_axis_title, row=row_idx, col=1)
+
+                # Compute legend position for this subplot (only needs to be done once)
+                if row_idx not in legend_layout:
+                    top = 1.0 - (row_idx - 1) * (subplot_height + spacing)
+                    bottom = top - subplot_height
+                    center_y = (top + bottom) / 2.0
+                    legend_key_name = "legend" if row_idx == 1 else f"legend{row_idx}"
+                    legend_layout[legend_key_name] = dict(
+                        x=1.02,
+                        y=center_y,
+                        yanchor="middle",
+                        xanchor="left",
+                        groupclick="toggleitem",
                     )
 
                 y_axis_title = subplot.label or ", ".join(subplot.channels)
@@ -880,8 +929,9 @@ class TimeSeriesBuilder:
         template = "plotly_dark" if pn.config.theme == "dark" else "plotly_white"
         fig.update_layout(
             template=template,
-            legend=dict(groupclick="toggleitem"),
             margin=dict(l=60, r=20, t=30, b=60),
+            showlegend=True,
+            **legend_layout,
         )
 
         return fig

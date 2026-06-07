@@ -784,8 +784,9 @@ class GripLabApp:
         x_channel = "ET"
         unit_system = UnitSystem(self.app_settings_widgets.unit_select.value)
         sign_convention = SignConvention(self.app_settings_widgets.sign_select.value)
+        colorway = list(self.app_settings_widgets.colorway_select.value or [])
         fig = TimeSeriesBuilder.build_time_series(
-            datasets, subplots, x_channel, unit_system, sign_convention
+            datasets, subplots, x_channel, unit_system, sign_convention, colorway
         )
         page.pane.object = fig
         page.subplots = subplots
