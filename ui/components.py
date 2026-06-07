@@ -92,7 +92,7 @@ class PlotControlWidgets:
             start=1,
             end=10,
             step=1,
-            value=5,
+            value=10,
             sizing_mode="stretch_width",
         )
         self.node_count = pn.widgets.StaticText(name="Node Count", value="0")
