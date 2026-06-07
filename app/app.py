@@ -73,6 +73,7 @@ class GripLabApp:
         self._setup_panel()
 
         # Initialize UI
+        self._initialized = False
         self._initialize_ui()
         self._layout_ui()
         self._setup_callbacks()
@@ -136,6 +137,7 @@ class GripLabApp:
         """Restore widget state and re-plot from cached session."""
         session = _cache.get("session", {})
         if not session or not self.dm.list_datasets():
+            self._initialized = True
             return
 
         logger.info("Restoring session state from cache")
@@ -149,17 +151,34 @@ class GripLabApp:
         self._update_channel_options()
         self._update_data_select_options()
 
-        # Re-plot
-        scatter_pages = [p for p in self.pages if isinstance(p, ScatterPage)]
         saved_pages = [p for p in session.get("pages", []) if p.get("type") == "scatter"]
+        
+        # Create additional tabs to match saved page count
+        for i in range(len(self.pages), len(saved_pages)):
+            self._add_scatter_tab(name=saved_pages[i].get("name"))
+
+        # Restore widget state and figures
+        figures = _cache.get("figures", {})
+        scatter_pages = [p for p in self.pages if isinstance(p, ScatterPage)]
         for i, page in enumerate(scatter_pages):
             if i < len(saved_pages):
                 page.controls.restore(saved_pages[i])
                 page.settings.restore(saved_pages[i])
-                self._on_plot_scatter(page, clicks=None)
+                saved_name = saved_pages[i].get("name", page.name)
+                if saved_name in figures and figures[saved_name] is not None:
+                    page.pane.object = figures[saved_name]
+                else:
+                    self._on_plot_scatter(page, clicks=None)
+
+        # Switch back to first tab
+        self.main_tabs.active = 0
+        self._load_sidebar_for_page(scatter_pages[0])
+        self._initialized = True
 
     def _save_session(self):
         """Save current widget state to cache."""
+        if not getattr(self, '_initialized', False):
+            return
         _cache["session"] = {
             "data_selection": self.data_table.selection,
             "pages": [
@@ -172,6 +191,7 @@ class GripLabApp:
                     "z_channel": page.controls.z_axis.value,
                     "c_channel": page.controls.color_axis.value,
                     "downsample": page.controls.downsample_slider.value,
+                    "node_count": page.controls.node_count.value,
                     "cmd_channels": [s.value for s in page.controls.cmd_selects],
                     "cmd_options": [m.options for m in page.controls.cmd_multi_selects],
                     "cmd_values": [m.value for m in page.controls.cmd_multi_selects],
@@ -197,6 +217,14 @@ class GripLabApp:
                 }
                 for page in self.pages
             ]
+        }
+
+        _cache["figures"] = {
+            page.name: page.pane.object
+            for page in self.pages
+            if isinstance(page, ScatterPage)
+            and page.pane.object is not None
+            and len(page.pane.object.data) > 0
         }
 
     def _init_header_widgets(self):
@@ -626,13 +654,35 @@ class GripLabApp:
                 self._refresh_data_table()
                 self._update_channel_options()
                 self._update_data_select_options()
-                scatter_pages = [p for p in self.pages if isinstance(p, ScatterPage)]
+                
                 saved_pages = [p for p in session.get("pages", []) if p.get("type") == "scatter"]
+
+                if self.pages:
+                    self.main_tabs.active = 0
+
+                # Clear all existing pages and tabs
+                while self.pages:
+                    self.pages.pop()
+                while len(self.main_tabs) > 0:
+                    self.main_tabs.pop(-1)
+
+                # Rebuild all from saved state
+                for saved in saved_pages:
+                    self._add_scatter_tab(name=saved.get("name"))
+
+                # Restore widget state and re-plot
+                scatter_pages = [p for p in self.pages if isinstance(p, ScatterPage)]
+                if scatter_pages:
+                    self._load_sidebar_for_page(scatter_pages[0])
                 for i, page in enumerate(scatter_pages):
                     if i < len(saved_pages):
                         page.controls.restore(saved_pages[i])
                         page.settings.restore(saved_pages[i])
                         self._on_plot_scatter(page, clicks=None)
+
+                self.main_tabs.active = 0
+                if scatter_pages:
+                    self._load_sidebar_for_page(scatter_pages[0])
                 if pn.state.notifications:
                     pn.state.notifications.success(
                         f"Session imported from {Path(files[0]).name}", duration=4000
@@ -673,6 +723,7 @@ class GripLabApp:
         if fig:
             page.pane.object = fig
             page.controls.node_count.value = str(node_count)
+        self._save_session()
 
     def _wire_scatter_callbacks(self, page: ScatterPage):
         pn.bind(
@@ -697,13 +748,14 @@ class GripLabApp:
             watch=True,
         )
 
-    def _add_scatter_tab(self):
+    def _add_scatter_tab(self, name: str | None = None):
         count = sum(1 for p in self.pages if isinstance(p, ScatterPage)) + 1
+        tab_name = name or f"Scatter {count}"
         page = ScatterPage(
-            name=f"Scatter {count}",
+            name=tab_name,
             controls=PlotControlWidgets(),
             settings=PlotSettingsWidgets(),
-            pane=pn.pane.Plotly(px.scatter(),sizing_mode="stretch_both"),
+            pane=pn.pane.Plotly(px.scatter(),sizing_mode="stretch_both", name=tab_name),
         )
         self._wire_scatter_callbacks(page)
         self.pages.append(page)
@@ -711,6 +763,7 @@ class GripLabApp:
         self.main_tabs.active = len(self.main_tabs) - 1
         self._update_channel_options()
         self._load_sidebar_for_page(page)
+        self._save_session()
 
     def _on_insert_menu(self, clicked):
         actions = {

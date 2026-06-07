@@ -123,7 +123,8 @@ class PlotControlWidgets:
             return
 
         self.plot_type.value = session.get("plot_type", "2D")
-        self.downsample_slider.value = session.get("downsample", 5)
+        self.downsample_slider.value = session.get("downsample", 10)
+        self.node_count.value = session.get("node_count", "0")
 
         # Channels are restored after options are populated — only set if valid
         for widget, key in [
