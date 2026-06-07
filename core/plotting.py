@@ -926,10 +926,10 @@ class TimeSeriesBuilder:
 
         fig.update_xaxes(title_text=x_label, row=n, col=1)
 
-        template = "plotly_dark" if pn.config.theme == "dark" else "plotly_white"
+        template = px.defaults.template or "plotly_white"
         fig.update_layout(
             template=template,
-            margin=dict(l=60, r=20, t=30, b=60),
+            margin=dict(l=60, r=160, t=30, b=60),
             showlegend=True,
             **legend_layout,
         )
