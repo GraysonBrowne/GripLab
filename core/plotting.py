@@ -11,6 +11,7 @@ import panel as pn
 import plotly.express as px
 import plotly.graph_objects as go
 
+from core.dataio import Dataset
 from converters.channels import ChannelMetadata
 from converters.conventions import ConventionConverter, SignConvention
 from converters.units import UnitSystem, UnitSystemConverter
@@ -803,3 +804,84 @@ class PlottingUtils:
                 filters[selector.value] = [None]
 
         return filters
+
+class TimeSeriesBuilder:
+    """Builds time series plots from datasets and subplot configurations."""
+
+    @staticmethod
+    def build_time_series(
+        datasets: List[Dataset],
+        subplots: list,
+        x_channel: str = "ET",
+        unit_system: Optional[UnitSystem] = None,
+        sign_convention: Optional[SignConvention] = None,
+    ) -> go.Figure:
+        from plotly.subplots import make_subplots
+
+        if not subplots or not datasets:
+            return px.scatter()
+
+        n = len(subplots)
+        fig = make_subplots(
+            rows=n,
+            cols=1,
+            shared_xaxes=True,
+            vertical_spacing=0.05,
+        )
+
+        x_label = x_channel
+        for dataset in datasets:
+            ds = dataset
+            if unit_system is not None:
+                ds = UnitSystemConverter.convert_dataset(ds, to_system=unit_system)
+            if sign_convention is not None:
+                ds = ConventionConverter.convert_dataset_convention(
+                    ds, target_convention=sign_convention
+                )
+
+            x_data = ds.get_channel_data(x_channel)
+            if x_data is None:
+                x_data = np.arange(ds.data.shape[0], dtype=float)
+                x_label = "Index"
+            else:
+                x_unit = ds.get_channel_unit(x_channel) or ""
+                x_label = f"{x_channel} [{x_unit}]" if x_unit else x_channel
+
+            for row_idx, subplot in enumerate(subplots, start=1):
+                for channel in subplot.channels:
+                    y_data = ds.get_channel_data(channel)
+                    if y_data is None:
+                        continue
+                    y_unit = ds.get_channel_unit(channel) or ""
+                    hover = (
+                        f"{channel}: %{{y:.3f}} {y_unit}<br>"
+                        f"{x_channel}: %{{x:.3f}}<extra>{ds.name}</extra>"
+                    )
+                    fig.add_trace(
+                        go.Scatter(
+                            x=x_data,
+                            y=y_data,
+                            mode="lines",
+                            name=f"{ds.name} — {channel}",
+                            line=dict(color=ds.node_color),
+                            hovertemplate=hover,
+                            legendgroup=ds.name,
+                            showlegend=(row_idx == 1),
+                        ),
+                        row=row_idx,
+                        col=1,
+                    )
+
+                y_axis_title = subplot.label or ", ".join(subplot.channels)
+                fig.update_yaxes(title_text=y_axis_title, row=row_idx, col=1)
+
+        fig.update_xaxes(title_text=x_label, row=n, col=1)
+
+        template = "plotly_dark" if pn.config.theme == "dark" else "plotly_white"
+        fig.update_layout(
+            template=template,
+            legend=dict(groupclick="toggleitem"),
+            margin=dict(l=60, r=20, t=30, b=60),
+        )
+
+        return fig
