@@ -6,9 +6,9 @@ from typing import List, Optional
 import panel as pn
 import plotly.express as px
 
+from app.models import SubplotConfig
 from converters.conventions import SignConvention
 from converters.units import UnitSystem
-
 
 def _cmap_css() -> str:
     return (
@@ -370,36 +370,131 @@ class AppSettingsWidgets:
             width=200,
         )
 
-class SubplotRowWidget:
+class SubplotCellWidget:
     def __init__(self, channels: list[str] = []):
         wf = WidgetFactory()
-        self.channel_select = pn.widgets.MultiSelect(
-            options=channels, sizing_mode="stretch_width", size=4
-        )
+        opts = [""] + channels
+        self.channel_selects = [
+            wf.create_select(f"Channel {i + 1}", options=opts)
+            for i in range(4)
+        ]
         self.label = wf.create_text_input("Y-Axis Label", placeholder="Channel [unit]")
-        self.remove_btn = wf.create_button("✕", button_type="danger", width=40)
+
+    def selected_channels(self) -> list[str]:
+        return [s.value for s in self.channel_selects if s.value]
+
+    def update_channel_options(self, channels: list[str]):
+        opts = [""] + channels
+        for sel in self.channel_selects:
+            current = sel.value if sel.value in channels else ""
+            sel.options = opts
+            sel.value = current
 
 class TimeSeriesControlWidgets:
     def __init__(self):
-        self.subplot_rows: List[SubplotRowWidget] = []
-        self.rows_column = pn.Column()
-        self.add_subplot_btn = WidgetFactory.create_button("+ Add Subplot", button_type="default")
+        self.cells: List[List[SubplotCellWidget]] = []
+        self.n_rows: int = 0
+        self.n_cols: int = 0
+
+        self.subplot_select = WidgetFactory.create_select("Subplot")
+        self.settings_column = pn.Column()
+        self.add_row_btn = WidgetFactory.create_button("+ Add Row", button_type="default")
+        self.add_col_btn = WidgetFactory.create_button("+ Add Column", button_type="default")
+        self.remove_btn = WidgetFactory.create_button("Remove Subplot", button_type="danger")
         self.plot_button = WidgetFactory.create_button("Plot Data", sizing_mode="stretch_width")
 
-    def add_row(self, channels=[]):
-        row = SubplotRowWidget(channels)
-        self.subplot_rows.append(row)
-        self.rows_column.append(pn.Row(row.channel_select, row.label, row.remove_btn))
+    def _cell_label(self, row: int, col: int) -> str:
+        if self.n_cols == 1:
+            return f"Row {row + 1}"
+        return f"Row {row + 1}, Col {col + 1}"
+
+    def _rebuild_select_options(self):
+        opts = [
+            self._cell_label(r, c)
+            for r in range(self.n_rows)
+            for c in range(self.n_cols)
+        ]
+        current = self.subplot_select.value
+        self.subplot_select.options = opts
+        self.subplot_select.value = current if current in opts else (opts[0] if opts else None)
+
+    def get_selected_cell(self) -> Optional[SubplotCellWidget]:
+        val = self.subplot_select.value
+        if not val:
+            return None
+        for r in range(self.n_rows):
+            for c in range(self.n_cols):
+                if self._cell_label(r, c) == val:
+                    return self.cells[r][c]
+        return None
+
+    def show_selected_settings(self):
+        cell = self.get_selected_cell()
+        if cell is None:
+            self.settings_column.objects = []
+        else:
+            self.settings_column.objects = [
+                *cell.channel_selects,
+                cell.label,
+                self.remove_btn,
+            ]
+
+    def add_row(self, channels: list[str] = []) -> List[SubplotCellWidget]:
+        row = [SubplotCellWidget(channels) for _ in range(max(self.n_cols, 1))]
+        self.cells.append(row)
+        self.n_rows += 1
+        if self.n_cols == 0:
+            self.n_cols = 1
+        self._rebuild_select_options()
         return row
 
-    def remove_row(self, row: SubplotRowWidget):
-        idx = self.subplot_rows.index(row)
-        self.subplot_rows.pop(idx)
-        self.rows_column.pop(idx)
+    def add_col(self, channels: list[str] = []) -> List[SubplotCellWidget]:
+        new_cells = []
+        for row in self.cells:
+            cell = SubplotCellWidget(channels)
+            row.append(cell)
+            new_cells.append(cell)
+        self.n_cols += 1
+        self._rebuild_select_options()
+        return new_cells
+
+    def remove_selected(self) -> Optional[tuple[int, int]]:
+        """Remove the currently selected cell. Returns (row, col) removed."""
+        val = self.subplot_select.value
+        if not val:
+            return None
+        for r in range(self.n_rows):
+            for c in range(self.n_cols):
+                if self._cell_label(r, c) != val:
+                    continue
+                if self.n_cols == 1:
+                    self.cells.pop(r)
+                    self.n_rows -= 1
+                elif self.n_rows == 1:
+                    self.cells[r].pop(c)
+                    self.n_cols -= 1
+                else:
+                    self.cells[r].pop(c)
+                    if not self.cells[r]:
+                        self.cells.pop(r)
+                        self.n_rows -= 1
+                    if self.n_cols > 0 and all(len(row) < self.n_cols for row in self.cells):
+                        self.n_cols -= 1
+                self._rebuild_select_options()
+                self.show_selected_settings()
+                return (r, c)
+        return None
 
     def update_channel_options(self, channels: list[str]):
-        for row in self.subplot_rows:
-            # preserve current selection if still valid
-            current = [c for c in row.channel_select.value if c in channels]
-            row.channel_select.options = channels
-            row.channel_select.value = current
+        for row in self.cells:
+            for cell in row:
+                cell.update_channel_options(channels)
+
+    def get_subplot_grid(self) -> List[List[SubplotConfig]]:
+        return [
+            [
+                SubplotConfig(channels=cell.selected_channels(), label=cell.label.value)
+                for cell in row
+            ]
+            for row in self.cells
+        ]

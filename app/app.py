@@ -177,16 +177,22 @@ class GripLabApp:
             self._add_time_series_tab(name=saved.get("name"))
             page = next(p for p in reversed(self.pages) if isinstance(p, TimeSeriesPage))
             channels = self.dm.get_channels(self.dm.list_datasets())
-            for sp in saved.get("subplots", []):
-                page.controls.add_row(channels)
-                row = page.controls.subplot_rows[-1]
-                row.channel_select.value = [c for c in sp["channels"] if c in channels]
-                row.label.value = sp.get("label", "")
-                pn.bind(
-                    lambda clicks, p=page, r=row: self._on_remove_subplot(p, r, clicks),
-                    row.remove_btn.param.clicks,
-                    watch=True,
-                )
+            grid = saved.get("subplots", [[]])
+            if grid and not isinstance(grid[0], list):
+                grid = [[cell] for cell in grid if isinstance(cell, dict)]
+            for r_idx, saved_row in enumerate(grid):
+                if r_idx > 0:
+                    page.controls.add_row(channels)
+                if r_idx == 0 and len(saved_row) > 1:
+                    for _ in range(len(saved_row) - 1):
+                        page.controls.add_col(channels)
+                for c_idx, saved_cell in enumerate(saved_row):
+                    cell = page.controls.cells[r_idx][c_idx]
+                    for i, ch in enumerate(saved_cell.get("channels", [])):
+                        if i < 4 and ch in channels:
+                            cell.channel_selects[i].value = ch
+                    cell.label.value = saved_cell.get("label", "")
+            page.controls.show_selected_settings()
 
         # Switch back to first tab
         self.main_tabs.active = 0
@@ -229,9 +235,9 @@ class GripLabApp:
                     "type": "time_series",
                     "name": page.name,
                     "subplots": [
-                        {"channels": s.channels, "label": s.label}
-                        for s in page.subplots
-                    ],
+                        [{"channels": cell.channels, "label": cell.label} for cell in row]
+                        for row in page.subplots
+                    ]
                 }
                 for page in self.pages
             ]
@@ -386,9 +392,10 @@ class GripLabApp:
             ]
         elif isinstance(page, TimeSeriesPage):
             self.plot_sidebar_tab.objects = [
-            page.controls.rows_column,
-            page.controls.add_subplot_btn,
-            page.controls.plot_button,
+                page.controls.subplot_select,
+                page.controls.settings_column,
+                pn.Row(page.controls.add_row_btn, page.controls.add_col_btn),
+                page.controls.plot_button,
             ]
 
     def _setup_callbacks(self):
@@ -749,29 +756,28 @@ class GripLabApp:
             page.controls.node_count.value = str(node_count)
         self._save_session()
 
-    def _on_add_subplot(self, page: TimeSeriesPage, clicks):
+    def _on_add_row(self, page: TimeSeriesPage, clicks):
         channels = self.dm.get_channels(self.dm.list_datasets())
-        row = page.controls.add_row(channels)
-        # wire remove button
-        pn.bind(
-            lambda clicks, p=page, r=row: self._on_remove_subplot(p, r, clicks),
-            row.remove_btn.param.clicks,
-            watch=True,
-        )
+        page.controls.add_row(channels)
+        page.controls.show_selected_settings()
 
-    def _on_remove_subplot(self, page: TimeSeriesPage, row, clicks):
-        page.controls.remove_row(row)
+    def _on_add_col(self, page: TimeSeriesPage, clicks):
+        channels = self.dm.get_channels(self.dm.list_datasets())
+        page.controls.add_col(channels)
+        page.controls.show_selected_settings()
+
+    def _on_remove_subplot(self, page: TimeSeriesPage, clicks):
+        page.controls.remove_selected()
+
+    def _on_subplot_select_change(self, page: TimeSeriesPage, value):
+        page.controls.show_selected_settings()
 
     def _on_plot_time_series(self, page: TimeSeriesPage, clicks):
         if not self.data_table.selection:
             if clicks is not None and pn.state.notifications:
                 pn.state.notifications.warning("Select a dataset to plot", duration=4000)
             return
-        subplots = [
-            SubplotConfig(channels=row.channel_select.value, label=row.label.value)
-            for row in page.controls.subplot_rows
-            if row.channel_select.value
-        ]
+        subplots = page.controls.get_subplot_grid()
         if not subplots:
             if clicks is not None and pn.state.notifications:
                 pn.state.notifications.warning(
@@ -822,8 +828,23 @@ class GripLabApp:
             watch=True,
         )
         pn.bind(
-            lambda clicks, p=page: self._on_add_subplot(p, clicks),
-            page.controls.add_subplot_btn.param.clicks,
+            lambda clicks, p=page: self._on_add_row(p, clicks),
+            page.controls.add_row_btn.param.clicks,
+            watch=True,
+        )
+        pn.bind(
+            lambda clicks, p=page: self._on_add_col(p, clicks),
+            page.controls.add_col_btn.param.clicks,
+            watch=True,
+        )
+        pn.bind(
+            lambda clicks, p=page: self._on_remove_subplot(p, clicks),
+            page.controls.remove_btn.param.clicks,
+            watch=True,
+        )
+        pn.bind(
+            lambda value, p=page: self._on_subplot_select_change(p, value),
+            page.controls.subplot_select.param.value,
             watch=True,
         )
 
@@ -853,6 +874,8 @@ class GripLabApp:
             controls=controls,
             pane=pn.pane.Plotly(px.scatter(), sizing_mode="stretch_both", name=tab_name),
         )
+        page.controls.add_row(self.dm.get_channels(self.dm.list_datasets()))
+        page.controls.show_selected_settings()
         self._wire_time_series_callbacks(page)
         self.pages.append(page)
         self.main_tabs.append((tab_name, page.pane))

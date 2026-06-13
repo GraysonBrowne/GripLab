@@ -811,7 +811,7 @@ class TimeSeriesBuilder:
     @staticmethod
     def build_time_series(
         datasets: List[Dataset],
-        subplots: list,
+        subplots: List[List],
         x_channel: str = "ET",
         unit_system: Optional[UnitSystem] = None,
         sign_convention: Optional[SignConvention] = None,
@@ -821,31 +821,41 @@ class TimeSeriesBuilder:
 
         if not subplots or not datasets:
             return px.scatter()
-        
-        # Assign a colorway color to each unique channel in order of appearance
-        all_channels: list[str] = []
-        seen: set[str] = set()
-        for subplot in subplots:
-            for ch in subplot.channels:
-                if ch not in seen:
-                    all_channels.append(ch)
-                    seen.add(ch)
 
-        dash_styles = ["solid", "dash", "dot", "dashdot"]
+        n_rows = len(subplots)
+        n_cols = max((len(row) for row in subplots), default=1)
 
-        n = len(subplots)
+        if n_rows == 0 or not datasets:
+            return px.scatter()
+
+        if n_cols > 1:
+            max_label_len = max(
+                (
+                    len(f"{ds.name} — {ch} [{y_unit}]")
+                    for ds in datasets
+                    for row in subplots
+                    for subplot in row
+                    for ch in subplot.channels
+                    for y_unit in [ds.get_channel_unit(ch) or ""]
+                ),
+                default=20,
+            )
+            h_gap = max(0.06 + max_label_len * 0.005, 0.10)
+        else:
+            h_gap = 0.08
+        spacing = 0.05
+        subplot_height = (1.0 - (n_rows - 1) * spacing) / n_rows
         fig = make_subplots(
-            rows=n,
-            cols=1,
-            shared_xaxes=True,
-            vertical_spacing=0.05,
+            rows=n_rows,
+            cols=n_cols,
+            shared_xaxes="all",
+            vertical_spacing=spacing,
+            horizontal_spacing=h_gap,
         )
 
         dash_styles = ["solid", "dash", "dot", "dashdot"]
-        spacing = 0.05
-        subplot_height = (1.0 - (n - 1) * spacing) / n
 
-        legend_shown: dict[int, set] = {}
+        legend_shown: dict[tuple, set] = {}
         x_label = x_channel
         legend_layout: dict = {}
 
@@ -868,68 +878,69 @@ class TimeSeriesBuilder:
 
             dash = dash_styles[ds_idx % len(dash_styles)]
 
-            for row_idx, subplot in enumerate(subplots, start=1):
-                legend_shown.setdefault(row_idx, set())
-                legend_ref = "legend" if row_idx == 1 else f"legend{row_idx}"
+            for row_idx, subplot_row in enumerate(subplots, start=1):
+                for col_idx, subplot in enumerate(subplot_row, start=1):
+                    legend_shown.setdefault((row_idx, col_idx), set())
+                    legend_idx = (row_idx - 1) * n_cols + col_idx
+                    legend_ref = "legend" if legend_idx == 1 else f"legend{legend_idx}"
 
-                for ch_idx, channel in enumerate(subplot.channels):
-                    y_data = ds.get_channel_data(channel)
-                    if y_data is None:
-                        continue
-                    y_unit = ds.get_channel_unit(channel) or ""
-                    hover = (
-                        f"{channel}: %{{y:.3f}} {y_unit}<br>"
-                        f"{x_channel}: %{{x:.3f}}<extra>{ds.name}</extra>"
-                    )
-                    color_idx = ch_idx % len(colorway) if colorway else 0
-                    color = colorway[color_idx] if colorway else ds.node_color
-                    legend_key = (ds.name, channel)
-                    show = legend_key not in legend_shown[row_idx]
-                    if show:
-                        legend_shown[row_idx].add(legend_key)
+                    for ch_idx, channel in enumerate(subplot.channels):
+                        y_data = ds.get_channel_data(channel)
+                        if y_data is None:
+                            continue
+                        y_unit = ds.get_channel_unit(channel) or ""
+                        hover = (
+                            f"{channel}: %{{y:.2f}} {y_unit}<br>"
+                            f"{x_channel}: %{{x:.2f}}<extra>{ds.name}</extra>"
+                        )
+                        color_idx = ch_idx % len(colorway) if colorway else 0
+                        color = colorway[color_idx] if colorway else ds.node_color
+                        legend_key = (ds.name, channel)
+                        show = legend_key not in legend_shown[(row_idx, col_idx)]
+                        if show:
+                            legend_shown[(row_idx, col_idx)].add(legend_key)
 
-                    fig.add_trace(
-                        go.Scatter(
-                            x=x_data,
-                            y=y_data,
-                            mode="lines",
-                            name=f"{ds.name} — {channel}",
-                            line=dict(color=color, dash=dash),
-                            hovertemplate=hover,
-                            legendgroup=ds.name,
-                            legend=legend_ref,
-                            showlegend=show,
-                        ),
-                        row=row_idx,
-                        col=1,
-                    )
+                        fig.add_trace(
+                            go.Scatter(
+                                x=x_data,
+                                y=y_data,
+                                mode="lines",
+                                name=f"{ds.name} — {channel} [{y_unit}]",
+                                line=dict(color=color, dash=dash),
+                                hovertemplate=hover,
+                                legendgroup=ds.name,
+                                legend=legend_ref,
+                                showlegend=show,
+                            ),
+                            row=row_idx,
+                            col=col_idx,
+                        )
 
-                y_axis_title = subplot.label or ", ".join(subplot.channels)
-                fig.update_yaxes(title_text=y_axis_title, row=row_idx, col=1)
+                    y_axis_title = subplot.label or ", ".join(subplot.channels)
+                    fig.update_yaxes(title_text=y_axis_title, row=row_idx, col=col_idx)
 
-                # Compute legend position for this subplot (only needs to be done once)
-                if row_idx not in legend_layout:
-                    top = 1.0 - (row_idx - 1) * (subplot_height + spacing)
-                    bottom = top - subplot_height
-                    center_y = (top + bottom) / 2.0
-                    legend_key_name = "legend" if row_idx == 1 else f"legend{row_idx}"
-                    legend_layout[legend_key_name] = dict(
-                        x=1.02,
-                        y=center_y,
-                        yanchor="middle",
-                        xanchor="left",
-                        groupclick="toggleitem",
-                    )
+                    # Compute legend position for this subplot
+                    if legend_ref not in legend_layout:
+                        top = 1.0 - (row_idx - 1) * (subplot_height + spacing)
+                        bottom = top - subplot_height
+                        center_y = (top + bottom) / 2.0
+                        col_width = (1.0 - (n_cols - 1) * h_gap) / n_cols
+                        col_x_right = col_idx * col_width + (col_idx - 1) * h_gap
+                        legend_layout[legend_ref] = dict(
+                            x=col_x_right + 0.01,
+                            y=center_y,
+                            yanchor="middle",
+                            xanchor="left",
+                            groupclick="toggleitem",
+                        )
 
-                y_axis_title = subplot.label or ", ".join(subplot.channels)
-                fig.update_yaxes(title_text=y_axis_title, row=row_idx, col=1)
-
-        fig.update_xaxes(title_text=x_label, row=n, col=1)
+        for col_idx in range(1, n_cols + 1):
+            fig.update_xaxes(title_text=x_label, row=n_rows, col=col_idx)
 
         template = px.defaults.template or "plotly_white"
         fig.update_layout(
             template=template,
-            margin=dict(l=60, r=160, t=30, b=60),
+            margin=dict(l=60, r=140, t=30, b=60),
             showlegend=True,
             **legend_layout,
         )

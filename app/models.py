@@ -34,11 +34,10 @@ class ScatterPage:
 
 @dataclass
 class TimeSeriesPage:
-    """State container for a time series tab."""
     name: str
     controls: TimeSeriesControlWidgets
     pane: pn.pane.Plotly
-    subplots: List[SubplotConfig] = field(default_factory=list)
+    subplots: List[List[SubplotConfig]] = field(default_factory=list)
 
 
 PageType = Union[ScatterPage, TimeSeriesPage]
