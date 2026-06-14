@@ -128,7 +128,7 @@ class GripLabApp:
         self._init_header_widgets()
         self._init_sidebar_widgets()
         self._init_main_view()
-        self.main_tabs = pn.Tabs(dynamic=True, sizing_mode="stretch_both")
+        self.main_tabs = pn.Tabs(dynamic=True, closable=True, sizing_mode="stretch_both")
         self.plot_sidebar_tab = pn.Column(name="Plot Data", height=345)
         self._add_scatter_tab()
 
@@ -403,6 +403,7 @@ class GripLabApp:
         pn.bind(self._on_import_data, self.import_btn.param.clicks, watch=True)
         pn.bind(self._on_settings_click, self.settings_btn.param.clicks, watch=True)
         pn.bind(self._on_main_tab_change, self.main_tabs.param.active, watch=True)
+        self.main_tabs.param.watch(self._on_tab_closed, 'objects')
 
         # Widget change callbacks
         pn.bind(
@@ -538,6 +539,29 @@ class GripLabApp:
             page = self.pages[active]
             self._load_sidebar_for_page(page)
             self.info_tabs.active = 1
+
+    def _on_tab_closed(self, event):
+        if len(event.new) >= len(event.old):
+            return
+        removed_pane = next((p for p in event.old if p not in event.new), None)
+        if removed_pane is None:
+            return
+        removed_idx = next(
+            (i for i, page in enumerate(self.pages) if page.pane is removed_pane), None
+        )
+        if removed_idx is None:
+            return
+        if len(self.pages) <= 1:
+            self.main_tabs.insert(removed_idx, (self.pages[0].name, self.pages[0].pane))
+            self.main_tabs.active = 0
+            if pn.state.notifications:
+                pn.state.notifications.warning("At least one page is required", duration=4000)
+            return
+        self.pages.pop(removed_idx)
+        active = min(self.main_tabs.active, len(self.pages) - 1)
+        self.main_tabs.active = active
+        self._load_sidebar_for_page(self.pages[active])
+        self._save_session()
 
     @hold()
     def _on_data_select(self, dataset_name):
