@@ -397,9 +397,9 @@ class TimeSeriesControlWidgets:
         self.n_cols: int = 0
 
         self.subplot_select = WidgetFactory.create_select("Subplot")
-        self.settings_column = pn.Column()
-        self.add_row_btn = WidgetFactory.create_button("+ Add Row", button_type="default")
-        self.add_col_btn = WidgetFactory.create_button("+ Add Column", button_type="default")
+        self.channel_grid = pn.GridBox(ncols=2, sizing_mode="stretch_width")
+        self.settings_column = pn.Column(self.channel_grid)
+        self.add_row_btn = WidgetFactory.create_button("+ Add Subplot", button_type="default")
         self.remove_btn = WidgetFactory.create_button("Remove Subplot", button_type="danger")
         self.plot_button = WidgetFactory.create_button("Plot Data", sizing_mode="stretch_width")
 
@@ -433,20 +433,25 @@ class TimeSeriesControlWidgets:
         if cell is None:
             self.settings_column.objects = []
         else:
+            self.channel_grid.objects = [*cell.channel_selects]
             self.settings_column.objects = [
-                *cell.channel_selects,
+                self.channel_grid,
                 cell.label,
                 self.remove_btn,
+                self.add_row_btn,
             ]
 
-    def add_row(self, channels: list[str] = []) -> List[SubplotCellWidget]:
-        row = [SubplotCellWidget(channels) for _ in range(max(self.n_cols, 1))]
-        self.cells.append(row)
+    def add_row(self, channels: list[str] = [], after: int = -1) -> List[SubplotCellWidget]:
+        new_row = [SubplotCellWidget(channels)]
+        if 0 <= after < self.n_rows:
+            self.cells.insert(after + 1, new_row)
+        else:
+            self.cells.append(new_row)
         self.n_rows += 1
         if self.n_cols == 0:
             self.n_cols = 1
         self._rebuild_select_options()
-        return row
+        return new_row
 
     def add_col(self, channels: list[str] = []) -> List[SubplotCellWidget]:
         new_cells = []
@@ -462,6 +467,8 @@ class TimeSeriesControlWidgets:
         """Remove the currently selected cell. Returns (row, col) removed."""
         val = self.subplot_select.value
         if not val:
+            return None
+        if self.n_rows <= 1:
             return None
         for r in range(self.n_rows):
             for c in range(self.n_cols):
@@ -481,6 +488,9 @@ class TimeSeriesControlWidgets:
                     if self.n_cols > 0 and all(len(row) < self.n_cols for row in self.cells):
                         self.n_cols -= 1
                 self._rebuild_select_options()
+                if self.n_rows > 0:
+                    new_r = min(r, self.n_rows - 1)
+                    self.subplot_select.value = self._cell_label(new_r, 0)
                 self.show_selected_settings()
                 return (r, c)
         return None

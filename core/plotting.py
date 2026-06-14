@@ -828,29 +828,13 @@ class TimeSeriesBuilder:
         if n_rows == 0 or not datasets:
             return px.scatter()
 
-        if n_cols > 1:
-            max_label_len = max(
-                (
-                    len(f"{ds.name} — {ch} [{y_unit}]")
-                    for ds in datasets
-                    for row in subplots
-                    for subplot in row
-                    for ch in subplot.channels
-                    for y_unit in [ds.get_channel_unit(ch) or ""]
-                ),
-                default=20,
-            )
-            h_gap = max(0.06 + max_label_len * 0.005, 0.10)
-        else:
-            h_gap = 0.08
         spacing = 0.05
         subplot_height = (1.0 - (n_rows - 1) * spacing) / n_rows
         fig = make_subplots(
             rows=n_rows,
-            cols=n_cols,
+            cols=1,
             shared_xaxes="all",
             vertical_spacing=spacing,
-            horizontal_spacing=h_gap,
         )
 
         dash_styles = ["solid", "dash", "dot", "dashdot"]
@@ -924,10 +908,8 @@ class TimeSeriesBuilder:
                         top = 1.0 - (row_idx - 1) * (subplot_height + spacing)
                         bottom = top - subplot_height
                         center_y = (top + bottom) / 2.0
-                        col_width = (1.0 - (n_cols - 1) * h_gap) / n_cols
-                        col_x_right = col_idx * col_width + (col_idx - 1) * h_gap
                         legend_layout[legend_ref] = dict(
-                            x=col_x_right + 0.01,
+                            x=1.02,
                             y=center_y,
                             yanchor="middle",
                             xanchor="left",

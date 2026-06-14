@@ -129,7 +129,7 @@ class GripLabApp:
         self._init_sidebar_widgets()
         self._init_main_view()
         self.main_tabs = pn.Tabs(dynamic=True, sizing_mode="stretch_both")
-        self.plot_sidebar_tab = pn.Column(name="Plot Data")
+        self.plot_sidebar_tab = pn.Column(name="Plot Data", height=345)
         self._add_scatter_tab()
 
         # Modal container
@@ -183,10 +183,9 @@ class GripLabApp:
             for r_idx, saved_row in enumerate(grid):
                 if r_idx > 0:
                     page.controls.add_row(channels)
-                if r_idx == 0 and len(saved_row) > 1:
-                    for _ in range(len(saved_row) - 1):
-                        page.controls.add_col(channels)
                 for c_idx, saved_cell in enumerate(saved_row):
+                    if c_idx >= len(page.controls.cells[r_idx]):
+                        break
                     cell = page.controls.cells[r_idx][c_idx]
                     for i, ch in enumerate(saved_cell.get("channels", [])):
                         if i < 4 and ch in channels:
@@ -353,12 +352,14 @@ class GripLabApp:
             name="Data Info",
         )
 
-        self.info_tabs = pn.layout.Tabs(self.plot_sidebar_tab, data_tab)
+        self.info_tabs = pn.layout.Tabs(data_tab, self.plot_sidebar_tab, 
+                                        sizing_mode="stretch_height")
 
         sidebar_object = cast(list, self.template.sidebar)
         sidebar_object.append(
             pn.Column(
-                self.import_btn, self.data_table, pn.layout.Divider(), self.info_tabs
+                self.import_btn, self.data_table, pn.layout.Divider(), self.info_tabs,
+                sizing_mode="stretch_height",
             )
         )
 
@@ -392,10 +393,8 @@ class GripLabApp:
             ]
         elif isinstance(page, TimeSeriesPage):
             self.plot_sidebar_tab.objects = [
-                page.controls.subplot_select,
-                page.controls.settings_column,
-                pn.Row(page.controls.add_row_btn, page.controls.add_col_btn),
-                page.controls.plot_button,
+                pn.Row(page.controls.subplot_select, page.controls.plot_button),
+                pn.Column(page.controls.settings_column, sizing_mode="stretch_width"),
             ]
 
     def _setup_callbacks(self):
@@ -446,6 +445,8 @@ class GripLabApp:
             self.app_settings_widgets.sign_select.param.value,
             watch=True,
         )
+
+        self.info_tabs.active = 1
 
     # ===========================
     # Main Callback Methods
@@ -536,6 +537,7 @@ class GripLabApp:
         if 0 <= active < len(self.pages):
             page = self.pages[active]
             self._load_sidebar_for_page(page)
+            self.info_tabs.active = 1
 
     @hold()
     def _on_data_select(self, dataset_name):
@@ -758,15 +760,22 @@ class GripLabApp:
 
     def _on_add_row(self, page: TimeSeriesPage, clicks):
         channels = self.dm.get_channels(self.dm.list_datasets())
-        page.controls.add_row(channels)
-        page.controls.show_selected_settings()
-
-    def _on_add_col(self, page: TimeSeriesPage, clicks):
-        channels = self.dm.get_channels(self.dm.list_datasets())
-        page.controls.add_col(channels)
+        val = page.controls.subplot_select.value
+        after = -1
+        for r in range(page.controls.n_rows):
+            if page.controls._cell_label(r, 0) == val:
+                after = r
+                break
+        page.controls.add_row(channels, after=after)
+        new_idx = after + 1 if after >= 0 else page.controls.n_rows - 1
+        page.controls.subplot_select.value = page.controls._cell_label(new_idx, 0)
         page.controls.show_selected_settings()
 
     def _on_remove_subplot(self, page: TimeSeriesPage, clicks):
+        if page.controls.n_rows <= 1:
+            if pn.state.notifications:
+                pn.state.notifications.warning("At least one subplot is required", duration=4000)
+            return
         page.controls.remove_selected()
 
     def _on_subplot_select_change(self, page: TimeSeriesPage, value):
@@ -792,7 +801,7 @@ class GripLabApp:
         sign_convention = SignConvention(self.app_settings_widgets.sign_select.value)
         colorway = list(self.app_settings_widgets.colorway_select.value or [])
         fig = TimeSeriesBuilder.build_time_series(
-            datasets, subplots, x_channel, unit_system, sign_convention, colorway
+            datasets, subplots, x_channel, unit_system, sign_convention, colorway,
         )
         page.pane.object = fig
         page.subplots = subplots
@@ -830,11 +839,6 @@ class GripLabApp:
         pn.bind(
             lambda clicks, p=page: self._on_add_row(p, clicks),
             page.controls.add_row_btn.param.clicks,
-            watch=True,
-        )
-        pn.bind(
-            lambda clicks, p=page: self._on_add_col(p, clicks),
-            page.controls.add_col_btn.param.clicks,
             watch=True,
         )
         pn.bind(
