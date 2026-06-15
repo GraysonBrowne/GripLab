@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, Any, List, Union
 
 import panel as pn
 
@@ -13,6 +13,7 @@ if TYPE_CHECKING:
         PlotControlWidgets,
         PlotSettingsWidgets,
         TimeSeriesControlWidgets,
+        TimeSeriesSettingsWidgets,
     )
 
 
@@ -36,8 +37,10 @@ class ScatterPage:
 class TimeSeriesPage:
     name: str
     controls: TimeSeriesControlWidgets
+    settings: TimeSeriesSettingsWidgets
     pane: pn.pane.Plotly
     subplots: List[List[SubplotConfig]] = field(default_factory=list)
+    tab_content: Any = field(default=None)
 
 
 PageType = Union[ScatterPage, TimeSeriesPage]

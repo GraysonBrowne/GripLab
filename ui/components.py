@@ -399,13 +399,17 @@ class TimeSeriesControlWidgets:
         self.subplot_select = WidgetFactory.create_select("Subplot")
         self.channel_grid = pn.GridBox(ncols=2, sizing_mode="stretch_width")
         self.settings_column = pn.Column(self.channel_grid)
-        self.add_row_btn = WidgetFactory.create_button("+ Add Subplot", button_type="default")
-        self.remove_btn = WidgetFactory.create_button("Remove Subplot", button_type="danger")
-        self.plot_button = WidgetFactory.create_button("Plot Data", sizing_mode="stretch_width")
+        self.add_row_btn = WidgetFactory.create_button("+ Add Subplot", button_type="default", sizing_mode="stretch_width")
+        self.remove_btn = WidgetFactory.create_button("Remove Subplot", button_type="danger", sizing_mode="stretch_width")
+        self.plot_button = WidgetFactory.create_button("Plot Data", 
+                                                       sizing_mode="stretch_width", 
+                                                       margin=(5, 10, 5, 7))
+        self.settings_button = WidgetFactory.create_button("⚙", button_type="default", 
+                                                           width=43, margin=(5, 0, 5, 15))
 
     def _cell_label(self, row: int, col: int) -> str:
         if self.n_cols == 1:
-            return f"Row {row + 1}"
+            return f"Subplot {row + 1}"
         return f"Row {row + 1}, Col {col + 1}"
 
     def _rebuild_select_options(self):
@@ -437,8 +441,7 @@ class TimeSeriesControlWidgets:
             self.settings_column.objects = [
                 self.channel_grid,
                 cell.label,
-                self.remove_btn,
-                self.add_row_btn,
+                pn.Row(self.remove_btn, self.add_row_btn),
             ]
 
     def add_row(self, channels: list[str] = [], after: int = -1) -> List[SubplotCellWidget]:
@@ -508,3 +511,17 @@ class TimeSeriesControlWidgets:
             ]
             for row in self.cells
         ]
+    
+class TimeSeriesSettingsWidgets:
+    def __init__(self):
+        self.title = pn.widgets.TextInput(
+            name="Title", placeholder="Run conditions", sizing_mode="stretch_width"
+        )
+        self.font_size = pn.widgets.IntSlider(
+            name="Font Size", value=12, start=4, end=32, step=1,
+            sizing_mode="stretch_width"
+        )
+        self.line_width = pn.widgets.IntSlider(
+            name="Line Width", value=2, start=1, end=8, step=1,
+            sizing_mode="stretch_width"
+        )

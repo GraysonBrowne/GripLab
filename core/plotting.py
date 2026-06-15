@@ -816,6 +816,9 @@ class TimeSeriesBuilder:
         unit_system: Optional[UnitSystem] = None,
         sign_convention: Optional[SignConvention] = None,
         colorway: Optional[List[str]] = None,
+        title: str = "",
+        font_size: int = 12,
+        line_width: int = 2,
     ) -> go.Figure:
         from plotly.subplots import make_subplots
 
@@ -864,6 +867,8 @@ class TimeSeriesBuilder:
 
             for row_idx, subplot_row in enumerate(subplots, start=1):
                 for col_idx, subplot in enumerate(subplot_row, start=1):
+                    if col_idx > 1:
+                        break
                     legend_shown.setdefault((row_idx, col_idx), set())
                     legend_idx = (row_idx - 1) * n_cols + col_idx
                     legend_ref = "legend" if legend_idx == 1 else f"legend{legend_idx}"
@@ -890,7 +895,7 @@ class TimeSeriesBuilder:
                                 y=y_data,
                                 mode="lines",
                                 name=f"{ds.name} — {channel} [{y_unit}]",
-                                line=dict(color=color, dash=dash),
+                                line=dict(color=color, dash=dash, width=line_width),
                                 hovertemplate=hover,
                                 legendgroup=ds.name,
                                 legend=legend_ref,
@@ -922,8 +927,10 @@ class TimeSeriesBuilder:
         template = px.defaults.template or "plotly_white"
         fig.update_layout(
             template=template,
-            margin=dict(l=60, r=140, t=30, b=60),
+            title=dict(text=title, xanchor="center", x=0.5) if title else None,
+            margin=dict(l=60, r=140, t=60 if title else 30, b=60),
             showlegend=True,
+            font=dict(size=font_size),
             **legend_layout,
         )
 
