@@ -94,3 +94,22 @@ def create_removal_dialog(dataset_name, confirm_callback, cancel_callback):
         width=440,
         margin=(0, 20),
     )
+
+
+def create_time_series_settings_layout(settings):
+    return pn.Column(
+        pn.pane.HTML(
+            """<h1>Plot Settings</h1>""",
+            styles={
+                "height": "40px",
+                "line-height": "0px",
+                "margin-top": "0px",
+                "margin-bottom": "0px",
+            },
+        ),
+        settings.title,
+        settings.font_size,
+        settings.line_width,
+        width=450,
+        margin=(0, 20),
+    )

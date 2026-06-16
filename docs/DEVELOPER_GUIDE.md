@@ -1,6 +1,6 @@
 ![GripLab](images/GripLab_Banner.png)
 
-# GripLab Developer Guide - v2026.05.2
+# GripLab Developer Guide - v2026.06.1
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
@@ -528,6 +528,7 @@ When releasing, update the version in **both** `pyproject.toml` and `version.txt
 |---|---|---|
 | 2026.05.1 | 2026-05-06 | Initial release |
 | 2026.05.2 | 2026-05-09 | Documentation Update |
+| 2026.06.1 | 2026-06-16 | Add Time Series Plots |
 
 ---
 

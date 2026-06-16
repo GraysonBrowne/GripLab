@@ -85,38 +85,32 @@ class Tk_utils:
             logger.error(f"Error selecting directory: {e}")
             return ""
 
-    def save_file(self, defaultextension, initialdir, icon=""):
+    def save_file(self, defaultextension, initialdir, filetypes=None, icon=""):
         """
         Opens a file save dialog using Tkinter and returns the selected file path.
 
         Args:
-            defaultextension (str): The default file extension to use in the save dialog
-                (e.g., '.txt').
-            initialdir (str): The initial directory that the dialog opens in.
-            icon (str, optional): Path to the icon file for the Tkinter window.
-                Defaults to ''.
+            defaultextension (str): The default file extension (e.g., '.txt').
+            initialdir (str): The initial directory the dialog opens in.
+            filetypes (list, optional): List of (label, pattern) tuples to filter
+                file types (e.g., [("GripLab Session", "*.grip")]). Defaults to None.
+            icon (str, optional): Path to the icon file. Defaults to ''.
 
         Returns:
-            str: The file path selected by the user, or an empty string if the operation
-                is cancelled.
-
-        Logs:
-            Logs the selected file path or cancellation, and logs errors if any occur
-                during the process.
+            str: The selected file path, or empty string if cancelled.
         """
         try:
             root = Tk()
-            root.withdraw()  # Hide the root window
+            root.withdraw()
             root.iconbitmap(icon)
-            root.call(
-                "wm", "attributes", ".", "-topmost", True
-            )  # Bring the dialog to the front
+            root.call("wm", "attributes", ".", "-topmost", True)
             file_path = filedialog.asksaveasfilename(
                 title="Save File As",
                 defaultextension=defaultextension,
                 initialdir=initialdir,
+                filetypes=filetypes or [],
             )
-            root.destroy()  # Destroy the root window after use
+            root.destroy()
             if file_path:
                 logger.info(f"File path to save: {file_path}")
                 return file_path

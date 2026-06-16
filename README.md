@@ -21,7 +21,8 @@ To stay in the loop and receive notifications when new releases are available, c
 ## Current Features
 
 - Import TTC tire test data in `.mat` and `.dat` formats
-- 2D and 3D interactive scatter plots with Plotly
+- 2D and 3D interactive scatter plots
+- Overlay channels with time series plots
 - Filter data by test condition using auto-generated command channels
 - Unit system conversion (USCS / Metric)
 - Sign convention conversion (SAE, Adapted SAE, ISO, Adapted ISO)
@@ -32,8 +33,7 @@ To stay in the loop and receive notifications when new releases are available, c
 ## Upcoming Features
 
 - Plotting
-  - Add time history plot type with ability to overlay channels
-  - Tire model evaluation plotted over data or with swept inputs
+  - Tire model evaluation plotted over data or with discrete inputs
 - Processing
   - Combine datasets
   - Utility for data filtering and parsing

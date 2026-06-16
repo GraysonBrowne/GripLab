@@ -4,54 +4,52 @@ GripLab - Tire Data Analysis Application
 """
 
 import sys
-import tomllib
 import webbrowser
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Dict, List, cast
 
 import numpy as np
 import pandas as pd
 import panel as pn
 import plotly.express as px
-from bokeh.models import Tooltip
+import plotly.graph_objects as go
 from panel.io import hold
 
 from app.config import AppConfig
 from app.controllers import DataController, PlotController
+from app.models import PageType, ScatterPage, TimeSeriesPage
 from converters.conventions import ConventionConverter, SignConvention
 from converters.units import UnitSystem, UnitSystemConverter
 
 # Import application modules
 from core.dataio import DataManager
+from core.plotting import TimeSeriesBuilder
 from ui.components import (
     AppSettingsWidgets,
     DataInfoWidgets,
     PlotControlWidgets,
     PlotSettingsWidgets,
+    TimeSeriesControlWidgets,
+    TimeSeriesSettingsWidgets,
 )
 from ui.modals import (
     create_plot_settings_layout,
     create_removal_dialog,
     create_settings_layout,
+    create_time_series_settings_layout,
 )
 from utils.dialogs import Tk_utils
 from utils.logger import logger
 
-
-def _read_version() -> str:
-    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
-    with open(pyproject_path, "rb") as f:
-        return tomllib.load(f)["project"]["version"]
-
-
-__version__ = _read_version()
+_cache: Dict[str, Any] = cast(Dict[str, Any], pn.state.cache)
 
 
 class GripLabApp:
     """Main application orchestrator."""
 
     def __init__(self):
-        logger.info(f"GripLab v{__version__} starting")
+        logger.info(f"GripLab v{AppConfig.version} starting")
+
         # Determine program directory
         if getattr(sys, "frozen", False):
             # Adjust working directory for frozen executable
@@ -64,8 +62,15 @@ class GripLabApp:
         self.config_path = str(Path(self.local_dir, "config.yaml"))
         self.config = AppConfig.from_yaml(self.config_path)
 
-        # Initialize data manager and controllers
-        self.dm = DataManager()
+        # Initialize data manager — restore from cache if available
+        if "dm" not in _cache:
+            _cache["dm"] = DataManager()
+            _cache["session"] = {}
+            logger.info("New session — initialized fresh DataManager")
+        else:
+            logger.info("Reconnected — restoring session from cache")
+
+        self.dm = _cache["dm"]
         self.data_controller = DataController(self.dm, self.config)
         self.plot_controller = PlotController(self.dm, self.config)
 
@@ -73,9 +78,12 @@ class GripLabApp:
         self._setup_panel()
 
         # Initialize UI
+        self._initialized = False
+        self._renaming = False
         self._initialize_ui()
         self._layout_ui()
         self._setup_callbacks()
+        self._restore_session()
 
         # State tracking
         self.removal_target = ""
@@ -101,6 +109,15 @@ class GripLabApp:
             logger.error("styles.css not found")
             return ""
 
+    def _load_tabs_css(self) -> str:
+        css_path = Path(self.program_dir, "ui", "tabs.css")
+        try:
+            with open(css_path, "r") as f:
+                return f.read()
+        except FileNotFoundError:
+            logger.error("tabs.css not found")
+            return ""
+
     def _initialize_ui(self):
         """Initialize all UI components."""
         # Create main template
@@ -116,39 +133,213 @@ class GripLabApp:
         )
 
         # Initialize widget groups
-        self.plot_widgets = PlotControlWidgets()
+        self.pages: List[PageType] = []
         self.data_widgets = DataInfoWidgets()
-        self.plot_settings_widgets = PlotSettingsWidgets()
         self.app_settings_widgets = AppSettingsWidgets(self.config)
 
         # Initialize other widgets
         self._init_header_widgets()
         self._init_sidebar_widgets()
         self._init_main_view()
+        self.main_tabs = pn.Tabs(
+            dynamic=True,
+            closable=True,
+            sizing_mode="stretch_both",
+            stylesheets=[self._load_tabs_css()],
+        )
+        self.plot_sidebar_tab = pn.Column(name="Plot Data", height=345)
+        self._add_time_series_tab(
+            default_subplots=[
+                (["SA", "CmdSA"], "Slip Angle"),
+                (["SL"], "Slip Ratio"),
+                (["FZ", "CmdFZ"], "Vertical Force"),
+                (["IA", "CmdIA"], "Inclination Angle"),
+                (["P", "CmdP"], "Pressure"),
+                (["V", "CmdV"], "Speed"),
+            ]
+        )
+        self.pages[-1].settings.title.value = "Run Conditions"
 
         # Modal container
         self.modal_content = pn.Column()
 
+    def _restore_session(self):
+        """Restore widget state and re-plot from cached session."""
+        session = _cache.get("session", {})
+        if not session or not self.dm.list_datasets():
+            self._add_scatter_tab()
+            self.main_tabs.active = 0
+            self._initialized = True
+            return
+
+        self.pages.pop(0)
+        self.main_tabs.pop(0)
+
+        logger.info("Restoring session state from cache")
+
+        # Restore table selection — guard against stale indices
+        cached_selection = session.get("data_selection", [])
+        table_len = len(self.dm.list_datasets())
+        self.data_table.selection = [i for i in cached_selection if i < table_len]
+
+        # Populate options
+        self._update_channel_options()
+        self._update_data_select_options()
+
+        # Restore widget state and figures
+        figures = _cache.get("figures", {})
+        channels = self.dm.get_channels(self.dm.list_datasets())
+
+        for saved in session.get("pages", []):
+            page_type = saved.get("type")
+            if page_type == "scatter":
+                self._add_scatter_tab(name=saved.get("name"))
+                page = next(
+                    p for p in reversed(self.pages) if isinstance(p, ScatterPage)
+                )
+                page.controls.restore(saved)
+                page.settings.restore(saved)
+                saved_name = saved.get("name", page.name)
+                if saved_name in figures and figures[saved_name] is not None:
+                    page.pane.object = figures[saved_name]
+                else:
+                    self._on_plot_scatter(page, clicks=None)
+            elif page_type == "time_series":
+                self._add_time_series_tab(name=saved.get("name"))
+                page = next(
+                    p for p in reversed(self.pages) if isinstance(p, TimeSeriesPage)
+                )
+                page.settings.title.value = saved.get("title", "")
+                page.settings.font_size.value = saved.get("font_size", 12)
+                page.settings.line_width.value = saved.get("line_width", 2)
+                grid = saved.get("subplots", [[]])
+                if grid and not isinstance(grid[0], list):
+                    grid = [[cell] for cell in grid if isinstance(cell, dict)]
+                for r_idx, saved_row in enumerate(grid):
+                    if r_idx > 0:
+                        page.controls.add_row(channels)
+                    for c_idx, saved_cell in enumerate(saved_row):
+                        if c_idx >= len(page.controls.cells[r_idx]):
+                            break
+                        cell = page.controls.cells[r_idx][c_idx]
+                        for i, ch in enumerate(saved_cell.get("channels", [])):
+                            if i < 4 and ch in channels:
+                                cell.channel_selects[i].value = ch
+                        cell.label.value = saved_cell.get("label", "")
+                page.controls.show_selected_settings()
+                page.subplots = page.controls.get_subplot_grid()
+                saved_name = saved.get("name", page.name)
+                if saved_name in figures and figures[saved_name] is not None:
+                    page.pane.object = figures[saved_name]
+                    page.pane.min_height = len(page.subplots) * 85 + 90
+
+        # Switch back to first tab
+        self.main_tabs.active = 0
+        self._load_sidebar_for_page(self.pages[0])
+        self._initialized = True
+
+    def _save_session(self):
+        """Save current widget state to cache."""
+        if not getattr(self, "_initialized", False):
+            return
+        _cache["session"] = {
+            "data_selection": self.data_table.selection,
+            "pages": [
+                {
+                    "type": "scatter",
+                    "name": page.name,
+                    "plot_type": page.controls.plot_type.value,
+                    "x_channel": page.controls.x_axis.value,
+                    "y_channel": page.controls.y_axis.value,
+                    "z_channel": page.controls.z_axis.value,
+                    "c_channel": page.controls.color_axis.value,
+                    "downsample": page.controls.downsample_slider.value,
+                    "node_count": page.controls.node_count.value,
+                    "cmd_channels": [s.value for s in page.controls.cmd_selects],
+                    "cmd_options": [m.options for m in page.controls.cmd_multi_selects],
+                    "cmd_values": [m.value for m in page.controls.cmd_multi_selects],
+                    "title": page.settings.title.value,
+                    "subtitle": page.settings.subtitle.value,
+                    "x_label": page.settings.x_label.value,
+                    "y_label": page.settings.y_label.value,
+                    "z_label": page.settings.z_label.value,
+                    "c_label": page.settings.c_label.value,
+                    "color_map": page.settings.color_map.value,
+                    "font_size": page.settings.font_size.value,
+                    "marker_size": page.settings.marker_size.value,
+                    "marker_opacity": page.settings.marker_opacity.value,
+                }
+                if isinstance(page, ScatterPage)
+                else {
+                    "type": "time_series",
+                    "name": page.name,
+                    "title": page.settings.title.value,
+                    "font_size": page.settings.font_size.value,
+                    "line_width": page.settings.line_width.value,
+                    "subplots": [
+                        [
+                            {"channels": cell.channels, "label": cell.label}
+                            for cell in row
+                        ]
+                        for row in page.subplots
+                    ],
+                }
+                for page in self.pages
+            ],
+        }
+
+        _cache["figures"] = {
+            page.name: page.pane.object
+            for page in self.pages
+            if isinstance(page.pane.object, go.Figure) and bool(page.pane.object.data)
+        }
+
     def _init_header_widgets(self):
         """Initialize header widgets."""
-        menu_items = [
+        file_menu_items = [
+            ("Import Data", "import_data"),
+            ("Save Session", "save_session"),
+            ("Import Session", "import_session"),
+        ]
+        self.file_menu = pn.widgets.MenuButton(
+            name="File",
+            items=file_menu_items,
+            button_type="primary",
+            width=100,
+            margin=(5, 5),
+        )
+        insert_menu_items = [
+            ("Scatter Plot", "scatter_plot"),
+            ("Time Series", "time_series"),
+        ]
+        self.insert_menu = pn.widgets.MenuButton(
+            name="Insert",
+            items=insert_menu_items,
+            button_type="primary",
+            width=100,
+            margin=(5, 5),
+        )
+        self.settings_btn = pn.widgets.Button(
+            name="Settings",
+            button_type="primary",
+            width=100,
+            margin=(5, 5),
+        )
+        help_menu_items = [
             ("Sign Convention", "signcon"),
             ("User Guide", "userguide"),
             ("Discussion Board", "discuss"),
             ("Report An Issue", "issue"),
             ("TTC Forum", "ttc"),
+            None,
+            (f"v{AppConfig.version}", "version"),
         ]
         self.help_menu = pn.widgets.MenuButton(
             name="Help",
-            items=menu_items,
+            items=help_menu_items,
             button_type="primary",
             width=100,
-        )
-        self.settings_btn = pn.widgets.Button(
-            name="Settings", button_type="primary", width=100
-        )
-        self.version_icon = pn.widgets.TooltipIcon(
-            value=Tooltip(content=f"v{__version__}", position="bottom")
+            margin=(5, 5),
         )
 
     def _init_sidebar_widgets(self):
@@ -167,6 +358,10 @@ class GripLabApp:
             widths={"Dataset": 279, "": 40, "trash": 40},
         )
 
+        # Repopulate table if dm has cached datasets
+        if self.dm.list_datasets():
+            self._refresh_data_table()
+
     def _init_main_view(self):
         """Initialize main view with plot pane."""
         theme_name = getattr(self.template.theme, "name", None)
@@ -175,7 +370,6 @@ class GripLabApp:
         defaults.template = (
             "plotly_dark" if str(theme_name) == "DarkTheme" else "plotly_white"
         )
-        self.plot_pane = pn.pane.Plotly(px.scatter(), sizing_mode="stretch_both")
 
     def _layout_ui(self):
         """Layout all UI components in the template."""
@@ -185,40 +379,11 @@ class GripLabApp:
         header_object.append(
             pn.Row(
                 pn.layout.HSpacer(),
+                self.file_menu,
+                self.insert_menu,
                 self.settings_btn,
                 self.help_menu,
-                self.version_icon,
             )
-        )
-
-        # Sidebar - Plot tab
-        plot_tab = pn.Column(
-            pn.Row(
-                self.plot_widgets.plot_type,
-                self.plot_widgets.settings_button,
-                self.plot_widgets.plot_button,
-            ),
-            pn.Row(
-                pn.GridBox(
-                    self.plot_widgets.x_axis,
-                    self.plot_widgets.y_axis,
-                    self.plot_widgets.z_axis,
-                    self.plot_widgets.color_axis,
-                    ncols=2,
-                    sizing_mode="stretch_width",
-                ),
-                pn.Column(
-                    self.plot_widgets.downsample_slider,
-                    self.plot_widgets.node_count,
-                    width=160,
-                ),
-            ),
-            pn.GridBox(
-                *self.plot_widgets.cmd_selects,
-                *self.plot_widgets.cmd_multi_selects,
-                ncols=4,
-            ),
-            name="Plot Data",
         )
 
         # Sidebar - Data Info tab
@@ -231,43 +396,84 @@ class GripLabApp:
             name="Data Info",
         )
 
-        self.info_tabs = pn.layout.Tabs(plot_tab, data_tab)
+        self.info_tabs = pn.layout.Tabs(
+            data_tab,
+            self.plot_sidebar_tab,
+            sizing_mode="stretch_height",
+            stylesheets=[self._load_tabs_css()],
+        )
 
         sidebar_object = cast(list, self.template.sidebar)
         sidebar_object.append(
             pn.Column(
-                self.import_btn, self.data_table, pn.layout.Divider(), self.info_tabs
+                self.import_btn,
+                self.data_table,
+                pn.layout.Divider(),
+                self.info_tabs,
+                sizing_mode="stretch_height",
             )
         )
 
         # Main area
         main_object = cast(list, self.template.main)
-        main_object.append(pn.Column(self.plot_pane))
+        main_object.append(self.main_tabs)
 
         # Modal
         modal_object = cast(list, self.template.modal)
         modal_object.append(self.modal_content)
+
+    def _load_sidebar_for_page(self, page: PageType):
+        if isinstance(page, ScatterPage):
+            page.controls.name_input.value = page.name
+            self.plot_sidebar_tab.objects = [
+                pn.Row(
+                    page.controls.name_input,
+                    page.controls.plot_type,
+                    page.controls.settings_button,
+                    page.controls.plot_button,
+                ),
+                pn.Row(
+                    pn.GridBox(
+                        page.controls.x_axis,
+                        page.controls.y_axis,
+                        page.controls.z_axis,
+                        page.controls.color_axis,
+                        ncols=2,
+                        sizing_mode="stretch_width",
+                    ),
+                    pn.Column(
+                        page.controls.downsample_slider,
+                        page.controls.node_count,
+                        width=160,
+                    ),
+                ),
+                pn.GridBox(
+                    *page.controls.cmd_selects,
+                    *page.controls.cmd_multi_selects,
+                    ncols=4,
+                ),
+            ]
+        elif isinstance(page, TimeSeriesPage):
+            page.controls.name_input.value = page.name
+            self.plot_sidebar_tab.objects = [
+                pn.Row(
+                    page.controls.name_input,
+                    page.controls.subplot_select,
+                    page.controls.settings_button,
+                    page.controls.plot_button,
+                ),
+                pn.Column(page.controls.settings_column, sizing_mode="stretch_width"),
+            ]
 
     def _setup_callbacks(self):
         """Setup all widget callbacks."""
         # Main action callbacks
         pn.bind(self._on_import_data, self.import_btn.param.clicks, watch=True)
         pn.bind(self._on_settings_click, self.settings_btn.param.clicks, watch=True)
-        pn.bind(
-            self._on_plot_data, self.plot_widgets.plot_button.param.clicks, watch=True
-        )
-        pn.bind(
-            self._on_plot_settings,
-            self.plot_widgets.settings_button.param.clicks,
-            watch=True,
-        )
+        pn.bind(self._on_main_tab_change, self.main_tabs.param.active, watch=True)
+        self.main_tabs.param.watch(self._on_tab_closed, "objects")
 
         # Widget change callbacks
-        pn.bind(
-            self._on_plot_type_change,
-            self.plot_widgets.plot_type.param.value,
-            watch=True,
-        )
         pn.bind(
             self._on_data_select, self.data_widgets.data_select.param.value, watch=True
         )
@@ -288,24 +494,28 @@ class GripLabApp:
         self.data_table.on_edit(self._on_table_edit)
         self._apply_table_styling()
 
+        # File menu callback
+        pn.bind(self._on_file_menu, self.file_menu.param.clicked, watch=True)
+
+        # Insert menu callback
+        pn.bind(self._on_insert_menu, self.insert_menu.param.clicked, watch=True)
+
         # Help menu callback
         pn.bind(self._on_help_menu, self.help_menu.param.clicked, watch=True)
 
-        # Command selector callbacks
-        for selector in self.plot_widgets.cmd_selects:
-            pn.bind(self._update_cmd_options, selector.param.value, watch=True)
-
         # Unit/Sign convention callbacks
         pn.bind(
-            self._update_cmd_options,
+            self._update_all_cmd_options,
             self.app_settings_widgets.unit_select.param.value,
             watch=True,
         )
         pn.bind(
-            self._update_cmd_options,
+            self._update_all_cmd_options,
             self.app_settings_widgets.sign_select.param.value,
             watch=True,
         )
+
+        self.info_tabs.active = 1
 
     # ===========================
     # Main Callback Methods
@@ -373,58 +583,85 @@ class GripLabApp:
                     self.config.colorway = name
                     break
 
-        colormap_options = getattr(
-            self.plot_settings_widgets.color_map, "options", None
-        )
-        if colormap_options and isinstance(colormap_options, dict):
-            for name, value in colormap_options.items():
-                if value == self.plot_settings_widgets.color_map.value:
-                    self.config.colormap = name
-                    break
-
         # Save to file
         self.config.save(self.config_path)
         self.template.close_modal()
 
-    def _on_plot_data(self, clicks):
-        """Handle plot data button click."""
-        if not self.data_table.selection:
-            logger.warning("No datasets selected to plot")
+    def _on_page_rename(self, page: PageType, name: str):
+        if not name or page not in self.pages:
+            return
+        if any(p.name == name for p in self.pages if p is not page):
             if pn.state.notifications:
                 pn.state.notifications.warning(
-                    "Select a dataset to plot", duration=4000
+                    f'A page named "{name}" already exists', duration=4000
                 )
             return
+        page.name = name
+        idx = self.pages.index(page)
+        tab_obj = getattr(page, "tab_content", None) or page.pane
+        self._renaming = True
+        try:
+            with pn.io.hold():
+                self.main_tabs.pop(idx)
+                self.main_tabs.insert(idx, (name, tab_obj))
+                self.main_tabs.active = idx
+        finally:
+            self._renaming = False
+        self._save_session()
 
-        # Collect all widget references for the plot controller
-        widgets = {
-            "data_table": self.data_table,
-            "plot_controls": self.plot_widgets,
-            "plot_settings": self.plot_settings_widgets,
-            "settings": self.app_settings_widgets,
-        }
-
-        plot_params = self.plot_controller.get_plot_parameters(widgets, self.config)
-        fig, node_count = self.plot_controller.create_plot(plot_params)
-
-        if fig:
-            self.plot_pane.object = fig
-            self.plot_widgets.node_count.value = str(node_count)
-
-    def _on_plot_settings(self, clicks):
+    def _on_plot_settings(self, page, clicks):
         """Open plot settings modal."""
-        plot_type = self.plot_widgets.plot_type.value
+        plot_type = page.controls.plot_type.value
         if plot_type is not None:
-            self.plot_settings_widgets.update_axis_state(plot_type)
-        layout = create_plot_settings_layout(self.plot_settings_widgets)
+            page.settings.update_axis_state(plot_type)
+        layout = create_plot_settings_layout(page.settings)
         self.modal_content.objects = [layout]
         self.template.open_modal()
 
     @hold()
-    def _on_plot_type_change(self, plot_type):
+    def _on_plot_type_change(self, page, plot_type):
         """Handle plot type change."""
-        self.plot_widgets.update_plot_type_state(plot_type)
-        self.plot_settings_widgets.update_axis_state(plot_type)
+        page.controls.update_plot_type_state(plot_type)
+        page.settings.update_axis_state(plot_type)
+
+    def _on_main_tab_change(self, active):
+        if 0 <= active < len(self.pages) and len(self.pages) == len(self.main_tabs):
+            page = self.pages[active]
+            self._load_sidebar_for_page(page)
+            self.info_tabs.active = 1
+
+    def _on_tab_closed(self, event):
+        if self._renaming:
+            return
+        if len(event.new) >= len(event.old):
+            return
+        removed_pane = next((p for p in event.old if p not in event.new), None)
+        if removed_pane is None:
+            return
+        removed_idx = next(
+            (
+                i
+                for i, page in enumerate(self.pages)
+                if (getattr(page, "tab_content", None) or page.pane) is removed_pane
+            ),
+            None,
+        )
+        if removed_idx is None:
+            return
+        if len(self.pages) <= 1:
+            page = self.pages[0]
+            tab_obj = getattr(page, "tab_content", None) or page.pane
+            self.main_tabs.insert(removed_idx, (page.name, tab_obj))
+            if pn.state.notifications:
+                pn.state.notifications.warning(
+                    "At least one page is required", duration=4000
+                )
+            return
+        self.pages.pop(removed_idx)
+        active = min(cast(int, self.main_tabs.active), len(self.pages) - 1)
+        self.main_tabs.active = active
+        self._load_sidebar_for_page(self.pages[active])
+        self._save_session()
 
     @hold()
     def _on_data_select(self, dataset_name):
@@ -470,6 +707,13 @@ class GripLabApp:
             self._refresh_data_table()
             self._update_data_select_options()
             self.data_widgets.data_select.value = updates["name"]
+        else:
+            self._refresh_data_table()
+            self.data_widgets.name_input.value = dataset_name
+            if pn.state.notifications:
+                pn.state.notifications.warning(
+                    "Dataset name must be unique", duration=4000
+                )
 
     def _on_demo_mode_change(self, demo_mode):
         """Handle demo mode toggle."""
@@ -524,6 +768,338 @@ class GripLabApp:
     # ===========================
     # Helper Methods
     # ===========================
+    def _on_export_session(self):
+        path = Tk_utils().save_file(
+            defaultextension=".grip",
+            filetypes=[("GripLab Session", "*.grip")],
+            initialdir=self.config.data_dir,
+            icon=str(Path(self.program_dir, "docs", "images", "GripLab_Icon.ico")),
+        )
+        if not path:
+            return
+        else:
+            self._save_session()
+            if self.data_controller.export_session(path):
+                if pn.state.notifications:
+                    pn.state.notifications.success(
+                        f"Session exported as {Path(path).name}", duration=4000
+                    )
+            else:
+                if pn.state.notifications:
+                    pn.state.notifications.error(
+                        "Failed to export session.", duration=4000
+                    )
+
+    def _on_import_session(self):
+        files = Tk_utils().select_file(
+            filetypes=[("GripLab Session", "*.grip")],
+            initialdir=self.config.data_dir,
+            icon=str(Path(self.program_dir, "docs", "images", "GripLab_Icon.ico")),
+        )
+        if files:
+            session = self.data_controller.import_session(str(files[0]))
+            if session is not None:
+                self.dm = self.data_controller.dm  # sync GripLabApp reference
+                self.plot_controller.dm = (
+                    self.data_controller.dm
+                )  # sync PlotController reference
+                cached_selection = session.get("data_selection", [])
+                table_len = len(self.dm.list_datasets())
+                self._refresh_data_table()
+                self.data_table.selection = [
+                    i for i in cached_selection if i < table_len
+                ]
+                self._update_channel_options()
+                self._update_data_select_options()
+
+                self.main_tabs.active = 0
+
+                # Clear all existing pages and tabs
+                while self.pages:
+                    self.pages.pop()
+                while len(self.main_tabs) > 0:
+                    self.main_tabs.pop(-1)
+
+                channels = self.dm.get_channels(self.dm.list_datasets())
+
+                for saved in session.get("pages", []):
+                    page_type = saved.get("type")
+                    if page_type == "scatter":
+                        self._add_scatter_tab(name=saved.get("name"))
+                        page = next(
+                            p
+                            for p in reversed(self.pages)
+                            if isinstance(p, ScatterPage)
+                        )
+                        page.controls.restore(saved)
+                        page.settings.restore(saved)
+                        self._on_plot_scatter(page, clicks=None)
+                    elif page_type == "time_series":
+                        self._add_time_series_tab(name=saved.get("name"))
+                        page = next(
+                            p
+                            for p in reversed(self.pages)
+                            if isinstance(p, TimeSeriesPage)
+                        )
+                        page.settings.title.value = saved.get("title", "")
+                        page.settings.font_size.value = saved.get("font_size", 12)
+                        page.settings.line_width.value = saved.get("line_width", 2)
+                        grid = saved.get("subplots", [[]])
+                        if grid and not isinstance(grid[0], list):
+                            grid = [[cell] for cell in grid if isinstance(cell, dict)]
+                        for r_idx, saved_row in enumerate(grid):
+                            if r_idx > 0:
+                                page.controls.add_row(channels)
+                            for c_idx, saved_cell in enumerate(saved_row):
+                                if c_idx >= len(page.controls.cells[r_idx]):
+                                    break
+                                cell = page.controls.cells[r_idx][c_idx]
+                                for i, ch in enumerate(saved_cell.get("channels", [])):
+                                    if i < 4 and ch in channels:
+                                        cell.channel_selects[i].value = ch
+                                cell.label.value = saved_cell.get("label", "")
+                        page.controls.show_selected_settings()
+                        page.subplots = page.controls.get_subplot_grid()
+                        self._on_plot_time_series(page, clicks=None)
+
+                if not self.pages:
+                    self._add_scatter_tab()
+
+                self.main_tabs.active = 0
+                self._load_sidebar_for_page(self.pages[0])
+
+                if pn.state.notifications:
+                    pn.state.notifications.success(
+                        f"Session imported from {Path(files[0]).name}", duration=4000
+                    )
+            else:
+                if pn.state.notifications:
+                    pn.state.notifications.error(
+                        "Failed to import session.", duration=4000
+                    )
+
+    def _on_file_menu(self, clicked):
+        """Handle file menu selection."""
+        actions = {
+            "import_data": lambda: self._on_import_data(clicks=None),
+            "save_session": self._on_export_session,
+            "import_session": lambda: self._on_import_session(),
+        }
+        action = actions.get(clicked)
+        if action:
+            logger.info(f"File menu action: {clicked}")
+            action()
+
+    def _on_plot_scatter(self, page: ScatterPage, clicks):
+        if not self.data_table.selection:
+            if clicks is not None:
+                if pn.state.notifications:
+                    pn.state.notifications.warning(
+                        "Select a dataset to plot", duration=4000
+                    )
+            return
+        widgets = {
+            "data_table": self.data_table,
+            "plot_controls": page.controls,
+            "plot_settings": page.settings,
+            "settings": self.app_settings_widgets,
+        }
+        plot_params = self.plot_controller.get_plot_parameters(widgets, self.config)
+        fig, node_count = self.plot_controller.create_plot(plot_params)
+        if fig:
+            page.pane.object = fig
+            page.controls.node_count.value = str(node_count)
+        self._save_session()
+
+    def _on_add_row(self, page: TimeSeriesPage, clicks):
+        channels = self.dm.get_channels(self.dm.list_datasets())
+        val = page.controls.subplot_select.value
+        after = -1
+        for r in range(page.controls.n_rows):
+            if page.controls._cell_label(r, 0) == val:
+                after = r
+                break
+        page.controls.add_row(channels, after=after)
+        new_idx = after + 1 if after >= 0 else page.controls.n_rows - 1
+        page.controls.subplot_select.value = page.controls._cell_label(new_idx, 0)
+        page.controls.show_selected_settings()
+
+    def _on_remove_subplot(self, page: TimeSeriesPage, clicks):
+        if page.controls.n_rows <= 1:
+            if pn.state.notifications:
+                pn.state.notifications.warning(
+                    "At least one subplot is required", duration=4000
+                )
+            return
+        page.controls.remove_selected()
+
+    def _on_subplot_select_change(self, page: TimeSeriesPage, value):
+        page.controls.show_selected_settings()
+
+    def _on_plot_time_series(self, page: TimeSeriesPage, clicks):
+        if not self.data_table.selection:
+            if clicks is not None and pn.state.notifications:
+                pn.state.notifications.warning(
+                    "Select a dataset to plot", duration=4000
+                )
+            return
+        subplots = page.controls.get_subplot_grid()
+        if not subplots:
+            if clicks is not None and pn.state.notifications:
+                pn.state.notifications.warning(
+                    "Add at least one subplot with channels selected", duration=4000
+                )
+            return
+        names = [self.dm.list_datasets()[i] for i in self.data_table.selection]
+        datasets = [self.dm.get_dataset(n) for n in names]
+        datasets = [d for d in datasets if d is not None]
+        x_channel = "ET"
+        unit_system = UnitSystem(self.app_settings_widgets.unit_select.value)
+        sign_convention = SignConvention(self.app_settings_widgets.sign_select.value)
+        colorway = list(
+            cast(list, self.app_settings_widgets.colorway_select.value or [])
+        )
+        n_rows = len(subplots)
+        fig = TimeSeriesBuilder.build_time_series(
+            datasets,
+            subplots,
+            x_channel,
+            unit_system,
+            sign_convention,
+            colorway,
+            title=page.settings.title.value,
+            font_size=cast(int, page.settings.font_size.value),
+            line_width=cast(int, page.settings.line_width.value),
+            demo_mode=self.config.demo_mode,
+        )
+        page.pane.min_height = n_rows * 100 + 90  # 90 accounts for t=30 + b=60 margins
+        page.pane.object = fig
+        page.subplots = subplots
+        self._save_session()
+
+    def _on_ts_plot_settings(self, page: TimeSeriesPage, clicks):
+        layout = create_time_series_settings_layout(page.settings)
+        self.modal_content.objects = [layout]
+        self.template.open_modal()
+
+    def _wire_scatter_callbacks(self, page: ScatterPage):
+        pn.bind(
+            lambda clicks: self._on_plot_scatter(page, clicks),
+            page.controls.plot_button.param.clicks,
+            watch=True,
+        )
+        page.controls.name_input.param.watch(
+            lambda event, p=page: self._on_page_rename(p, p.controls.name_input.value),
+            "value",
+        )
+        for selector in page.controls.cmd_selects:
+            pn.bind(
+                lambda event, p=page: self._update_cmd_options(p, event),
+                selector.param.value,
+                watch=True,
+            )
+        pn.bind(
+            lambda clicks, p=page: self._on_plot_settings(p, clicks),
+            page.controls.settings_button.param.clicks,
+            watch=True,
+        )
+        pn.bind(
+            lambda plot_type, p=page: self._on_plot_type_change(p, plot_type),
+            page.controls.plot_type.param.value,
+            watch=True,
+        )
+
+    def _wire_time_series_callbacks(self, page: TimeSeriesPage):
+        pn.bind(
+            lambda clicks, p=page: self._on_plot_time_series(p, clicks),
+            page.controls.plot_button.param.clicks,
+            watch=True,
+        )
+        page.controls.name_input.param.watch(
+            lambda event, p=page: self._on_page_rename(p, p.controls.name_input.value),
+            "value",
+        )
+        pn.bind(
+            lambda clicks, p=page: self._on_ts_plot_settings(p, clicks),
+            page.controls.settings_button.param.clicks,
+            watch=True,
+        )
+        pn.bind(
+            lambda clicks, p=page: self._on_add_row(p, clicks),
+            page.controls.add_row_btn.param.clicks,
+            watch=True,
+        )
+        pn.bind(
+            lambda clicks, p=page: self._on_remove_subplot(p, clicks),
+            page.controls.remove_btn.param.clicks,
+            watch=True,
+        )
+        pn.bind(
+            lambda value, p=page: self._on_subplot_select_change(p, value),
+            page.controls.subplot_select.param.value,
+            watch=True,
+        )
+
+    def _add_scatter_tab(self, name: str | None = None):
+        count = sum(1 for p in self.pages if isinstance(p, ScatterPage)) + 1
+        tab_name = name or (f"Scatter {count}" if count > 1 else "Scatter")
+        page = ScatterPage(
+            name=tab_name,
+            controls=PlotControlWidgets(),
+            settings=PlotSettingsWidgets(),
+            pane=pn.pane.Plotly(
+                px.scatter(), sizing_mode="stretch_both", name=tab_name
+            ),
+        )
+        self._wire_scatter_callbacks(page)
+        self.pages.append(page)
+        self.main_tabs.append((page.name, page.pane))
+        self.main_tabs.active = len(self.main_tabs) - 1
+        self._update_channel_options()
+        self._load_sidebar_for_page(page)
+        self._save_session()
+
+    def _add_time_series_tab(self, name: str | None = None, default_subplots=None):
+        count = sum(1 for p in self.pages if isinstance(p, TimeSeriesPage)) + 1
+        tab_name = name or (f"Time Series {count}" if count > 1 else "Time Series")
+        controls = TimeSeriesControlWidgets()
+        pane = pn.pane.Plotly(px.scatter(), sizing_mode="stretch_both", name=tab_name)
+        page = TimeSeriesPage(
+            name=tab_name,
+            controls=controls,
+            settings=TimeSeriesSettingsWidgets(),
+            pane=pane,
+        )
+        page.tab_content = pn.Column(pane, sizing_mode="stretch_both", scroll=True)
+        channels = self.dm.get_channels(self.dm.list_datasets())
+        if default_subplots:
+            for ch_list, label in default_subplots:
+                row_cells = page.controls.add_row(channels)
+                cell = row_cells[0]
+                cell.label.value = label
+                cell._default_channels = list(ch_list[:4])
+        else:
+            page.controls.add_row(channels)
+        page.controls.show_selected_settings()
+        self._wire_time_series_callbacks(page)
+        self.pages.append(page)
+        self.main_tabs.append((tab_name, page.tab_content))
+        self.main_tabs.active = len(self.main_tabs) - 1
+        self._update_channel_options()
+        self._load_sidebar_for_page(page)
+        self._save_session()
+
+    def _on_insert_menu(self, clicked):
+        if not clicked:
+            return
+        actions = {
+            "scatter_plot": self._add_scatter_tab,
+            "time_series": self._add_time_series_tab,
+        }
+        action = actions.get(clicked)
+        if action:
+            action()
+        self.insert_menu.clicked = None
 
     def _on_help_menu(self, clicked):
         """Handle help menu selection."""
@@ -559,29 +1135,35 @@ class GripLabApp:
             self.config.data_dir = directory
 
     @hold()
-    def _update_cmd_options(self, event):
+    def _update_cmd_options(self, page: ScatterPage, event):
         """Update command channel options based on selection."""
         try:
             channels = self.dm.get_channels(self.dm.list_datasets())
             cmd_channels = [ch for ch in channels if ch.startswith("Cmd")]
 
             # Get current selections
-            selected = [s.value for s in self.plot_widgets.cmd_selects]
+            selected = [s.value for s in page.controls.cmd_selects]
 
             # Update each selector's options
-            for i, selector in enumerate(self.plot_widgets.cmd_selects):
+            for i, selector in enumerate(page.controls.cmd_selects):
                 excluded = set(selected) - {selected[i]}
                 selector.options = [""] + [
                     ch for ch in cmd_channels if ch not in excluded
                 ]
 
                 # Update corresponding multi-select options
-                self._update_cmd_multi_select(i, cast(str, selector.value))
+                self._update_cmd_multi_select(page, i, cast(str, selector.value))
 
         except Exception as e:
             logger.error(f"Error updating command options: {e}", exc_info=True)
 
-    def _update_cmd_multi_select(self, index: int, channel: str):
+    @hold()
+    def _update_all_cmd_options(self, event=None):
+        for page in self.pages:
+            if isinstance(page, ScatterPage):
+                self._update_cmd_options(page, event)
+
+    def _update_cmd_multi_select(self, page: ScatterPage, index: int, channel: str):
         """Update command multi-select options based on data."""
         selection = self.data_table.selection
         if not selection:
@@ -615,13 +1197,13 @@ class GripLabApp:
         options = {str(v): i for i, v in enumerate(unique_values)}
 
         # Preserve current selection
-        current_value = self.plot_widgets.cmd_multi_selects[index].value
-        self.plot_widgets.cmd_multi_selects[index].options = options
+        current_value = page.controls.cmd_multi_selects[index].value
+        page.controls.cmd_multi_selects[index].options = options
         if options:
-            self.plot_widgets.cmd_multi_selects[index].value = current_value
+            page.controls.cmd_multi_selects[index].value = current_value
         else:
-            self.plot_widgets.cmd_multi_selects[index].value = []
-        self.plot_widgets.cmd_multi_selects[index].param.trigger("value")
+            page.controls.cmd_multi_selects[index].value = []
+        page.controls.cmd_multi_selects[index].param.trigger("value")
 
     def _refresh_data_table(self):
         """Refresh the data table display."""
@@ -650,13 +1232,15 @@ class GripLabApp:
     def _update_channel_options(self):
         """Update channel selection dropdowns."""
         channels = self.dm.get_channels(self.dm.list_datasets())
-
-        self.plot_widgets.x_axis.options = channels
-        self.plot_widgets.y_axis.options = channels
-        self.plot_widgets.z_axis.options = channels
-        self.plot_widgets.color_axis.options = channels
-
-        self._update_cmd_options(None)
+        for page in self.pages:
+            if isinstance(page, ScatterPage):
+                page.controls.x_axis.options = channels
+                page.controls.y_axis.options = channels
+                page.controls.z_axis.options = channels
+                page.controls.color_axis.options = channels
+            elif isinstance(page, TimeSeriesPage):
+                page.controls.update_channel_options(channels)
+        self._update_all_cmd_options(None)
 
     def _update_data_select_options(self):
         """Update data select dropdown options."""
@@ -681,8 +1265,7 @@ class GripLabApp:
                 logger.info("Shutting down server...")
                 server.stop()
 
-            # Need to prevent shutting down on page refresh
-            # pn.state.on_session_destroyed(on_session_destroyed)
+            pn.state.on_session_destroyed(on_session_destroyed)
         else:
             # Running in development mode
             self.template.servable(title="GripLab")

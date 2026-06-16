@@ -1,9 +1,11 @@
 # app/controllers.py
 """Business logic controllers for GripLab application."""
 
+import pickle
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
+import panel as pn
 import plotly.express as px
 from plotly.graph_objects import Figure
 
@@ -13,6 +15,8 @@ from utils.logger import logger
 
 from .config import AppConfig
 
+_cache: Dict[str, Any] = cast(Dict[str, Any], pn.state.cache)
+
 
 class DataController:
     """Controller for data management operations."""
@@ -20,7 +24,7 @@ class DataController:
     def __init__(self, data_manager: DataManager, config: AppConfig):
         self.dm = data_manager
         self.config = config
-        self.import_counter = 0
+        self.import_counter = len(data_manager.list_datasets())
 
     def import_data(self, file_paths: List[str]) -> List[str]:
         """Import data files and return list of imported dataset names."""
@@ -82,6 +86,15 @@ class DataController:
                     raise ValueError(f"No dataset found for {name}")
                 original_name = dataset.demo_name
 
+                # Validate name uniqueness before making any changes
+                new_name = updates.get("name")
+                if (
+                    new_name
+                    and new_name != original_name
+                    and new_name in self.dm.list_demo_names()
+                ):
+                    raise ValueError(f"Dataset name '{new_name}' is already in use")
+
                 # Update demo attributes
                 for key, value in updates.items():
                     if hasattr(dataset, f"demo_{key}"):
@@ -97,6 +110,15 @@ class DataController:
                 if dataset is None:
                     raise ValueError(f"No dataset found for {dataset_name}")
                 original_name = dataset.name
+
+                # Validate name uniqueness before making any changes
+                new_name = updates.get("name")
+                if (
+                    new_name
+                    and new_name != original_name
+                    and new_name in self.dm.list_datasets()
+                ):
+                    raise ValueError(f"Dataset name '{new_name}' is already in use")
 
                 # Update attributes
                 for key, value in updates.items():
@@ -149,6 +171,53 @@ class DataController:
             )
             return None
 
+    def export_session(self, path: str) -> bool:
+        """Export the current session to a binary file."""
+        try:
+            payload = {
+                "version": AppConfig.version,
+                "dm": self.dm.to_dict(),
+                "session": _cache.get("session", {}),
+            }
+            with open(path, "wb") as f:
+                pickle.dump(payload, f)
+            logger.info(f"Session exported to {path}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to export session: {e}", exc_info=True)
+            return False
+
+    def import_session(self, path: str) -> Optional[dict]:
+        """Import a session from a binary file.
+        Returns session state dict on success."""
+        try:
+            with open(path, "rb") as f:
+                payload = pickle.load(f)
+
+            file_version = payload.get("version", "unknown")
+            if file_version != AppConfig.version:
+                logger.warning(
+                    f"Session file version mismatch: file is v{file_version},"
+                    f" app is v{AppConfig.version}"
+                )
+                if pn.state.notifications:
+                    pn.state.notifications.warning(
+                        f"Session created with v{file_version} —"
+                        f" some settings may not restore correctly.",
+                        duration=6000,
+                    )
+
+            dm = DataManager.from_dict(payload["dm"])  # reconstruct fresh instance
+            _cache["dm"] = dm
+            self.dm = dm
+            self.import_counter = len(dm.list_datasets())
+            _cache["session"] = payload.get("session", {})
+            logger.info(f"Session imported from {path}")
+            return payload.get("session", {})
+        except Exception as e:
+            logger.error(f"Failed to import session: {e}", exc_info=True)
+            return None
+
     def _generate_unique_name(self, base_name: str) -> str:
         """Generate a unique dataset name."""
         name = base_name
@@ -169,9 +238,14 @@ class DataController:
         return name
 
     def _get_next_color(self) -> str:
-        """Get the next color from the configured colorway."""
+        """Get the next color from the configured colorway, normalized to hex."""
         colorway = getattr(px.colors.qualitative, self.config.colorway)
-        return colorway[self.import_counter % len(colorway)]
+        color = colorway[self.import_counter % len(colorway)]
+        if color.startswith("rgb"):
+            parts = color[color.index("(") + 1 : color.index(")")].split(",")
+            r, g, b = int(parts[0]), int(parts[1]), int(parts[2])
+            color = f"#{r:02x}{g:02x}{b:02x}"
+        return color
 
 
 class PlotController:

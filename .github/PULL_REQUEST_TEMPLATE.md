@@ -38,6 +38,7 @@ Attach screenshots, logs, or output to help reviewers understand the changes.
 - [ ] I have added tests that prove my fix/feature works.
 - [ ] I have added/updated documentation if needed.
 - [ ] Linked related issue(s) in the PR description.
+- [ ] If this change affects displayed data or labels, demo mode has been verified or updated accordingly.
 
 ---
 
