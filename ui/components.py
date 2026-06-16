@@ -61,6 +61,7 @@ class PlotControlWidgets:
             name="Plot Type",
             options=["2D", "2D Color", "3D", "3D Color"],
             width=90,
+            height=60,
             margin=(5,5),
         )
 
@@ -408,7 +409,7 @@ class TimeSeriesControlWidgets:
         self.name_input = pn.widgets.TextInput(
             name="Page Name", placeholder="Time Series", sizing_mode="stretch_width"
         )
-        self.subplot_select = WidgetFactory.create_select("Selection", width=90, margin=(5,5), sizing_mode="fixed")
+        self.subplot_select = WidgetFactory.create_select("Selection", width=90, height=60, margin=(5,5), sizing_mode="fixed")
         self.channel_grid = pn.GridBox(ncols=2, sizing_mode="stretch_width")
         self.settings_column = pn.Column(self.channel_grid)
         self.add_row_btn = WidgetFactory.create_button("+ Add Subplot", button_type="default", sizing_mode="stretch_width")

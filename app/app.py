@@ -739,7 +739,7 @@ class GripLabApp:
                     pn.state.notifications.error(
                         "Failed to export session.", duration=4000
                     )
-
+    
     def _on_import_session(self):
         files = Tk_utils().select_file(
             filetypes=[("GripLab Session", "*.grip")],
@@ -755,17 +755,14 @@ class GripLabApp:
                 )  # sync PlotController reference
                 cached_selection = session.get("data_selection", [])
                 table_len = len(self.dm.list_datasets())
+                self._refresh_data_table()
                 self.data_table.selection = [
                     i for i in cached_selection if i < table_len
                 ]
-                self._refresh_data_table()
                 self._update_channel_options()
                 self._update_data_select_options()
                 
-                saved_pages = [p for p in session.get("pages", []) if p.get("type") == "scatter"]
-
-                if self.pages:
-                    self.main_tabs.active = 0
+                self.main_tabs.active = 0
 
                 # Clear all existing pages and tabs
                 while self.pages:
@@ -773,23 +770,46 @@ class GripLabApp:
                 while len(self.main_tabs) > 0:
                     self.main_tabs.pop(-1)
 
-                # Rebuild all from saved state
-                for saved in saved_pages:
-                    self._add_scatter_tab(name=saved.get("name"))
+                channels = self.dm.get_channels(self.dm.list_datasets())
 
-                # Restore widget state and re-plot
-                scatter_pages = [p for p in self.pages if isinstance(p, ScatterPage)]
-                if scatter_pages:
-                    self._load_sidebar_for_page(scatter_pages[0])
-                for i, page in enumerate(scatter_pages):
-                    if i < len(saved_pages):
-                        page.controls.restore(saved_pages[i])
-                        page.settings.restore(saved_pages[i])
+                for saved in session.get("pages", []):
+                    page_type = saved.get("type")
+                    if page_type == "scatter":
+                        self._add_scatter_tab(name=saved.get("name"))
+                        page = next(p for p in reversed(self.pages) if isinstance(p, ScatterPage))
+                        page.controls.restore(saved)
+                        page.settings.restore(saved)
                         self._on_plot_scatter(page, clicks=None)
+                    elif page_type == "time_series":
+                        self._add_time_series_tab(name=saved.get("name"))
+                        page = next(p for p in reversed(self.pages) if isinstance(p, TimeSeriesPage))
+                        page.settings.title.value = saved.get("title", "")
+                        page.settings.font_size.value = saved.get("font_size", 12)
+                        page.settings.line_width.value = saved.get("line_width", 2)
+                        grid = saved.get("subplots", [[]])
+                        if grid and not isinstance(grid[0], list):
+                            grid = [[cell] for cell in grid if isinstance(cell, dict)]
+                        for r_idx, saved_row in enumerate(grid):
+                            if r_idx > 0:
+                                page.controls.add_row(channels)
+                            for c_idx, saved_cell in enumerate(saved_row):
+                                if c_idx >= len(page.controls.cells[r_idx]):
+                                    break
+                                cell = page.controls.cells[r_idx][c_idx]
+                                for i, ch in enumerate(saved_cell.get("channels", [])):
+                                    if i < 4 and ch in channels:
+                                        cell.channel_selects[i].value = ch
+                                cell.label.value = saved_cell.get("label", "")
+                        page.controls.show_selected_settings()
+                        page.subplots = page.controls.get_subplot_grid()
+                        self._on_plot_time_series(page, clicks=None)
+
+                if not self.pages:
+                    self._add_scatter_tab()
 
                 self.main_tabs.active = 0
-                if scatter_pages:
-                    self._load_sidebar_for_page(scatter_pages[0])
+                self._load_sidebar_for_page(self.pages[0])
+
                 if pn.state.notifications:
                     pn.state.notifications.success(
                         f"Session imported from {Path(files[0]).name}", duration=4000
