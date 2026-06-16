@@ -8,6 +8,7 @@ PyInstaller.__main__.run(
         "--onefile",
         "--version-file=version.txt",
         "--add-data=ui/styles.css:ui",
+        "--add-data=ui/tabs.css:ui",
         "--icon=docs/images/GripLab_Icon.png",
         "--splash=docs/images/GripLab_Splash.png",
         "--add-data=docs:docs",
