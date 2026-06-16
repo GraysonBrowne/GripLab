@@ -107,6 +107,15 @@ class GripLabApp:
         except FileNotFoundError:
             logger.error("styles.css not found")
             return ""
+        
+    def _load_tabs_css(self) -> str:
+        css_path = Path(self.program_dir, "ui", "tabs.css")
+        try:
+            with open(css_path, "r") as f:
+                return f.read()
+        except FileNotFoundError:
+            logger.error("tabs.css not found")
+            return ""
 
     def _initialize_ui(self):
         """Initialize all UI components."""
@@ -131,7 +140,8 @@ class GripLabApp:
         self._init_header_widgets()
         self._init_sidebar_widgets()
         self._init_main_view()
-        self.main_tabs = pn.Tabs(dynamic=True, closable=True, sizing_mode="stretch_both")
+        self.main_tabs = pn.Tabs(dynamic=True, closable=True, sizing_mode="stretch_both",
+                                 stylesheets=[self._load_tabs_css()])
         self.plot_sidebar_tab = pn.Column(name="Plot Data", height=345)
         self._add_time_series_tab(default_subplots=[
             (["SA", "CmdSA"], "Slip Angle"),
@@ -374,7 +384,8 @@ class GripLabApp:
         )
 
         self.info_tabs = pn.layout.Tabs(data_tab, self.plot_sidebar_tab, 
-                                        sizing_mode="stretch_height")
+                                        sizing_mode="stretch_height", 
+                                        stylesheets=[self._load_tabs_css()])
 
         sidebar_object = cast(list, self.template.sidebar)
         sidebar_object.append(
