@@ -386,7 +386,7 @@ class SubplotCellWidget:
         self._default_channels: list[str] = []
 
     def selected_channels(self) -> list[str]:
-        return [s.value for s in self.channel_selects if s.value]
+        return [s.value for s in self.channel_selects]
 
     def update_channel_options(self, channels: list[str]):
         opts = [""] + channels

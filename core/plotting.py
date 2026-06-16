@@ -874,6 +874,8 @@ class TimeSeriesBuilder:
                     legend_ref = "legend" if legend_idx == 1 else f"legend{legend_idx}"
 
                     for ch_idx, channel in enumerate(subplot.channels):
+                        if not channel:
+                            continue
                         y_data = ds.get_channel_data(channel)
                         if y_data is None:
                             continue
