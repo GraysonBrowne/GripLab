@@ -379,14 +379,20 @@ class SubplotCellWidget:
             for i in range(4)
         ]
         self.label = wf.create_text_input("Y-Axis Label", placeholder="Channel [unit]")
+        self._default_channels: list[str] = []
 
     def selected_channels(self) -> list[str]:
         return [s.value for s in self.channel_selects if s.value]
 
     def update_channel_options(self, channels: list[str]):
         opts = [""] + channels
-        for sel in self.channel_selects:
-            current = sel.value if sel.value in channels else ""
+        for i, sel in enumerate(self.channel_selects):
+            if sel.value in channels:
+                current = sel.value
+            elif i < len(self._default_channels) and self._default_channels[i] in channels:
+                current = self._default_channels[i]
+            else:
+                current = ""
             sel.options = opts
             sel.value = current
 

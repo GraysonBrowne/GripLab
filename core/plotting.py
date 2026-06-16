@@ -861,7 +861,7 @@ class TimeSeriesBuilder:
                 x_label = "Index"
             else:
                 x_unit = ds.get_channel_unit(x_channel) or ""
-                x_label = f"{x_channel} [{x_unit}]" if x_unit else x_channel
+                x_label = f"Elapsed Time [{x_unit}]" if x_unit else x_channel
 
             dash = dash_styles[ds_idx % len(dash_styles)]
 

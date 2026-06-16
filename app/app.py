@@ -132,7 +132,14 @@ class GripLabApp:
         self._init_main_view()
         self.main_tabs = pn.Tabs(dynamic=True, closable=True, sizing_mode="stretch_both")
         self.plot_sidebar_tab = pn.Column(name="Plot Data", height=345)
-        self._add_scatter_tab()
+        self._add_time_series_tab(default_subplots=[
+            (["SA", "CmdSA"], "Slip Angle"),
+            (["SL"], "Slip Ratio"),
+            (["FZ", "CmdFZ"], "Vertical Force"),
+            (["IA", "CmdIA"], "Inclination Angle"),
+            (["P", "CmdP"], "Pressure"),
+            (["V", "CmdV"], "Speed"),
+        ])
 
         # Modal container
         self.modal_content = pn.Column()
@@ -141,8 +148,13 @@ class GripLabApp:
         """Restore widget state and re-plot from cached session."""
         session = _cache.get("session", {})
         if not session or not self.dm.list_datasets():
+            self._add_scatter_tab()
+            self.main_tabs.active = 0
             self._initialized = True
             return
+
+        self.pages.pop(0)
+        self.main_tabs.pop(0)
 
         logger.info("Restoring session state from cache")
 
@@ -155,52 +167,52 @@ class GripLabApp:
         self._update_channel_options()
         self._update_data_select_options()
 
-        saved_pages = [p for p in session.get("pages", []) if p.get("type") == "scatter"]
-        
-        # Create additional tabs to match saved page count
-        for i in range(len(self.pages), len(saved_pages)):
-            self._add_scatter_tab(name=saved_pages[i].get("name"))
-
         # Restore widget state and figures
         figures = _cache.get("figures", {})
-        scatter_pages = [p for p in self.pages if isinstance(p, ScatterPage)]
-        for i, page in enumerate(scatter_pages):
-            if i < len(saved_pages):
-                page.controls.restore(saved_pages[i])
-                page.settings.restore(saved_pages[i])
-                saved_name = saved_pages[i].get("name", page.name)
+        channels = self.dm.get_channels(self.dm.list_datasets())
+
+        for saved in session.get("pages", []):
+            page_type = saved.get("type")
+            if page_type == "scatter":
+                self._add_scatter_tab(name=saved.get("name"))
+                page = next(p for p in reversed(self.pages) if isinstance(p, ScatterPage))
+                page.controls.restore(saved)
+                page.settings.restore(saved)
+                saved_name = saved.get("name", page.name)
                 if saved_name in figures and figures[saved_name] is not None:
                     page.pane.object = figures[saved_name]
                 else:
                     self._on_plot_scatter(page, clicks=None)
-
-        saved_ts_pages = [p for p in session.get("pages", []) if p.get("type") == "time_series"]
-        for saved in saved_ts_pages:
-            self._add_time_series_tab(name=saved.get("name"))
-            page = next(p for p in reversed(self.pages) if isinstance(p, TimeSeriesPage))
-            page.settings.title.value = saved.get("title", "")
-            page.settings.font_size.value = saved.get("font_size", 12)
-            page.settings.line_width.value = saved.get("line_width", 2)
-            channels = self.dm.get_channels(self.dm.list_datasets())
-            grid = saved.get("subplots", [[]])
-            if grid and not isinstance(grid[0], list):
-                grid = [[cell] for cell in grid if isinstance(cell, dict)]
-            for r_idx, saved_row in enumerate(grid):
-                if r_idx > 0:
-                    page.controls.add_row(channels)
-                for c_idx, saved_cell in enumerate(saved_row):
-                    if c_idx >= len(page.controls.cells[r_idx]):
-                        break
-                    cell = page.controls.cells[r_idx][c_idx]
-                    for i, ch in enumerate(saved_cell.get("channels", [])):
-                        if i < 4 and ch in channels:
-                            cell.channel_selects[i].value = ch
-                    cell.label.value = saved_cell.get("label", "")
-            page.controls.show_selected_settings()
+            elif page_type == "time_series":
+                self._add_time_series_tab(name=saved.get("name"))
+                page = next(p for p in reversed(self.pages) if isinstance(p, TimeSeriesPage))
+                page.settings.title.value = saved.get("title", "")
+                page.settings.font_size.value = saved.get("font_size", 12)
+                page.settings.line_width.value = saved.get("line_width", 2)
+                grid = saved.get("subplots", [[]])
+                if grid and not isinstance(grid[0], list):
+                    grid = [[cell] for cell in grid if isinstance(cell, dict)]
+                for r_idx, saved_row in enumerate(grid):
+                    if r_idx > 0:
+                        page.controls.add_row(channels)
+                    for c_idx, saved_cell in enumerate(saved_row):
+                        if c_idx >= len(page.controls.cells[r_idx]):
+                            break
+                        cell = page.controls.cells[r_idx][c_idx]
+                        for i, ch in enumerate(saved_cell.get("channels", [])):
+                            if i < 4 and ch in channels:
+                                cell.channel_selects[i].value = ch
+                        cell.label.value = saved_cell.get("label", "")
+                page.controls.show_selected_settings()
+                page.subplots = page.controls.get_subplot_grid()
+                saved_name = saved.get("name", page.name)
+                if saved_name in figures and figures[saved_name] is not None:
+                    page.pane.object = figures[saved_name]
+                    page.pane.min_height = len(page.subplots) * 100 + 90
 
         # Switch back to first tab
         self.main_tabs.active = 0
-        self._load_sidebar_for_page(scatter_pages[0])
+        self._load_sidebar_for_page(self.pages[0])
         self._initialized = True
 
     def _save_session(self):
@@ -253,8 +265,7 @@ class GripLabApp:
         _cache["figures"] = {
             page.name: page.pane.object
             for page in self.pages
-            if isinstance(page, ScatterPage)
-            and page.pane.object is not None
+            if page.pane.object is not None
             and len(page.pane.object.data) > 0
         }
 
@@ -920,7 +931,7 @@ class GripLabApp:
         self._load_sidebar_for_page(page)
         self._save_session()
 
-    def _add_time_series_tab(self, name: str | None = None):
+    def _add_time_series_tab(self, name: str | None = None, default_subplots=None):
         count = sum(1 for p in self.pages if isinstance(p, TimeSeriesPage)) + 1
         tab_name = name or (f"Time Series {count}" if count > 1 else "Time Series")
         controls = TimeSeriesControlWidgets()
@@ -932,7 +943,15 @@ class GripLabApp:
             pane=pane,
         )
         page.tab_content = pn.Column(pane, sizing_mode="stretch_both", scroll=True)
-        page.controls.add_row(self.dm.get_channels(self.dm.list_datasets()))
+        channels = self.dm.get_channels(self.dm.list_datasets())
+        if default_subplots:
+            for ch_list, label in default_subplots:
+                row_cells = page.controls.add_row(channels)
+                cell = row_cells[0]
+                cell.label.value = label
+                cell._default_channels = list(ch_list[:4])
+        else:
+            page.controls.add_row(channels)
         page.controls.show_selected_settings()
         self._wire_time_series_callbacks(page)
         self.pages.append(page)
