@@ -78,6 +78,7 @@ class GripLabApp:
 
         # Initialize UI
         self._initialized = False
+        self._renaming = False
         self._initialize_ui()
         self._layout_ui()
         self._setup_callbacks()
@@ -392,8 +393,10 @@ class GripLabApp:
 
     def _load_sidebar_for_page(self, page: PageType):
         if isinstance(page, ScatterPage):
+            page.controls.name_input.value = page.name
             self.plot_sidebar_tab.objects = [
-                pn.Row(page.controls.plot_type, 
+                pn.Row(page.controls.name_input,
+                       page.controls.plot_type, 
                        page.controls.settings_button, 
                        page.controls.plot_button
                        ),
@@ -411,8 +414,10 @@ class GripLabApp:
                            ncols=4)
             ]
         elif isinstance(page, TimeSeriesPage):
+            page.controls.name_input.value = page.name
             self.plot_sidebar_tab.objects = [
-                pn.Row(page.controls.subplot_select, page.controls.settings_button, 
+                pn.Row(page.controls.name_input,page.controls.subplot_select, 
+                       page.controls.settings_button, 
                        page.controls.plot_button),
                 pn.Column(page.controls.settings_column, sizing_mode="stretch_width"),
             ]
@@ -538,6 +543,26 @@ class GripLabApp:
         # Save to file
         self.config.save(self.config_path)
         self.template.close_modal()
+    
+    def _on_page_rename(self, page: PageType, name: str):
+        if not name or page not in self.pages:
+            return
+        if any(p.name == name for p in self.pages if p is not page):
+            if pn.state.notifications:
+                pn.state.notifications.warning(f'A page named "{name}" already exists', duration=4000)
+            return
+        page.name = name
+        idx = self.pages.index(page)
+        tab_obj = getattr(page, 'tab_content', None) or page.pane
+        self._renaming = True
+        try:
+            with pn.io.hold():
+                self.main_tabs.pop(idx)
+                self.main_tabs.insert(idx, (name, tab_obj))
+                self.main_tabs.active = idx
+        finally:
+            self._renaming = False
+        self._save_session()
 
     def _on_plot_settings(self, page, clicks):
         """Open plot settings modal."""
@@ -555,12 +580,14 @@ class GripLabApp:
         page.settings.update_axis_state(plot_type)
 
     def _on_main_tab_change(self, active):
-        if 0 <= active < len(self.pages):
+        if 0 <= active < len(self.pages) and len(self.pages) == len(self.main_tabs):
             page = self.pages[active]
             self._load_sidebar_for_page(page)
             self.info_tabs.active = 1
 
     def _on_tab_closed(self, event):
+        if self._renaming:
+            return
         if len(event.new) >= len(event.old):
             return
         removed_pane = next((p for p in event.old if p not in event.new), None)
@@ -870,6 +897,10 @@ class GripLabApp:
             page.controls.plot_button.param.clicks,
             watch=True,
         )
+        page.controls.name_input.param.watch(
+            lambda event, p=page: self._on_page_rename(p, p.controls.name_input.value),
+            'value'
+        )
         for selector in page.controls.cmd_selects:
             pn.bind(
                 lambda event, p=page: self._update_cmd_options(p, event),
@@ -892,6 +923,10 @@ class GripLabApp:
             lambda clicks, p=page: self._on_plot_time_series(p, clicks),
             page.controls.plot_button.param.clicks,
             watch=True,
+        )
+        page.controls.name_input.param.watch(
+            lambda event, p=page: self._on_page_rename(p, p.controls.name_input.value),
+            'value'
         )
         pn.bind(
             lambda clicks, p=page: self._on_ts_plot_settings(p, clicks),

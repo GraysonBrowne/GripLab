@@ -105,6 +105,6 @@ def create_time_series_settings_layout(settings):
         settings.title,
         settings.font_size,
         settings.line_width,
-        width=800,
+        width=450,
         margin=(0, 20),
     )

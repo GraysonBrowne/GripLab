@@ -52,13 +52,16 @@ class PlotControlWidgets:
 
     def __init__(self):
         wf = WidgetFactory()
+        self.name_input = pn.widgets.TextInput(
+            name="Page Name", placeholder="Scatter", sizing_mode="stretch_width"
+        )
 
         # Plot type selection
-        self.plot_type = pn.widgets.RadioBoxGroup(
+        self.plot_type = pn.widgets.Select(
             name="Plot Type",
             options=["2D", "2D Color", "3D", "3D Color"],
-            inline=True,
-            margin=(12, 10, 5, 10),
+            width=90,
+            margin=(5,5),
         )
 
         # Axis selectors
@@ -99,10 +102,10 @@ class PlotControlWidgets:
 
         # Plot action buttons
         self.plot_button = wf.create_button(
-            "Plot Data", sizing_mode="stretch_width", margin=(5, 10, 5, 7)
+            "Plot Data", width=90, margin=(26, 10, 5, 7)
         )
         self.settings_button = wf.create_button(
-            "⚙️", button_type="default", width=43, margin=(5, 0, 5, 15)
+            "⚙️", button_type="default", width=43, margin=(26, 0, 5, 15)
         )
 
     def update_plot_type_state(self, plot_type: str):
@@ -402,20 +405,22 @@ class TimeSeriesControlWidgets:
         self.n_rows: int = 0
         self.n_cols: int = 0
 
-        self.subplot_select = WidgetFactory.create_select("Subplot")
+        self.name_input = pn.widgets.TextInput(
+            name="Page Name", placeholder="Time Series", sizing_mode="stretch_width"
+        )
+        self.subplot_select = WidgetFactory.create_select("Selection", width=90, margin=(5,5), sizing_mode="fixed")
         self.channel_grid = pn.GridBox(ncols=2, sizing_mode="stretch_width")
         self.settings_column = pn.Column(self.channel_grid)
         self.add_row_btn = WidgetFactory.create_button("+ Add Subplot", button_type="default", sizing_mode="stretch_width")
         self.remove_btn = WidgetFactory.create_button("Remove Subplot", button_type="danger", sizing_mode="stretch_width")
         self.plot_button = WidgetFactory.create_button("Plot Data", 
-                                                       sizing_mode="stretch_width", 
-                                                       margin=(5, 10, 5, 7))
-        self.settings_button = WidgetFactory.create_button("⚙", button_type="default", 
-                                                           width=43, margin=(5, 0, 5, 15))
+                                                       width=90, margin=(26, 10, 5, 7))
+        self.settings_button = WidgetFactory.create_button("⚙️", button_type="default", 
+                                                           width=43, margin=(26, 0, 5, 15))
 
     def _cell_label(self, row: int, col: int) -> str:
         if self.n_cols == 1:
-            return f"Subplot {row + 1}"
+            return f"Plot {row + 1}"
         return f"Row {row + 1}, Col {col + 1}"
 
     def _rebuild_select_options(self):
