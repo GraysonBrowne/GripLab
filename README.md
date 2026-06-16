@@ -18,7 +18,7 @@ To stay in the loop and receive notifications when new releases are available, c
 
 ---
 
-## Features
+## Current Features
 
 - Import TTC tire test data in `.mat` and `.dat` formats
 - 2D and 3D interactive scatter plots
@@ -27,6 +27,20 @@ To stay in the loop and receive notifications when new releases are available, c
 - Unit system conversion (USCS / Metric)
 - Sign convention conversion (SAE, Adapted SAE, ISO, Adapted ISO)
 - Configurable themes, color sequences, and plot styling
+
+---
+
+## Upcoming Features
+
+- Plotting
+  - Add time history plot type with ability to overlay channels
+  - Tire model evaluation plotted over data or with swept inputs
+- Processing
+  - Combine datasets
+  - Utility for data filtering and parsing
+  - Export processed datasets
+- Fitting
+  - Utility for fitting Pacejka/MF-Tyre models
 
 ---
 
