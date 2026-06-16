@@ -1030,6 +1030,8 @@ class GripLabApp:
         self._save_session()
 
     def _on_insert_menu(self, clicked):
+        if not clicked:
+            return
         actions = {
             "scatter_plot": self._add_scatter_tab,
             "time_series": self._add_time_series_tab,
@@ -1037,6 +1039,7 @@ class GripLabApp:
         action = actions.get(clicked)
         if action:
             action()
+        self.insert_menu.clicked = None
 
     def _on_help_menu(self, clicked):
         """Handle help menu selection."""
