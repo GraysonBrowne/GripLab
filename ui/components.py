@@ -10,6 +10,7 @@ from app.models import SubplotConfig
 from converters.conventions import SignConvention
 from converters.units import UnitSystem
 
+
 def _cmap_css() -> str:
     return (
         "div, div:hover {background: var(--panel-surface-color); color: currentColor}"
@@ -62,7 +63,7 @@ class PlotControlWidgets:
             options=["2D", "2D Color", "3D", "3D Color"],
             width=90,
             height=60,
-            margin=(5,5),
+            margin=(5, 5),
         )
 
         # Axis selectors
@@ -374,13 +375,13 @@ class AppSettingsWidgets:
             width=200,
         )
 
+
 class SubplotCellWidget:
     def __init__(self, channels: list[str] = []):
         wf = WidgetFactory()
         opts = [""] + channels
         self.channel_selects = [
-            wf.create_select(f"Channel {i + 1}", options=opts)
-            for i in range(4)
+            wf.create_select(f"Channel {i + 1}", options=opts) for i in range(4)
         ]
         self.label = wf.create_text_input("Y-Axis Label", placeholder="Channel [unit]")
         self._default_channels: list[str] = []
@@ -393,12 +394,16 @@ class SubplotCellWidget:
         for i, sel in enumerate(self.channel_selects):
             if sel.value in channels:
                 current = sel.value
-            elif i < len(self._default_channels) and self._default_channels[i] in channels:
+            elif (
+                i < len(self._default_channels)
+                and self._default_channels[i] in channels
+            ):
                 current = self._default_channels[i]
             else:
                 current = ""
             sel.options = opts
             sel.value = current
+
 
 class TimeSeriesControlWidgets:
     def __init__(self):
@@ -409,15 +414,23 @@ class TimeSeriesControlWidgets:
         self.name_input = pn.widgets.TextInput(
             name="Page Name", placeholder="Time Series", sizing_mode="stretch_width"
         )
-        self.subplot_select = WidgetFactory.create_select("Selection", width=90, height=60, margin=(5,5), sizing_mode="fixed")
+        self.subplot_select = WidgetFactory.create_select(
+            "Selection", width=90, height=60, margin=(5, 5), sizing_mode="fixed"
+        )
         self.channel_grid = pn.GridBox(ncols=2, sizing_mode="stretch_width")
         self.settings_column = pn.Column(self.channel_grid)
-        self.add_row_btn = WidgetFactory.create_button("+ Add Subplot", button_type="default", sizing_mode="stretch_width")
-        self.remove_btn = WidgetFactory.create_button("Remove Subplot", button_type="danger", sizing_mode="stretch_width")
-        self.plot_button = WidgetFactory.create_button("Plot Data", 
-                                                       width=90, margin=(26, 10, 5, 7))
-        self.settings_button = WidgetFactory.create_button("⚙️", button_type="default", 
-                                                           width=43, margin=(26, 0, 5, 15))
+        self.add_row_btn = WidgetFactory.create_button(
+            "+ Add Subplot", button_type="default", sizing_mode="stretch_width"
+        )
+        self.remove_btn = WidgetFactory.create_button(
+            "Remove Subplot", button_type="danger", sizing_mode="stretch_width"
+        )
+        self.plot_button = WidgetFactory.create_button(
+            "Plot Data", width=90, margin=(26, 10, 5, 7)
+        )
+        self.settings_button = WidgetFactory.create_button(
+            "⚙️", button_type="default", width=43, margin=(26, 0, 5, 15)
+        )
 
     def _cell_label(self, row: int, col: int) -> str:
         if self.n_cols == 1:
@@ -432,7 +445,9 @@ class TimeSeriesControlWidgets:
         ]
         current = self.subplot_select.value
         self.subplot_select.options = opts
-        self.subplot_select.value = current if current in opts else (opts[0] if opts else None)
+        self.subplot_select.value = (
+            current if current in opts else (opts[0] if opts else None)
+        )
 
     def get_selected_cell(self) -> Optional[SubplotCellWidget]:
         val = self.subplot_select.value
@@ -456,7 +471,9 @@ class TimeSeriesControlWidgets:
                 pn.Row(self.remove_btn, self.add_row_btn),
             ]
 
-    def add_row(self, channels: list[str] = [], after: int = -1) -> List[SubplotCellWidget]:
+    def add_row(
+        self, channels: list[str] = [], after: int = -1
+    ) -> List[SubplotCellWidget]:
         new_row = [SubplotCellWidget(channels)]
         if 0 <= after < self.n_rows:
             self.cells.insert(after + 1, new_row)
@@ -500,7 +517,9 @@ class TimeSeriesControlWidgets:
                     if not self.cells[r]:
                         self.cells.pop(r)
                         self.n_rows -= 1
-                    if self.n_cols > 0 and all(len(row) < self.n_cols for row in self.cells):
+                    if self.n_cols > 0 and all(
+                        len(row) < self.n_cols for row in self.cells
+                    ):
                         self.n_cols -= 1
                 self._rebuild_select_options()
                 if self.n_rows > 0:
@@ -523,17 +542,26 @@ class TimeSeriesControlWidgets:
             ]
             for row in self.cells
         ]
-    
+
+
 class TimeSeriesSettingsWidgets:
     def __init__(self):
         self.title = pn.widgets.TextInput(
             name="Title", placeholder="Run conditions", sizing_mode="stretch_width"
         )
         self.font_size = pn.widgets.IntSlider(
-            name="Font Size", value=12, start=4, end=32, step=1,
-            sizing_mode="stretch_width"
+            name="Font Size",
+            value=12,
+            start=4,
+            end=32,
+            step=1,
+            sizing_mode="stretch_width",
         )
         self.line_width = pn.widgets.IntSlider(
-            name="Line Width", value=2, start=1, end=8, step=1,
-            sizing_mode="stretch_width"
+            name="Line Width",
+            value=2,
+            start=1,
+            end=8,
+            step=1,
+            sizing_mode="stretch_width",
         )

@@ -17,7 +17,7 @@ from panel.io import hold
 
 from app.config import AppConfig
 from app.controllers import DataController, PlotController
-from app.models import PageType, ScatterPage, TimeSeriesPage, SubplotConfig
+from app.models import PageType, ScatterPage, TimeSeriesPage
 from converters.conventions import ConventionConverter, SignConvention
 from converters.units import UnitSystem, UnitSystemConverter
 
@@ -108,7 +108,7 @@ class GripLabApp:
         except FileNotFoundError:
             logger.error("styles.css not found")
             return ""
-        
+
     def _load_tabs_css(self) -> str:
         css_path = Path(self.program_dir, "ui", "tabs.css")
         try:
@@ -141,17 +141,23 @@ class GripLabApp:
         self._init_header_widgets()
         self._init_sidebar_widgets()
         self._init_main_view()
-        self.main_tabs = pn.Tabs(dynamic=True, closable=True, sizing_mode="stretch_both",
-                                 stylesheets=[self._load_tabs_css()])
+        self.main_tabs = pn.Tabs(
+            dynamic=True,
+            closable=True,
+            sizing_mode="stretch_both",
+            stylesheets=[self._load_tabs_css()],
+        )
         self.plot_sidebar_tab = pn.Column(name="Plot Data", height=345)
-        self._add_time_series_tab(default_subplots=[
-            (["SA", "CmdSA"], "Slip Angle"),
-            (["SL"], "Slip Ratio"),
-            (["FZ", "CmdFZ"], "Vertical Force"),
-            (["IA", "CmdIA"], "Inclination Angle"),
-            (["P", "CmdP"], "Pressure"),
-            (["V", "CmdV"], "Speed"),
-        ])
+        self._add_time_series_tab(
+            default_subplots=[
+                (["SA", "CmdSA"], "Slip Angle"),
+                (["SL"], "Slip Ratio"),
+                (["FZ", "CmdFZ"], "Vertical Force"),
+                (["IA", "CmdIA"], "Inclination Angle"),
+                (["P", "CmdP"], "Pressure"),
+                (["V", "CmdV"], "Speed"),
+            ]
+        )
         self.pages[-1].settings.title.value = "Run Conditions"
 
         # Modal container
@@ -188,7 +194,9 @@ class GripLabApp:
             page_type = saved.get("type")
             if page_type == "scatter":
                 self._add_scatter_tab(name=saved.get("name"))
-                page = next(p for p in reversed(self.pages) if isinstance(p, ScatterPage))
+                page = next(
+                    p for p in reversed(self.pages) if isinstance(p, ScatterPage)
+                )
                 page.controls.restore(saved)
                 page.settings.restore(saved)
                 saved_name = saved.get("name", page.name)
@@ -198,7 +206,9 @@ class GripLabApp:
                     self._on_plot_scatter(page, clicks=None)
             elif page_type == "time_series":
                 self._add_time_series_tab(name=saved.get("name"))
-                page = next(p for p in reversed(self.pages) if isinstance(p, TimeSeriesPage))
+                page = next(
+                    p for p in reversed(self.pages) if isinstance(p, TimeSeriesPage)
+                )
                 page.settings.title.value = saved.get("title", "")
                 page.settings.font_size.value = saved.get("font_size", 12)
                 page.settings.line_width.value = saved.get("line_width", 2)
@@ -230,7 +240,7 @@ class GripLabApp:
 
     def _save_session(self):
         """Save current widget state to cache."""
-        if not getattr(self, '_initialized', False):
+        if not getattr(self, "_initialized", False):
             return
         _cache["session"] = {
             "data_selection": self.data_table.selection,
@@ -259,27 +269,29 @@ class GripLabApp:
                     "marker_size": page.settings.marker_size.value,
                     "marker_opacity": page.settings.marker_opacity.value,
                 }
-                if isinstance(page, ScatterPage) else
-                {
+                if isinstance(page, ScatterPage)
+                else {
                     "type": "time_series",
                     "name": page.name,
                     "title": page.settings.title.value,
                     "font_size": page.settings.font_size.value,
                     "line_width": page.settings.line_width.value,
                     "subplots": [
-                        [{"channels": cell.channels, "label": cell.label} for cell in row]
+                        [
+                            {"channels": cell.channels, "label": cell.label}
+                            for cell in row
+                        ]
                         for row in page.subplots
-                    ]
+                    ],
                 }
                 for page in self.pages
-            ]
+            ],
         }
 
         _cache["figures"] = {
             page.name: page.pane.object
             for page in self.pages
-            if isinstance(page.pane.object, go.Figure)
-            and bool(page.pane.object.data)
+            if isinstance(page.pane.object, go.Figure) and bool(page.pane.object.data)
         }
 
     def _init_header_widgets(self):
@@ -384,14 +396,20 @@ class GripLabApp:
             name="Data Info",
         )
 
-        self.info_tabs = pn.layout.Tabs(data_tab, self.plot_sidebar_tab, 
-                                        sizing_mode="stretch_height", 
-                                        stylesheets=[self._load_tabs_css()])
+        self.info_tabs = pn.layout.Tabs(
+            data_tab,
+            self.plot_sidebar_tab,
+            sizing_mode="stretch_height",
+            stylesheets=[self._load_tabs_css()],
+        )
 
         sidebar_object = cast(list, self.template.sidebar)
         sidebar_object.append(
             pn.Column(
-                self.import_btn, self.data_table, pn.layout.Divider(), self.info_tabs,
+                self.import_btn,
+                self.data_table,
+                pn.layout.Divider(),
+                self.info_tabs,
                 sizing_mode="stretch_height",
             )
         )
@@ -408,30 +426,42 @@ class GripLabApp:
         if isinstance(page, ScatterPage):
             page.controls.name_input.value = page.name
             self.plot_sidebar_tab.objects = [
-                pn.Row(page.controls.name_input,
-                       page.controls.plot_type, 
-                       page.controls.settings_button, 
-                       page.controls.plot_button
-                       ),
-                pn.Row(pn.GridBox(page.controls.x_axis, 
-                                  page.controls.y_axis,
-                                  page.controls.z_axis,
-                                  page.controls.color_axis,
-                                  ncols=2, sizing_mode="stretch_width"),
-                        pn.Column(page.controls.downsample_slider,
-                                  page.controls.node_count,
-                                  width=160)
-                        ),
-                pn.GridBox(*page.controls.cmd_selects,
-                           *page.controls.cmd_multi_selects,
-                           ncols=4)
+                pn.Row(
+                    page.controls.name_input,
+                    page.controls.plot_type,
+                    page.controls.settings_button,
+                    page.controls.plot_button,
+                ),
+                pn.Row(
+                    pn.GridBox(
+                        page.controls.x_axis,
+                        page.controls.y_axis,
+                        page.controls.z_axis,
+                        page.controls.color_axis,
+                        ncols=2,
+                        sizing_mode="stretch_width",
+                    ),
+                    pn.Column(
+                        page.controls.downsample_slider,
+                        page.controls.node_count,
+                        width=160,
+                    ),
+                ),
+                pn.GridBox(
+                    *page.controls.cmd_selects,
+                    *page.controls.cmd_multi_selects,
+                    ncols=4,
+                ),
             ]
         elif isinstance(page, TimeSeriesPage):
             page.controls.name_input.value = page.name
             self.plot_sidebar_tab.objects = [
-                pn.Row(page.controls.name_input,page.controls.subplot_select, 
-                       page.controls.settings_button, 
-                       page.controls.plot_button),
+                pn.Row(
+                    page.controls.name_input,
+                    page.controls.subplot_select,
+                    page.controls.settings_button,
+                    page.controls.plot_button,
+                ),
                 pn.Column(page.controls.settings_column, sizing_mode="stretch_width"),
             ]
 
@@ -441,7 +471,7 @@ class GripLabApp:
         pn.bind(self._on_import_data, self.import_btn.param.clicks, watch=True)
         pn.bind(self._on_settings_click, self.settings_btn.param.clicks, watch=True)
         pn.bind(self._on_main_tab_change, self.main_tabs.param.active, watch=True)
-        self.main_tabs.param.watch(self._on_tab_closed, 'objects')
+        self.main_tabs.param.watch(self._on_tab_closed, "objects")
 
         # Widget change callbacks
         pn.bind(
@@ -556,17 +586,19 @@ class GripLabApp:
         # Save to file
         self.config.save(self.config_path)
         self.template.close_modal()
-    
+
     def _on_page_rename(self, page: PageType, name: str):
         if not name or page not in self.pages:
             return
         if any(p.name == name for p in self.pages if p is not page):
             if pn.state.notifications:
-                pn.state.notifications.warning(f'A page named "{name}" already exists', duration=4000)
+                pn.state.notifications.warning(
+                    f'A page named "{name}" already exists', duration=4000
+                )
             return
         page.name = name
         idx = self.pages.index(page)
-        tab_obj = getattr(page, 'tab_content', None) or page.pane
+        tab_obj = getattr(page, "tab_content", None) or page.pane
         self._renaming = True
         try:
             with pn.io.hold():
@@ -607,18 +639,23 @@ class GripLabApp:
         if removed_pane is None:
             return
         removed_idx = next(
-            (i for i, page in enumerate(self.pages)
-            if (getattr(page, 'tab_content', None) or page.pane) is removed_pane),
-            None
+            (
+                i
+                for i, page in enumerate(self.pages)
+                if (getattr(page, "tab_content", None) or page.pane) is removed_pane
+            ),
+            None,
         )
         if removed_idx is None:
             return
         if len(self.pages) <= 1:
             page = self.pages[0]
-            tab_obj = getattr(page, 'tab_content', None) or page.pane
+            tab_obj = getattr(page, "tab_content", None) or page.pane
             self.main_tabs.insert(removed_idx, (page.name, tab_obj))
             if pn.state.notifications:
-                pn.state.notifications.warning("At least one page is required", duration=4000)
+                pn.state.notifications.warning(
+                    "At least one page is required", duration=4000
+                )
             return
         self.pages.pop(removed_idx)
         active = min(cast(int, self.main_tabs.active), len(self.pages) - 1)
@@ -752,7 +789,7 @@ class GripLabApp:
                     pn.state.notifications.error(
                         "Failed to export session.", duration=4000
                     )
-    
+
     def _on_import_session(self):
         files = Tk_utils().select_file(
             filetypes=[("GripLab Session", "*.grip")],
@@ -774,7 +811,7 @@ class GripLabApp:
                 ]
                 self._update_channel_options()
                 self._update_data_select_options()
-                
+
                 self.main_tabs.active = 0
 
                 # Clear all existing pages and tabs
@@ -789,13 +826,21 @@ class GripLabApp:
                     page_type = saved.get("type")
                     if page_type == "scatter":
                         self._add_scatter_tab(name=saved.get("name"))
-                        page = next(p for p in reversed(self.pages) if isinstance(p, ScatterPage))
+                        page = next(
+                            p
+                            for p in reversed(self.pages)
+                            if isinstance(p, ScatterPage)
+                        )
                         page.controls.restore(saved)
                         page.settings.restore(saved)
                         self._on_plot_scatter(page, clicks=None)
                     elif page_type == "time_series":
                         self._add_time_series_tab(name=saved.get("name"))
-                        page = next(p for p in reversed(self.pages) if isinstance(p, TimeSeriesPage))
+                        page = next(
+                            p
+                            for p in reversed(self.pages)
+                            if isinstance(p, TimeSeriesPage)
+                        )
                         page.settings.title.value = saved.get("title", "")
                         page.settings.font_size.value = saved.get("font_size", 12)
                         page.settings.line_width.value = saved.get("line_width", 2)
@@ -849,8 +894,9 @@ class GripLabApp:
         if not self.data_table.selection:
             if clicks is not None:
                 if pn.state.notifications:
-                    pn.state.notifications.warning("Select a dataset to plot",
-                                                   duration=4000)
+                    pn.state.notifications.warning(
+                        "Select a dataset to plot", duration=4000
+                    )
             return
         widgets = {
             "data_table": self.data_table,
@@ -881,7 +927,9 @@ class GripLabApp:
     def _on_remove_subplot(self, page: TimeSeriesPage, clicks):
         if page.controls.n_rows <= 1:
             if pn.state.notifications:
-                pn.state.notifications.warning("At least one subplot is required", duration=4000)
+                pn.state.notifications.warning(
+                    "At least one subplot is required", duration=4000
+                )
             return
         page.controls.remove_selected()
 
@@ -891,7 +939,9 @@ class GripLabApp:
     def _on_plot_time_series(self, page: TimeSeriesPage, clicks):
         if not self.data_table.selection:
             if clicks is not None and pn.state.notifications:
-                pn.state.notifications.warning("Select a dataset to plot", duration=4000)
+                pn.state.notifications.warning(
+                    "Select a dataset to plot", duration=4000
+                )
             return
         subplots = page.controls.get_subplot_grid()
         if not subplots:
@@ -906,16 +956,23 @@ class GripLabApp:
         x_channel = "ET"
         unit_system = UnitSystem(self.app_settings_widgets.unit_select.value)
         sign_convention = SignConvention(self.app_settings_widgets.sign_select.value)
-        colorway = list(cast(list, self.app_settings_widgets.colorway_select.value or []))
+        colorway = list(
+            cast(list, self.app_settings_widgets.colorway_select.value or [])
+        )
         n_rows = len(subplots)
         fig = TimeSeriesBuilder.build_time_series(
-            datasets, subplots, x_channel, unit_system, sign_convention, colorway,
+            datasets,
+            subplots,
+            x_channel,
+            unit_system,
+            sign_convention,
+            colorway,
             title=page.settings.title.value,
             font_size=cast(int, page.settings.font_size.value),
             line_width=cast(int, page.settings.line_width.value),
             demo_mode=self.config.demo_mode,
         )
-        page.pane.min_height = n_rows * 100 + 90   # 90 accounts for t=30 + b=60 margins
+        page.pane.min_height = n_rows * 100 + 90  # 90 accounts for t=30 + b=60 margins
         page.pane.object = fig
         page.subplots = subplots
         self._save_session()
@@ -933,7 +990,7 @@ class GripLabApp:
         )
         page.controls.name_input.param.watch(
             lambda event, p=page: self._on_page_rename(p, p.controls.name_input.value),
-            'value'
+            "value",
         )
         for selector in page.controls.cmd_selects:
             pn.bind(
@@ -951,7 +1008,7 @@ class GripLabApp:
             page.controls.plot_type.param.value,
             watch=True,
         )
-    
+
     def _wire_time_series_callbacks(self, page: TimeSeriesPage):
         pn.bind(
             lambda clicks, p=page: self._on_plot_time_series(p, clicks),
@@ -960,7 +1017,7 @@ class GripLabApp:
         )
         page.controls.name_input.param.watch(
             lambda event, p=page: self._on_page_rename(p, p.controls.name_input.value),
-            'value'
+            "value",
         )
         pn.bind(
             lambda clicks, p=page: self._on_ts_plot_settings(p, clicks),
@@ -990,7 +1047,9 @@ class GripLabApp:
             name=tab_name,
             controls=PlotControlWidgets(),
             settings=PlotSettingsWidgets(),
-            pane=pn.pane.Plotly(px.scatter(),sizing_mode="stretch_both", name=tab_name),
+            pane=pn.pane.Plotly(
+                px.scatter(), sizing_mode="stretch_both", name=tab_name
+            ),
         )
         self._wire_scatter_callbacks(page)
         self.pages.append(page)

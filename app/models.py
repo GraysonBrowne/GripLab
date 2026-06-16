@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 @dataclass
 class SubplotConfig:
     """Configuration for a single time series subplot row."""
+
     channels: List[str] = field(default_factory=list)
     label: str = ""
 
@@ -27,6 +28,7 @@ class SubplotConfig:
 @dataclass
 class ScatterPage:
     """State container for a scatter plot tab."""
+
     name: str
     controls: PlotControlWidgets
     settings: PlotSettingsWidgets

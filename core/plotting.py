@@ -11,10 +11,10 @@ import panel as pn
 import plotly.express as px
 import plotly.graph_objects as go
 
-from core.dataio import Dataset
 from converters.channels import ChannelMetadata
 from converters.conventions import ConventionConverter, SignConvention
 from converters.units import UnitSystem, UnitSystemConverter
+from core.dataio import Dataset
 from core.processing import DataDownsampler
 from utils.logger import logger
 
@@ -805,6 +805,7 @@ class PlottingUtils:
 
         return filters
 
+
 class TimeSeriesBuilder:
     """Builds time series plots from datasets and subplot configurations."""
 
@@ -889,7 +890,7 @@ class TimeSeriesBuilder:
                             name = f"{ds_label} — {channel}"
                             hover = f"<b>{ds_label}</b><br><extra></extra>"
                         else:
-                            name=f"{ds_label} — {channel} [{y_unit}]"
+                            name = f"{ds_label} — {channel} [{y_unit}]"
                             hover = (
                                 f"<b>{ds_label}</b><br>"
                                 f"{channel}: %{{y:.2f}} {y_unit}<br>"
@@ -918,7 +919,9 @@ class TimeSeriesBuilder:
                             col=col_idx,
                         )
 
-                    y_axis_title = subplot.label or ", ".join(c for c in subplot.channels if c)
+                    y_axis_title = subplot.label or ", ".join(
+                        c for c in subplot.channels if c
+                    )
                     fig.update_yaxes(title_text=y_axis_title, row=row_idx, col=col_idx)
                     if demo_mode:
                         fig.update_yaxes(showticklabels=False, row=row_idx, col=col_idx)
