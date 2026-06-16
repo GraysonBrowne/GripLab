@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import panel as pn
 import plotly.express as px
+import plotly.graph_objects as go
 from panel.io import hold
 
 from app.config import AppConfig
@@ -220,7 +221,7 @@ class GripLabApp:
                 saved_name = saved.get("name", page.name)
                 if saved_name in figures and figures[saved_name] is not None:
                     page.pane.object = figures[saved_name]
-                    page.pane.min_height = len(page.subplots) * 100 + 90
+                    page.pane.min_height = len(page.subplots) * 85 + 90
 
         # Switch back to first tab
         self.main_tabs.active = 0
@@ -277,8 +278,8 @@ class GripLabApp:
         _cache["figures"] = {
             page.name: page.pane.object
             for page in self.pages
-            if page.pane.object is not None
-            and len(page.pane.object.data) > 0
+            if isinstance(page.pane.object, go.Figure)
+            and bool(page.pane.object.data)
         }
 
     def _init_header_widgets(self):
@@ -620,7 +621,7 @@ class GripLabApp:
                 pn.state.notifications.warning("At least one page is required", duration=4000)
             return
         self.pages.pop(removed_idx)
-        active = min(self.main_tabs.active, len(self.pages) - 1)
+        active = min(cast(int, self.main_tabs.active), len(self.pages) - 1)
         self.main_tabs.active = active
         self._load_sidebar_for_page(self.pages[active])
         self._save_session()
@@ -905,13 +906,13 @@ class GripLabApp:
         x_channel = "ET"
         unit_system = UnitSystem(self.app_settings_widgets.unit_select.value)
         sign_convention = SignConvention(self.app_settings_widgets.sign_select.value)
-        colorway = list(self.app_settings_widgets.colorway_select.value or [])
+        colorway = list(cast(list, self.app_settings_widgets.colorway_select.value or []))
         n_rows = len(subplots)
         fig = TimeSeriesBuilder.build_time_series(
             datasets, subplots, x_channel, unit_system, sign_convention, colorway,
             title=page.settings.title.value,
-            font_size=page.settings.font_size.value,
-            line_width=page.settings.line_width.value,
+            font_size=cast(int, page.settings.font_size.value),
+            line_width=cast(int, page.settings.line_width.value),
             demo_mode=self.config.demo_mode,
         )
         page.pane.min_height = n_rows * 100 + 90   # 90 accounts for t=30 + b=60 margins
@@ -1075,7 +1076,7 @@ class GripLabApp:
             self.config.data_dir = directory
 
     @hold()
-    def _update_cmd_options(self, page: PageType, event):
+    def _update_cmd_options(self, page: ScatterPage, event):
         """Update command channel options based on selection."""
         try:
             channels = self.dm.get_channels(self.dm.list_datasets())
@@ -1103,7 +1104,7 @@ class GripLabApp:
             if isinstance(page, ScatterPage):
                 self._update_cmd_options(page, event)
 
-    def _update_cmd_multi_select(self, page: PageType, index: int, channel: str):
+    def _update_cmd_multi_select(self, page: ScatterPage, index: int, channel: str):
         """Update command multi-select options based on data."""
         selection = self.data_table.selection
         if not selection:

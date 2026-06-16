@@ -837,7 +837,7 @@ class TimeSeriesBuilder:
         fig = make_subplots(
             rows=n_rows,
             cols=1,
-            shared_xaxes="all",
+            shared_xaxes="all",  # type: ignore[arg-type]
             vertical_spacing=spacing,
         )
 
