@@ -901,6 +901,7 @@ class GripLabApp:
             title=page.settings.title.value,
             font_size=page.settings.font_size.value,
             line_width=page.settings.line_width.value,
+            demo_mode=self.config.demo_mode,
         )
         page.pane.min_height = n_rows * 100 + 90   # 90 accounts for t=30 + b=60 margins
         page.pane.object = fig

@@ -819,6 +819,7 @@ class TimeSeriesBuilder:
         title: str = "",
         font_size: int = 12,
         line_width: int = 2,
+        demo_mode: bool = False,
     ) -> go.Figure:
         from plotly.subplots import make_subplots
 
@@ -855,10 +856,14 @@ class TimeSeriesBuilder:
                     ds, target_convention=sign_convention
                 )
 
+            ds_label = ds.demo_name if demo_mode else ds.name
+
             x_data = ds.get_channel_data(x_channel)
             if x_data is None:
                 x_data = np.arange(ds.data.shape[0], dtype=float)
                 x_label = "Index"
+            elif demo_mode:
+                x_label = "Elapsed Time"
             else:
                 x_unit = ds.get_channel_unit(x_channel) or ""
                 x_label = f"Elapsed Time [{x_unit}]" if x_unit else x_channel
@@ -880,13 +885,19 @@ class TimeSeriesBuilder:
                         if y_data is None:
                             continue
                         y_unit = ds.get_channel_unit(channel) or ""
-                        hover = (
-                            f"{channel}: %{{y:.2f}} {y_unit}<br>"
-                            f"{x_channel}: %{{x:.2f}}<extra>{ds.name}</extra>"
-                        )
+                        if demo_mode:
+                            name = f"{ds_label} — {channel}"
+                            hover = f"<b>{ds_label}</b><br><extra></extra>"
+                        else:
+                            name=f"{ds_label} — {channel} [{y_unit}]"
+                            hover = (
+                                f"<b>{ds_label}</b><br>"
+                                f"{channel}: %{{y:.2f}} {y_unit}<br>"
+                                f"{x_channel}: %{{x:.2f}}<extra></extra>"
+                            )
                         color_idx = ch_idx % len(colorway) if colorway else 0
                         color = colorway[color_idx] if colorway else ds.node_color
-                        legend_key = (ds.name, channel)
+                        legend_key = (ds_label, channel)
                         show = legend_key not in legend_shown[(row_idx, col_idx)]
                         if show:
                             legend_shown[(row_idx, col_idx)].add(legend_key)
@@ -896,10 +907,10 @@ class TimeSeriesBuilder:
                                 x=x_data,
                                 y=y_data,
                                 mode="lines",
-                                name=f"{ds.name} — {channel} [{y_unit}]",
+                                name=name,
                                 line=dict(color=color, dash=dash, width=line_width),
                                 hovertemplate=hover,
-                                legendgroup=ds.name,
+                                legendgroup=ds_label,
                                 legend=legend_ref,
                                 showlegend=show,
                             ),
@@ -907,8 +918,10 @@ class TimeSeriesBuilder:
                             col=col_idx,
                         )
 
-                    y_axis_title = subplot.label or ", ".join(subplot.channels)
+                    y_axis_title = subplot.label or ", ".join(c for c in subplot.channels if c)
                     fig.update_yaxes(title_text=y_axis_title, row=row_idx, col=col_idx)
+                    if demo_mode:
+                        fig.update_yaxes(showticklabels=False, row=row_idx, col=col_idx)
 
                     # Compute legend position for this subplot
                     if legend_ref not in legend_layout:
@@ -925,6 +938,8 @@ class TimeSeriesBuilder:
 
         for col_idx in range(1, n_cols + 1):
             fig.update_xaxes(title_text=x_label, row=n_rows, col=col_idx)
+            if demo_mode:
+                fig.update_xaxes(showticklabels=False, row=n_rows, col=col_idx)
 
         template = px.defaults.template or "plotly_white"
         fig.update_layout(
