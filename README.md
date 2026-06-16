@@ -33,8 +33,7 @@ To stay in the loop and receive notifications when new releases are available, c
 ## Upcoming Features
 
 - Plotting
-  - Add time history plot type with ability to overlay channels
-  - Tire model evaluation plotted over data or with swept inputs
+  - Tire model evaluation plotted over data or with discrete inputs
 - Processing
   - Combine datasets
   - Utility for data filtering and parsing
