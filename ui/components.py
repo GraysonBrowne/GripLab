@@ -6,6 +6,7 @@ from typing import List, Optional
 import panel as pn
 import plotly.express as px
 
+from app.models import SubplotConfig
 from converters.conventions import SignConvention
 from converters.units import UnitSystem
 
@@ -52,13 +53,17 @@ class PlotControlWidgets:
 
     def __init__(self):
         wf = WidgetFactory()
+        self.name_input = pn.widgets.TextInput(
+            name="Page Name", placeholder="Scatter", sizing_mode="stretch_width"
+        )
 
         # Plot type selection
-        self.plot_type = pn.widgets.RadioBoxGroup(
+        self.plot_type = pn.widgets.Select(
             name="Plot Type",
             options=["2D", "2D Color", "3D", "3D Color"],
-            inline=True,
-            margin=(12, 10, 5, 10),
+            width=90,
+            height=60,
+            margin=(5, 5),
         )
 
         # Axis selectors
@@ -92,17 +97,17 @@ class PlotControlWidgets:
             start=1,
             end=10,
             step=1,
-            value=5,
+            value=10,
             sizing_mode="stretch_width",
         )
         self.node_count = pn.widgets.StaticText(name="Node Count", value="0")
 
         # Plot action buttons
         self.plot_button = wf.create_button(
-            "Plot Data", sizing_mode="stretch_width", margin=(5, 10, 5, 7)
+            "Plot Data", width=90, margin=(26, 10, 5, 7)
         )
         self.settings_button = wf.create_button(
-            "⚙️", button_type="default", width=43, margin=(5, 0, 5, 15)
+            "⚙️", button_type="default", width=43, margin=(26, 0, 5, 15)
         )
 
     def update_plot_type_state(self, plot_type: str):
@@ -123,7 +128,8 @@ class PlotControlWidgets:
             return
 
         self.plot_type.value = session.get("plot_type", "2D")
-        self.downsample_slider.value = session.get("downsample", 5)
+        self.downsample_slider.value = session.get("downsample", 10)
+        self.node_count.value = session.get("node_count", "0")
 
         # Channels are restored after options are populated — only set if valid
         for widget, key in [
@@ -367,4 +373,195 @@ class AppSettingsWidgets:
             button_type="primary",
             margin=(10, 15, 0, 15),
             width=200,
+        )
+
+
+class SubplotCellWidget:
+    def __init__(self, channels: list[str] = []):
+        wf = WidgetFactory()
+        opts = [""] + channels
+        self.channel_selects = [
+            wf.create_select(f"Channel {i + 1}", options=opts) for i in range(4)
+        ]
+        self.label = wf.create_text_input("Y-Axis Label", placeholder="Channel [unit]")
+        self._default_channels: list[str] = []
+
+    def selected_channels(self) -> list[str]:
+        return [s.value or "" for s in self.channel_selects]
+
+    def update_channel_options(self, channels: list[str]):
+        opts = [""] + channels
+        for i, sel in enumerate(self.channel_selects):
+            if sel.value in channels:
+                current = sel.value
+            elif (
+                i < len(self._default_channels)
+                and self._default_channels[i] in channels
+            ):
+                current = self._default_channels[i]
+            else:
+                current = ""
+            sel.options = opts
+            sel.value = current
+
+
+class TimeSeriesControlWidgets:
+    def __init__(self):
+        self.cells: List[List[SubplotCellWidget]] = []
+        self.n_rows: int = 0
+        self.n_cols: int = 0
+
+        self.name_input = pn.widgets.TextInput(
+            name="Page Name", placeholder="Time Series", sizing_mode="stretch_width"
+        )
+        self.subplot_select = WidgetFactory.create_select(
+            "Selection", width=90, height=60, margin=(5, 5), sizing_mode="fixed"
+        )
+        self.channel_grid = pn.GridBox(ncols=2, sizing_mode="stretch_width")
+        self.settings_column = pn.Column(self.channel_grid)
+        self.add_row_btn = WidgetFactory.create_button(
+            "+ Add Subplot", button_type="default", sizing_mode="stretch_width"
+        )
+        self.remove_btn = WidgetFactory.create_button(
+            "Remove Subplot", button_type="danger", sizing_mode="stretch_width"
+        )
+        self.plot_button = WidgetFactory.create_button(
+            "Plot Data", width=90, margin=(26, 10, 5, 7)
+        )
+        self.settings_button = WidgetFactory.create_button(
+            "⚙️", button_type="default", width=43, margin=(26, 0, 5, 15)
+        )
+
+    def _cell_label(self, row: int, col: int) -> str:
+        if self.n_cols == 1:
+            return f"Plot {row + 1}"
+        return f"Row {row + 1}, Col {col + 1}"
+
+    def _rebuild_select_options(self):
+        opts = [
+            self._cell_label(r, c)
+            for r in range(self.n_rows)
+            for c in range(self.n_cols)
+        ]
+        current = self.subplot_select.value
+        self.subplot_select.options = opts
+        self.subplot_select.value = (
+            current if current in opts else (opts[0] if opts else None)
+        )
+
+    def get_selected_cell(self) -> Optional[SubplotCellWidget]:
+        val = self.subplot_select.value
+        if not val:
+            return None
+        for r in range(self.n_rows):
+            for c in range(self.n_cols):
+                if self._cell_label(r, c) == val:
+                    return self.cells[r][c]
+        return None
+
+    def show_selected_settings(self):
+        cell = self.get_selected_cell()
+        if cell is None:
+            self.settings_column.objects = []
+        else:
+            self.channel_grid.objects = [*cell.channel_selects]
+            self.settings_column.objects = [
+                self.channel_grid,
+                cell.label,
+                pn.Row(self.remove_btn, self.add_row_btn),
+            ]
+
+    def add_row(
+        self, channels: list[str] = [], after: int = -1
+    ) -> List[SubplotCellWidget]:
+        new_row = [SubplotCellWidget(channels)]
+        if 0 <= after < self.n_rows:
+            self.cells.insert(after + 1, new_row)
+        else:
+            self.cells.append(new_row)
+        self.n_rows += 1
+        if self.n_cols == 0:
+            self.n_cols = 1
+        self._rebuild_select_options()
+        return new_row
+
+    def add_col(self, channels: list[str] = []) -> List[SubplotCellWidget]:
+        new_cells = []
+        for row in self.cells:
+            cell = SubplotCellWidget(channels)
+            row.append(cell)
+            new_cells.append(cell)
+        self.n_cols += 1
+        self._rebuild_select_options()
+        return new_cells
+
+    def remove_selected(self) -> Optional[tuple[int, int]]:
+        """Remove the currently selected cell. Returns (row, col) removed."""
+        val = self.subplot_select.value
+        if not val:
+            return None
+        if self.n_rows <= 1:
+            return None
+        for r in range(self.n_rows):
+            for c in range(self.n_cols):
+                if self._cell_label(r, c) != val:
+                    continue
+                if self.n_cols == 1:
+                    self.cells.pop(r)
+                    self.n_rows -= 1
+                elif self.n_rows == 1:
+                    self.cells[r].pop(c)
+                    self.n_cols -= 1
+                else:
+                    self.cells[r].pop(c)
+                    if not self.cells[r]:
+                        self.cells.pop(r)
+                        self.n_rows -= 1
+                    if self.n_cols > 0 and all(
+                        len(row) < self.n_cols for row in self.cells
+                    ):
+                        self.n_cols -= 1
+                self._rebuild_select_options()
+                if self.n_rows > 0:
+                    new_r = min(r, self.n_rows - 1)
+                    self.subplot_select.value = self._cell_label(new_r, 0)
+                self.show_selected_settings()
+                return (r, c)
+        return None
+
+    def update_channel_options(self, channels: list[str]):
+        for row in self.cells:
+            for cell in row:
+                cell.update_channel_options(channels)
+
+    def get_subplot_grid(self) -> List[List[SubplotConfig]]:
+        return [
+            [
+                SubplotConfig(channels=cell.selected_channels(), label=cell.label.value)
+                for cell in row
+            ]
+            for row in self.cells
+        ]
+
+
+class TimeSeriesSettingsWidgets:
+    def __init__(self):
+        self.title = pn.widgets.TextInput(
+            name="Title", placeholder="Run conditions", sizing_mode="stretch_width"
+        )
+        self.font_size = pn.widgets.IntSlider(
+            name="Font Size",
+            value=12,
+            start=4,
+            end=32,
+            step=1,
+            sizing_mode="stretch_width",
+        )
+        self.line_width = pn.widgets.IntSlider(
+            name="Line Width",
+            value=2,
+            start=1,
+            end=8,
+            step=1,
+            sizing_mode="stretch_width",
         )
