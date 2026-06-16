@@ -141,6 +141,7 @@ class GripLabApp:
             (["P", "CmdP"], "Pressure"),
             (["V", "CmdV"], "Speed"),
         ])
+        self.pages[-1].settings.title.value = "Run Conditions"
 
         # Modal container
         self.modal_content = pn.Column()
