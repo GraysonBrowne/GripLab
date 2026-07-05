@@ -167,6 +167,7 @@ class GripLabApp:
         """Restore widget state and re-plot from cached session."""
         session = _cache.get("session", {})
         if not session or not self.dm.list_datasets():
+            self._update_data_select_options()
             self._add_scatter_tab()
             self.main_tabs.active = 0
             self._initialized = True
@@ -549,6 +550,7 @@ class GripLabApp:
                     )
                 )
                 self.data_table.selection = current_selection + new_indices
+        self._save_session()
 
     def _on_settings_click(self, clicks):
         """Open settings modal."""
@@ -739,7 +741,7 @@ class GripLabApp:
 
     def _on_table_color_click(self, event):
         """Handle color cell click in data table."""
-        self.info_tabs.active = 1  # Switch to Data Info tab
+        self.info_tabs.active = 0  # Switch to Data Info tab
 
         if self.config.demo_mode:
             self.data_widgets.data_select.value = self.dm.list_demo_names()[event.row]
