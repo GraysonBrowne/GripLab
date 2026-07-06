@@ -19,9 +19,16 @@ from core.processing import DataDownsampler
 from utils.logger import logger
 
 MARKER_SYMBOLS = [
-    "circle", "square", "diamond", "cross",
-    "x", "circle-open", "square-open", "diamond-open",
+    "circle",
+    "square",
+    "diamond",
+    "cross",
+    "x",
+    "circle-open",
+    "square-open",
+    "diamond-open",
 ]
+
 
 def hex_to_rgba(color: str, alpha: float = 1.0) -> str:
     """
@@ -698,12 +705,13 @@ class PlottingUtils:
         group_colors: dict = {}
         use_symbols = group_channel is not None or "Color" in config.plot_type.value
 
-
         for i, idx in enumerate(selection):
             name = dm.list_datasets()[idx]
             dataset = dm.get_dataset(name)
 
-            symbol = MARKER_SYMBOLS[i % len(MARKER_SYMBOLS)] if use_symbols else "circle"
+            symbol = (
+                MARKER_SYMBOLS[i % len(MARKER_SYMBOLS)] if use_symbols else "circle"
+            )
             processed = DataProcessor.prepare_dataset(dataset, config, cmd_filters)
             datasets.append(processed)
             display_name = dm.list_demo_names()[idx] if axis_visibility else name
@@ -726,7 +734,7 @@ class PlottingUtils:
                     plot_data.color = group_colors[value]
                     plot_data_list.append(plot_data)
                     total_points += plot_data.point_count
-                    
+
             else:
                 plot_data = DataProcessor.extract_plot_data(processed, config)
                 plot_data.name = display_name

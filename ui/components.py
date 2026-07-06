@@ -104,11 +104,11 @@ class PlotControlWidgets:
             step=1,
             value=10,
             sizing_mode="stretch_width",
-            margin=(5, 10, 0, 10)
+            margin=(5, 10, 0, 10),
         )
-        self.node_count = pn.widgets.StaticText(name="Node Count", 
-                                                value="0", 
-                                                margin=(0,10))
+        self.node_count = pn.widgets.StaticText(
+            name="Node Count", value="0", margin=(0, 10)
+        )
 
         # Plot action buttons
         self.plot_button = wf.create_button(
