@@ -288,6 +288,8 @@ class PlotController:
                 plot_params.get("font_size", 18),
                 plot_params.get("marker_size", 10),
                 plot_params.get("marker_opacity", 1.0),
+                group_by=plot_params.get("group_by"),
+                colorway=plot_params.get("colorway"),
             )
             return fig, node_count
         except Exception as e:
@@ -308,6 +310,8 @@ class PlotController:
             "sign_select": widgets["settings"].sign_select,
             "plot_radio_group": widgets["plot_controls"].plot_type,
             "color_map": widgets["plot_settings"].color_map,
+            "group_by": widgets["plot_controls"].group_by.value,
+            "colorway": list(widgets["settings"].colorway_select.value or []),
             "downsample_slider": widgets["plot_controls"].downsample_slider,
             "cmd_select_1": widgets["plot_controls"].cmd_selects[0],
             "cmd_select_2": widgets["plot_controls"].cmd_selects[1],

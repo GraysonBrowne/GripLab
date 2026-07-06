@@ -254,6 +254,7 @@ class GripLabApp:
                     "y_channel": page.controls.y_axis.value,
                     "z_channel": page.controls.z_axis.value,
                     "c_channel": page.controls.color_axis.value,
+                    "group_by": page.controls.group_by.value,
                     "downsample": page.controls.downsample_slider.value,
                     "node_count": page.controls.node_count.value,
                     "cmd_channels": [s.value for s in page.controls.cmd_selects],
@@ -443,6 +444,7 @@ class GripLabApp:
                         sizing_mode="stretch_width",
                     ),
                     pn.Column(
+                        page.controls.group_by,
                         page.controls.downsample_slider,
                         page.controls.node_count,
                         width=160,
@@ -1240,6 +1242,8 @@ class GripLabApp:
                 page.controls.y_axis.options = channels
                 page.controls.z_axis.options = channels
                 page.controls.color_axis.options = channels
+                cmd_channels = [ch for ch in channels if ch.startswith("Cmd")]
+                page.controls.group_by.options = ["Dataset"] + cmd_channels
             elif isinstance(page, TimeSeriesPage):
                 page.controls.update_channel_options(channels)
         self._update_all_cmd_options(None)

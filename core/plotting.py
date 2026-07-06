@@ -639,6 +639,8 @@ class PlottingUtils:
         font_size=18,
         marker_size=10,
         marker_opacity=1.0,
+        group_by=None,
+        colorway=None,
     ) -> Tuple[go.Figure, int]:
         """
         Creates a plot from widget selections.
@@ -690,23 +692,40 @@ class PlottingUtils:
         plot_data_list = []
         total_points = 0
 
+        group_channel = group_by if group_by and group_by != "Dataset" else None
+        palette = colorway or px.colors.qualitative.Plotly
+        group_colors: dict = {}
+
         for idx in selection:
             name = dm.list_datasets()[idx]
             dataset = dm.get_dataset(name)
 
-            # Process dataset
             processed = DataProcessor.prepare_dataset(dataset, config, cmd_filters)
             datasets.append(processed)
+            display_name = dm.list_demo_names()[idx] if axis_visibility else name
 
-            # Extract plot data
-            plot_data = DataProcessor.extract_plot_data(processed, config)
-
-            # Update name for demo mode
-            if axis_visibility:
-                plot_data.name = dm.list_demo_names()[idx]
-
-            plot_data_list.append(plot_data)
-            total_points += plot_data.point_count
+            if group_channel and group_channel in processed.channels:
+                col_idx = processed.channels.index(group_channel)
+                values = sorted(
+                    np.unique(processed.data[:, col_idx].astype(np.int64)).tolist(),
+                    key=abs,
+                )
+                for value in values:
+                    subset = DataProcessor._filter_by_channel(
+                        processed, group_channel, [value]
+                    )
+                    plot_data = DataProcessor.extract_plot_data(subset, config)
+                    plot_data.name = f"{display_name} | {group_channel}={value}"
+                    if value not in group_colors:
+                        group_colors[value] = palette[len(group_colors) % len(palette)]
+                    plot_data.color = group_colors[value]
+                    plot_data_list.append(plot_data)
+                    total_points += plot_data.point_count
+            else:
+                plot_data = DataProcessor.extract_plot_data(processed, config)
+                plot_data.name = display_name
+                plot_data_list.append(plot_data)
+                total_points += plot_data.point_count
 
         # Create figure
         fig = PlotBuilder.create_figure(config.plot_type)

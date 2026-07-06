@@ -72,6 +72,11 @@ class PlotControlWidgets:
         self.z_axis = wf.create_select("Z-Axis", disabled=True)
         self.color_axis = wf.create_select("Colorbar", disabled=True)
 
+        # Group by selector
+        self.group_by = wf.create_select("Group By", min_width=80)
+        self.group_by.options = ["Dataset"]
+        self.group_by.value = "Dataset"
+
         # Command channel selectors
         self.cmd_selects = [
             wf.create_select("Conditional Parsing", min_width=80),
@@ -99,8 +104,11 @@ class PlotControlWidgets:
             step=1,
             value=10,
             sizing_mode="stretch_width",
+            margin=(5, 10, 0, 10)
         )
-        self.node_count = pn.widgets.StaticText(name="Node Count", value="0")
+        self.node_count = pn.widgets.StaticText(name="Node Count", 
+                                                value="0", 
+                                                margin=(0,10))
 
         # Plot action buttons
         self.plot_button = wf.create_button(
@@ -141,6 +149,10 @@ class PlotControlWidgets:
             value = session.get(key)
             if value and value in widget.options:
                 widget.value = value
+
+        group_by = session.get("group_by", "Dataset")
+        if group_by in self.group_by.options:
+            self.group_by.value = group_by
 
         # Restore command channel selectors and multi-selects
         cmd_channels = session.get("cmd_channels", [])
