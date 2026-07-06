@@ -18,6 +18,10 @@ from core.dataio import Dataset
 from core.processing import DataDownsampler
 from utils.logger import logger
 
+MARKER_SYMBOLS = [
+    "circle", "square", "diamond", "cross",
+    "x", "circle-open", "square-open", "diamond-open",
+]
 
 def hex_to_rgba(color: str, alpha: float = 1.0) -> str:
     """
@@ -139,6 +143,7 @@ class PlotData:
     name: str = ""
     color: str = "#1f77b4"
     hover_text: Optional[List[str]] = None
+    symbol: str = "circle"
 
     @property
     def point_count(self) -> int:
@@ -181,6 +186,7 @@ class PlotBuilder:
             name=data.name,
             marker=dict(
                 size=config.marker_size,
+                symbol=data.symbol,
                 color=hex_to_rgba(data.color, alpha=config.marker_opacity),
                 line=dict(color=data.color, width=1),
             ),
@@ -215,6 +221,7 @@ class PlotBuilder:
             mode="markers",
             marker=dict(
                 size=config.marker_size,
+                symbol=data.symbol,
                 color=data.c,
                 colorscale=colorscale_with_alpha(
                     config.color_map, config.marker_opacity
@@ -279,6 +286,7 @@ class PlotBuilder:
             name=data.name,
             marker=dict(
                 size=config.marker_size,
+                symbol=data.symbol,
                 color=hex_to_rgba(data.color, alpha=config.marker_opacity),
                 line=dict(color=data.color, width=1),
             ),
@@ -315,6 +323,7 @@ class PlotBuilder:
             mode="markers",
             marker=dict(
                 size=config.marker_size,
+                symbol=data.symbol,
                 color=data.c,
                 colorscale=colorscale_with_alpha(
                     config.color_map, config.marker_opacity
@@ -695,11 +704,14 @@ class PlottingUtils:
         group_channel = group_by if group_by and group_by != "Dataset" else None
         palette = colorway or px.colors.qualitative.Plotly
         group_colors: dict = {}
+        use_symbols = group_channel is not None or "Color" in config.plot_type.value
 
-        for idx in selection:
+
+        for i, idx in enumerate(selection):
             name = dm.list_datasets()[idx]
             dataset = dm.get_dataset(name)
 
+            symbol = MARKER_SYMBOLS[i % len(MARKER_SYMBOLS)] if use_symbols else "circle"
             processed = DataProcessor.prepare_dataset(dataset, config, cmd_filters)
             datasets.append(processed)
             display_name = dm.list_demo_names()[idx] if axis_visibility else name
@@ -716,16 +728,21 @@ class PlottingUtils:
                     )
                     plot_data = DataProcessor.extract_plot_data(subset, config)
                     plot_data.name = f"{display_name} | {group_channel}={value}"
+                    plot_data.symbol = symbol
                     if value not in group_colors:
                         group_colors[value] = palette[len(group_colors) % len(palette)]
                     plot_data.color = group_colors[value]
                     plot_data_list.append(plot_data)
                     total_points += plot_data.point_count
+                    
             else:
                 plot_data = DataProcessor.extract_plot_data(processed, config)
                 plot_data.name = display_name
+                plot_data.symbol = symbol
                 plot_data_list.append(plot_data)
                 total_points += plot_data.point_count
+
+            
 
         # Create figure
         fig = PlotBuilder.create_figure(config.plot_type)
