@@ -4,7 +4,7 @@
 from collections import defaultdict
 from dataclasses import dataclass, replace
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import panel as pn
@@ -92,8 +92,8 @@ class PlotConfig:
     plot_type: PlotType
     x_channel: str
     y_channel: str
-    z_channel: Optional[str] = None
-    color_channel: Optional[str] = None
+    z_channel: str | None = None
+    color_channel: str | None = None
 
     # Units
     x_unit: str = ""
@@ -145,11 +145,11 @@ class PlotData:
 
     x: np.ndarray
     y: np.ndarray
-    z: Optional[np.ndarray] = None
-    c: Optional[np.ndarray] = None
+    z: np.ndarray | None = None
+    c: np.ndarray | None = None
     name: str = ""
     color: str = "#1f77b4"
-    hover_text: Optional[List[str]] = None
+    hover_text: list[str] | None = None
     symbol: str = "circle"
 
     @property
@@ -207,7 +207,7 @@ class PlotBuilder:
         fig: go.Figure,
         data: PlotData,
         config: PlotConfig,
-        color_range: Tuple[float, float],
+        color_range: tuple[float, float],
     ) -> None:
         """Add 2D scatter trace with color mapping."""
         if config.show_axes:
@@ -285,7 +285,7 @@ class PlotBuilder:
         fig: go.Figure,
         data: PlotData,
         config: PlotConfig,
-        color_range: Tuple[float, float],
+        color_range: tuple[float, float],
     ) -> None:
         """Add 3D scatter trace with color mapping."""
         if config.show_axes:
@@ -332,7 +332,7 @@ class PlotBuilder:
 
     @staticmethod
     def add_colorbar_trace(
-        fig: go.Figure, config: PlotConfig, color_range: Tuple[float, float]
+        fig: go.Figure, config: PlotConfig, color_range: tuple[float, float]
     ) -> None:
         """Add invisible trace that renders the shared colorbar."""
         is_3d = "3D" in config.plot_type.value
@@ -416,7 +416,7 @@ class DataProcessor:
 
     @staticmethod
     def prepare_dataset(
-        dataset: Any, config: PlotConfig, cmd_filters: Optional[Dict[str, List]] = None
+        dataset: Any, config: PlotConfig, cmd_filters: dict[str, list] | None = None
     ) -> Any:
         """
         Prepare dataset for plotting with conversions and parsing.
@@ -451,7 +451,7 @@ class DataProcessor:
         return dataset
 
     @staticmethod
-    def _filter_by_channel(dataset: Any, channel: str, values: List) -> Any:
+    def _filter_by_channel(dataset: Any, channel: str, values: list) -> Any:
         """Filter dataset by channel values."""
         if channel not in dataset.channels:
             return dataset
@@ -517,7 +517,7 @@ class PlotMetadataBuilder:
 
     @staticmethod
     def build_title(
-        datasets: List[Any], config: PlotConfig, demo_mode: bool = False
+        datasets: list[Any], config: PlotConfig, demo_mode: bool = False
     ) -> str:
         """Build plot title from datasets."""
         if config.title:
@@ -556,7 +556,7 @@ class PlotMetadataBuilder:
         return title
 
     @staticmethod
-    def build_subtitle(datasets: List[Any], config: PlotConfig) -> str:
+    def build_subtitle(datasets: list[Any], config: PlotConfig) -> str:
         """Build plot subtitle with test conditions."""
         if config.subtitle:
             return config.subtitle
@@ -575,7 +575,7 @@ class PlotMetadataBuilder:
             if not values:
                 continue
 
-            unique_vals: List[Any] = [int(x) for x in list(set(values))]
+            unique_vals: list[Any] = [int(x) for x in list(set(values))]
             if len(unique_vals) == 1:
                 if key == "rim_width":
                     if not config.show_axes:
@@ -649,7 +649,7 @@ class PlottingUtils:
         marker_opacity=1.0,
         group_by=None,
         colorway=None,
-    ) -> Tuple[go.Figure, int]:
+    ) -> tuple[go.Figure, int]:
         """
         Creates a plot from widget selections.
         """
@@ -825,7 +825,7 @@ class PlottingUtils:
         return fig, total_points
 
     @staticmethod
-    def _build_cmd_filters(selectors: List, multi_selectors: List) -> Dict[str, List]:
+    def _build_cmd_filters(selectors: list, multi_selectors: list) -> dict[str, list]:
         """Build command channel filters from widget selections."""
         filters = {}
 
@@ -848,12 +848,12 @@ class TimeSeriesBuilder:
 
     @staticmethod
     def build_time_series(
-        datasets: List[Dataset],
-        subplots: List[List],
+        datasets: list[Dataset],
+        subplots: list[list],
         x_channel: str = "ET",
-        unit_system: Optional[UnitSystem] = None,
-        sign_convention: Optional[SignConvention] = None,
-        colorway: Optional[List[str]] = None,
+        unit_system: UnitSystem | None = None,
+        sign_convention: SignConvention | None = None,
+        colorway: list[str] | None = None,
         title: str = "",
         font_size: int = 12,
         line_width: int = 2,

@@ -1,7 +1,6 @@
 # ui/components.py
 """UI component classes for GripLab application."""
 
-from typing import List, Optional
 
 import panel as pn
 import plotly.express as px
@@ -33,7 +32,7 @@ class WidgetFactory:
 
     @staticmethod
     def create_select(
-        name: str, options: Optional[List] = None, **kwargs
+        name: str, options: list | None = None, **kwargs
     ) -> pn.widgets.Select:
         """Create a select dropdown widget."""
         defaults = {"options": options or [], "sizing_mode": "stretch_width"}
@@ -419,7 +418,7 @@ class SubplotCellWidget:
 
 class TimeSeriesControlWidgets:
     def __init__(self):
-        self.cells: List[List[SubplotCellWidget]] = []
+        self.cells: list[list[SubplotCellWidget]] = []
         self.n_rows: int = 0
         self.n_cols: int = 0
 
@@ -461,7 +460,7 @@ class TimeSeriesControlWidgets:
             current if current in opts else (opts[0] if opts else None)
         )
 
-    def get_selected_cell(self) -> Optional[SubplotCellWidget]:
+    def get_selected_cell(self) -> SubplotCellWidget | None:
         val = self.subplot_select.value
         if not val:
             return None
@@ -485,7 +484,7 @@ class TimeSeriesControlWidgets:
 
     def add_row(
         self, channels: list[str] = [], after: int = -1
-    ) -> List[SubplotCellWidget]:
+    ) -> list[SubplotCellWidget]:
         new_row = [SubplotCellWidget(channels)]
         if 0 <= after < self.n_rows:
             self.cells.insert(after + 1, new_row)
@@ -497,7 +496,7 @@ class TimeSeriesControlWidgets:
         self._rebuild_select_options()
         return new_row
 
-    def add_col(self, channels: list[str] = []) -> List[SubplotCellWidget]:
+    def add_col(self, channels: list[str] = []) -> list[SubplotCellWidget]:
         new_cells = []
         for row in self.cells:
             cell = SubplotCellWidget(channels)
@@ -507,7 +506,7 @@ class TimeSeriesControlWidgets:
         self._rebuild_select_options()
         return new_cells
 
-    def remove_selected(self) -> Optional[tuple[int, int]]:
+    def remove_selected(self) -> tuple[int, int] | None:
         """Remove the currently selected cell. Returns (row, col) removed."""
         val = self.subplot_select.value
         if not val:
@@ -546,7 +545,7 @@ class TimeSeriesControlWidgets:
             for cell in row:
                 cell.update_channel_options(channels)
 
-    def get_subplot_grid(self) -> List[List[SubplotConfig]]:
+    def get_subplot_grid(self) -> list[list[SubplotConfig]]:
         return [
             [
                 SubplotConfig(channels=cell.selected_channels(), label=cell.label.value)

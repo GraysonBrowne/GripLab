@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, List, Union
+from typing import TYPE_CHECKING, Any, Union
 
 import panel as pn
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 class SubplotConfig:
     """Configuration for a single time series subplot row."""
 
-    channels: List[str] = field(default_factory=list)
+    channels: list[str] = field(default_factory=list)
     label: str = ""
 
 
@@ -41,7 +41,7 @@ class TimeSeriesPage:
     controls: TimeSeriesControlWidgets
     settings: TimeSeriesSettingsWidgets
     pane: pn.pane.Plotly
-    subplots: List[List[SubplotConfig]] = field(default_factory=list)
+    subplots: list[list[SubplotConfig]] = field(default_factory=list)
     tab_content: Any = field(default=None)
 
 

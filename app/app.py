@@ -6,7 +6,7 @@ GripLab - Tire Data Analysis Application
 import sys
 import webbrowser
 from pathlib import Path
-from typing import Any, Dict, List, cast
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -41,7 +41,7 @@ from ui.modals import (
 from utils.dialogs import Tk_utils
 from utils.logger import logger
 
-_cache: Dict[str, Any] = cast(Dict[str, Any], pn.state.cache)
+_cache: dict[str, Any] = cast(dict[str, Any], pn.state.cache)
 
 
 class GripLabApp:
@@ -103,7 +103,7 @@ class GripLabApp:
         """Load custom CSS styles."""
         css_path = Path(self.program_dir, "ui", "styles.css")
         try:
-            with open(css_path, "r") as f:
+            with open(css_path) as f:
                 return f.read()
         except FileNotFoundError:
             logger.error("styles.css not found")
@@ -112,7 +112,7 @@ class GripLabApp:
     def _load_tabs_css(self) -> str:
         css_path = Path(self.program_dir, "ui", "tabs.css")
         try:
-            with open(css_path, "r") as f:
+            with open(css_path) as f:
                 return f.read()
         except FileNotFoundError:
             logger.error("tabs.css not found")
@@ -133,7 +133,7 @@ class GripLabApp:
         )
 
         # Initialize widget groups
-        self.pages: List[PageType] = []
+        self.pages: list[PageType] = []
         self.data_widgets = DataInfoWidgets()
         self.app_settings_widgets = AppSettingsWidgets(self.config)
 

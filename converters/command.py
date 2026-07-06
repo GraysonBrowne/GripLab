@@ -2,7 +2,6 @@
 """Command channel generation for tire test data."""
 
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -26,7 +25,7 @@ class CmdChannelGenerator:
     """Generates command channels for tire test data analysis."""
 
     # Target values for command channels by unit system
-    CMD_TARGETS: Dict[str, Dict[UnitSystem, List[float]]] = {
+    CMD_TARGETS: dict[str, dict[UnitSystem, list[float]]] = {
         "V": {
             UnitSystem.USCS: [0, 2, 15, 25, 45],
             UnitSystem.METRIC: [0, 3, 24, 40, 72],
@@ -52,12 +51,12 @@ class CmdChannelGenerator:
     @classmethod
     def create_cmd_channels(
         cls,
-        channels: List[str],
-        units: List[str],
+        channels: list[str],
+        units: list[str],
         data: np.ndarray,
         unit_system: UnitSystem,
         sign_convention: SignConvention,
-    ) -> Tuple[List[str], List[str], np.ndarray]:
+    ) -> tuple[list[str], list[str], np.ndarray]:
         """
         Create command channels for standard test parameters.
 
@@ -121,7 +120,7 @@ class CmdChannelGenerator:
             return (channels, units, data)
 
     @classmethod
-    def _get_existing_cmd_channels(cls, channels: List[str]) -> List[str]:
+    def _get_existing_cmd_channels(cls, channels: list[str]) -> list[str]:
         """Get list of command channels that already exist."""
         existing = []
         for chan in cls.CMD_TARGETS.keys():
@@ -132,8 +131,8 @@ class CmdChannelGenerator:
     @classmethod
     def _validate_inputs(
         cls,
-        channels: List[str],
-        units: List[str],
+        channels: list[str],
+        units: list[str],
         data: np.ndarray,
         unit_system: UnitSystem,
     ) -> bool:
@@ -155,12 +154,12 @@ class CmdChannelGenerator:
     @classmethod
     def _generate_cmd_channels(
         cls,
-        channels: List[str],
-        units: List[str],
+        channels: list[str],
+        units: list[str],
         data: np.ndarray,
         unit_system: UnitSystem,
-        existing: List[str],
-    ) -> Tuple[List[str], List[str], List[np.ndarray]]:
+        existing: list[str],
+    ) -> tuple[list[str], list[str], list[np.ndarray]]:
         """Generate new command channels."""
         new_channels = []
         new_units = []
@@ -200,7 +199,7 @@ class CmdChannelGenerator:
 
     @classmethod
     def _discretize_channel(
-        cls, values: np.ndarray, targets: List[float], channel_name: str
+        cls, values: np.ndarray, targets: list[float], channel_name: str
     ) -> np.ndarray:
         """
         Discretize continuous channel data to nearest target values.
@@ -232,7 +231,7 @@ class CmdChannelGenerator:
     @classmethod
     def get_cmd_channel_info(
         cls, channel: str, unit_system: UnitSystem
-    ) -> Optional[Dict]:
+    ) -> dict | None:
         """
         Get information about a command channel.
 
@@ -263,8 +262,8 @@ class CmdChannelGenerator:
 
     @classmethod
     def validate_cmd_channels(
-        cls, channels: List[str], data: np.ndarray
-    ) -> Dict[str, bool]:
+        cls, channels: list[str], data: np.ndarray
+    ) -> dict[str, bool]:
         """
         Validate that command channels contain expected discrete values.
 
