@@ -1,7 +1,6 @@
 # ui/components.py
 """UI component classes for GripLab application."""
 
-
 import panel as pn
 import plotly.express as px
 

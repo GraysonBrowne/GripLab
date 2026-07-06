@@ -229,9 +229,7 @@ class CmdChannelGenerator:
         return nearest_values
 
     @classmethod
-    def get_cmd_channel_info(
-        cls, channel: str, unit_system: UnitSystem
-    ) -> dict | None:
+    def get_cmd_channel_info(cls, channel: str, unit_system: UnitSystem) -> dict | None:
         """
         Get information about a command channel.
 

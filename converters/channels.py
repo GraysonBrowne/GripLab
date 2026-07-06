@@ -2,7 +2,6 @@
 """Container for channel labels and other metadata."""
 
 
-
 class ChannelMetadata:
     CHANNEL_LABELS: dict[str, str] = {
         # Forces
