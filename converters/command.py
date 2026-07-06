@@ -123,7 +123,7 @@ class CmdChannelGenerator:
     def _get_existing_cmd_channels(cls, channels: list[str]) -> list[str]:
         """Get list of command channels that already exist."""
         existing = []
-        for chan in cls.CMD_TARGETS.keys():
+        for chan in cls.CMD_TARGETS:
             if f"Cmd{chan}" in channels:
                 existing.append(f"Cmd{chan}")
         return existing

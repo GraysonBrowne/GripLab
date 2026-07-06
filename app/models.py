@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any
 
 import panel as pn
 
@@ -45,4 +45,4 @@ class TimeSeriesPage:
     tab_content: Any = field(default=None)
 
 
-PageType = Union[ScatterPage, TimeSeriesPage]
+PageType = ScatterPage | TimeSeriesPage

@@ -896,11 +896,10 @@ class GripLabApp:
 
     def _on_plot_scatter(self, page: ScatterPage, clicks):
         if not self.data_table.selection:
-            if clicks is not None:
-                if pn.state.notifications:
-                    pn.state.notifications.warning(
-                        "Select a dataset to plot", duration=4000
-                    )
+            if clicks is not None and pn.state.notifications:
+                pn.state.notifications.warning(
+                    "Select a dataset to plot", duration=4000
+                )
             return
         widgets = {
             "data_table": self.data_table,

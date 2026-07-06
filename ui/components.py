@@ -158,7 +158,9 @@ class PlotControlWidgets:
         cmd_options = session.get("cmd_options", [])
         cmd_values = session.get("cmd_values", [])
 
-        for i, (sel, multi) in enumerate(zip(self.cmd_selects, self.cmd_multi_selects)):
+        for i, (sel, multi) in enumerate(
+            zip(self.cmd_selects, self.cmd_multi_selects, strict=True)
+        ):
             if i < len(cmd_channels) and cmd_channels[i] in sel.options:
                 sel.value = cmd_channels[i]
             if i < len(cmd_options):
@@ -388,8 +390,10 @@ class AppSettingsWidgets:
 
 
 class SubplotCellWidget:
-    def __init__(self, channels: list[str] = []):
+    def __init__(self, channels: list[str] | None = None):
         wf = WidgetFactory()
+        if channels is None:
+            channels = []
         opts = [""] + channels
         self.channel_selects = [
             wf.create_select(f"Channel {i + 1}", options=opts) for i in range(4)
@@ -483,7 +487,7 @@ class TimeSeriesControlWidgets:
             ]
 
     def add_row(
-        self, channels: list[str] = [], after: int = -1
+        self, channels: list[str] | None = None, after: int = -1
     ) -> list[SubplotCellWidget]:
         new_row = [SubplotCellWidget(channels)]
         if 0 <= after < self.n_rows:
@@ -496,7 +500,7 @@ class TimeSeriesControlWidgets:
         self._rebuild_select_options()
         return new_row
 
-    def add_col(self, channels: list[str] = []) -> list[SubplotCellWidget]:
+    def add_col(self, channels: list[str] | None = None) -> list[SubplotCellWidget]:
         new_cells = []
         for row in self.cells:
             cell = SubplotCellWidget(channels)

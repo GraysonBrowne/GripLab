@@ -502,12 +502,11 @@ class DataProcessor:
         x, y, z, c = DataDownsampler.downsample_uniform(
             x_data, y_data, z_data, c_data, factor=config.downsample_factor
         )
-        if len(x) == 0 or len(y) == 0:
-            if pn.state.notifications:
-                pn.state.notifications.warning(
-                    f"No data to plot from {dataset.name} under selected conditions",
-                    duration=4000,
-                )
+        if (len(x) == 0 or len(y) == 0) and pn.state.notifications:
+            pn.state.notifications.warning(
+                f"No data to plot from {dataset.name} under selected conditions",
+                duration=4000,
+            )
 
         return PlotData(x=x, y=y, z=z, c=c, name=dataset.name, color=dataset.node_color)
 
@@ -829,7 +828,7 @@ class PlottingUtils:
         """Build command channel filters from widget selections."""
         filters = {}
 
-        for selector, multi in zip(selectors, multi_selectors):
+        for selector, multi in zip(selectors, multi_selectors, strict=True):
             if selector.value and multi.value:
                 # Get selected values from multi-select
                 selected_values = [
