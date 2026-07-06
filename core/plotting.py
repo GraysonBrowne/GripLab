@@ -219,6 +219,7 @@ class PlotBuilder:
             x=data.x,
             y=data.y,
             mode="markers",
+            name=data.name,
             marker=dict(
                 size=config.marker_size,
                 symbol=data.symbol,
@@ -241,29 +242,6 @@ class PlotBuilder:
             hovertemplate=hovertemplate,
         )
         fig.add_trace(trace)
-
-        # Invisible dummy trace — opaque colorscale, drives the colorbar
-        colorbar_trace = dict(
-            type="scatter",
-            x=[None],
-            y=[None],
-            mode="markers",
-            marker=dict(
-                size=0,
-                color=[color_range[0], color_range[1]],
-                colorscale=config.color_map,  # fully opaque
-                cmin=color_range[0],
-                cmax=color_range[1],
-                colorbar=dict(
-                    title=dict(text=config.color_label, side="right"),
-                    showticklabels=config.show_axes,
-                ),
-                showscale=True,
-            ),
-            showlegend=False,
-            hoverinfo="none",
-        )
-        fig.add_trace(colorbar_trace)
 
     @staticmethod
     def add_3d_trace(fig: go.Figure, data: PlotData, config: PlotConfig) -> None:
@@ -321,6 +299,7 @@ class PlotBuilder:
             y=data.z,
             z=data.y,
             mode="markers",
+            name=data.name,
             marker=dict(
                 size=config.marker_size,
                 symbol=data.symbol,
@@ -344,29 +323,40 @@ class PlotBuilder:
         )
         fig.add_trace(trace)
 
-        # Invisible dummy trace — opaque colorscale, drives the colorbar
-        colorbar_trace = dict(
-            type="scatter3d",
+    @staticmethod
+    def add_colorbar_trace(
+        fig: go.Figure, config: PlotConfig, color_range: Tuple[float, float]
+    ) -> None:
+        """Add invisible trace that renders the shared colorbar."""
+        is_3d = "3D" in config.plot_type.value
+        trace = dict(
+            type="scatter3d" if is_3d else "scatter",
             x=[None],
             y=[None],
-            z=[None],
             mode="markers",
             marker=dict(
                 size=0,
                 color=[color_range[0], color_range[1]],
-                colorscale=config.color_map,  # fully opaque
+                colorscale=config.color_map,
                 cmin=color_range[0],
                 cmax=color_range[1],
                 colorbar=dict(
                     title=dict(text=config.color_label, side="right"),
                     showticklabels=config.show_axes,
+                    x=1.02,
+                    xanchor="left",
+                    y=0.0,
+                    yanchor="bottom",
+                    len=0.7,
                 ),
                 showscale=True,
             ),
             showlegend=False,
             hoverinfo="none",
         )
-        fig.add_trace(colorbar_trace)
+        if is_3d:
+            trace["z"] = [None]
+        fig.add_trace(trace)
 
     @staticmethod
     def update_layout(fig: go.Figure, config: PlotConfig) -> None:
@@ -396,7 +386,8 @@ class PlotBuilder:
                     ),
                 ),
                 font=dict(size=config.font_size),
-                showlegend="Color" not in config.plot_type.value,
+                legend=dict(x=1.02, xanchor="left", y=1.0, yanchor="top"),
+                showlegend=True,
             )
         else:
             fig.update_layout(
@@ -408,7 +399,8 @@ class PlotBuilder:
                 xaxis=dict(title=config.x_label, showticklabels=config.show_axes),
                 yaxis=dict(title=config.y_label, showticklabels=config.show_axes),
                 font=dict(size=config.font_size),
-                showlegend="Color" not in config.plot_type.value,
+                legend=dict(x=1.02, xanchor="left", y=1.0, yanchor="top"),
+                showlegend=True,
             )
 
 
@@ -742,8 +734,6 @@ class PlottingUtils:
                 plot_data_list.append(plot_data)
                 total_points += plot_data.point_count
 
-            
-
         # Create figure
         fig = PlotBuilder.create_figure(config.plot_type)
 
@@ -817,6 +807,9 @@ class PlottingUtils:
                     PlotBuilder.add_3d_color_trace(
                         fig, plot_data, config, color_range or (0.0, 1.0)
                     )
+
+        if "Color" in config.plot_type.value and color_range:
+            PlotBuilder.add_colorbar_trace(fig, config, color_range)
 
         # Update layout
         PlotBuilder.update_layout(fig, config)
