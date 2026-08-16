@@ -1,6 +1,6 @@
 ![GripLab](images/GripLab_Banner.png)
 
-# GripLab Developer Guide - v2026.06.1
+# GripLab Developer Guide - v2026.08.1
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
@@ -542,8 +542,9 @@ Tag the release as `v<version>`, lowercase (e.g. `v2026.05.1`).
 | Version | Date | Notes |
 |---|---|---|
 | 2026.05.1 | 2026-05-06 | Initial release |
-| 2026.05.2 | 2026-05-09 | Documentation Update |
-| 2026.06.1 | 2026-06-16 | Add Time Series Plots |
+| 2026.05.2 | 2026-05-09 | Documentation update |
+| 2026.06.1 | 2026-06-16 | Add time series plots |
+| 2026.08.1 | 2026-08-15 | Group by command channels |
 
 ---
 
