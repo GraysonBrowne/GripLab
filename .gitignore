@@ -210,3 +210,7 @@ __marimo__/
 config.yaml
 *.ipynb
 *.grip
+
+# Claude
+.claude/
+private_docs/

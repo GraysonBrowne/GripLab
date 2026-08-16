@@ -3,7 +3,7 @@
 
 import pickle
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, cast
 
 import panel as pn
 import plotly.express as px
@@ -15,7 +15,7 @@ from utils.logger import logger
 
 from .config import AppConfig
 
-_cache: Dict[str, Any] = cast(Dict[str, Any], pn.state.cache)
+_cache: dict[str, Any] = cast(dict[str, Any], pn.state.cache)
 
 
 class DataController:
@@ -26,7 +26,7 @@ class DataController:
         self.config = config
         self.import_counter = len(data_manager.list_datasets())
 
-    def import_data(self, file_paths: List[str]) -> List[str]:
+    def import_data(self, file_paths: list[str]) -> list[str]:
         """Import data files and return list of imported dataset names."""
         imported_names = []
 
@@ -73,7 +73,7 @@ class DataController:
             return False
 
     def update_dataset_info(
-        self, dataset_name: str, updates: Dict[str, Any], is_demo: bool = False
+        self, dataset_name: str, updates: dict[str, Any], is_demo: bool = False
     ) -> bool:
         """Update dataset information."""
         try:
@@ -136,7 +136,7 @@ class DataController:
 
     def get_dataset_info(
         self, dataset_name: str, is_demo: bool = False
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Get dataset information."""
         try:
             if is_demo:
@@ -187,7 +187,7 @@ class DataController:
             logger.error(f"Failed to export session: {e}", exc_info=True)
             return False
 
-    def import_session(self, path: str) -> Optional[dict]:
+    def import_session(self, path: str) -> dict | None:
         """Import a session from a binary file.
         Returns session state dict on success."""
         try:
@@ -255,7 +255,7 @@ class PlotController:
         self.dm = data_manager
         self.config = config
 
-    def create_plot(self, plot_params: Dict[str, Any]) -> Tuple[Optional[Figure], int]:
+    def create_plot(self, plot_params: dict[str, Any]) -> tuple[Figure | None, int]:
         """Create a plot based on the provided parameters."""
         try:
             fig, node_count = PlottingUtils.plot_data(
@@ -288,6 +288,8 @@ class PlotController:
                 plot_params.get("font_size", 18),
                 plot_params.get("marker_size", 10),
                 plot_params.get("marker_opacity", 1.0),
+                group_by=plot_params.get("group_by"),
+                colorway=plot_params.get("colorway"),
             )
             return fig, node_count
         except Exception as e:
@@ -295,8 +297,8 @@ class PlotController:
             return None, 0
 
     def get_plot_parameters(
-        self, widgets: Dict[str, Any], config: AppConfig
-    ) -> Dict[str, Any]:
+        self, widgets: dict[str, Any], config: AppConfig
+    ) -> dict[str, Any]:
         """Collect plot parameters from widgets."""
         return {
             "data_table": widgets["data_table"],
@@ -308,6 +310,8 @@ class PlotController:
             "sign_select": widgets["settings"].sign_select,
             "plot_radio_group": widgets["plot_controls"].plot_type,
             "color_map": widgets["plot_settings"].color_map,
+            "group_by": widgets["plot_controls"].group_by.value,
+            "colorway": list(widgets["settings"].colorway_select.value or []),
             "downsample_slider": widgets["plot_controls"].downsample_slider,
             "cmd_select_1": widgets["plot_controls"].cmd_selects[0],
             "cmd_select_2": widgets["plot_controls"].cmd_selects[1],

@@ -3,7 +3,7 @@
 
 from dataclasses import replace
 from enum import StrEnum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
@@ -23,7 +23,7 @@ class ConventionConverter:
     """Handles conversion between tire testing sign conventions."""
 
     # Sign convention multipliers relative to SAE baseline
-    SIGN_DEFINITIONS: Dict[str, Dict[str, int]] = {
+    SIGN_DEFINITIONS: dict[str, dict[str, int]] = {
         # Angle channels
         "IA": {
             SignConvention.SAE: 1,
@@ -222,7 +222,7 @@ class ConventionConverter:
     @classmethod
     def convert_channel_convention(
         cls,
-        channels: List[str],
+        channels: list[str],
         data: np.ndarray,
         current_convention: SignConvention,
         target_convention: SignConvention,
@@ -272,7 +272,7 @@ class ConventionConverter:
             return data
 
     @classmethod
-    def get_convention_info(cls, convention: str) -> Dict[str, str]:
+    def get_convention_info(cls, convention: str) -> dict[str, str]:
         """
         Get information about a sign convention.
 
@@ -319,7 +319,7 @@ class ConventionConverter:
         )
 
     @classmethod
-    def get_channel_signs(cls, channel: str) -> Optional[Dict[str, int]]:
+    def get_channel_signs(cls, channel: str) -> dict[str, int] | None:
         """
         Get sign multipliers for a channel across all conventions.
 

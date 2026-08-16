@@ -6,7 +6,7 @@ GripLab - Tire Data Analysis Application
 import sys
 import webbrowser
 from pathlib import Path
-from typing import Any, Dict, List, cast
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -41,7 +41,7 @@ from ui.modals import (
 from utils.dialogs import Tk_utils
 from utils.logger import logger
 
-_cache: Dict[str, Any] = cast(Dict[str, Any], pn.state.cache)
+_cache: dict[str, Any] = cast(dict[str, Any], pn.state.cache)
 
 
 class GripLabApp:
@@ -103,7 +103,7 @@ class GripLabApp:
         """Load custom CSS styles."""
         css_path = Path(self.program_dir, "ui", "styles.css")
         try:
-            with open(css_path, "r") as f:
+            with open(css_path) as f:
                 return f.read()
         except FileNotFoundError:
             logger.error("styles.css not found")
@@ -112,7 +112,7 @@ class GripLabApp:
     def _load_tabs_css(self) -> str:
         css_path = Path(self.program_dir, "ui", "tabs.css")
         try:
-            with open(css_path, "r") as f:
+            with open(css_path) as f:
                 return f.read()
         except FileNotFoundError:
             logger.error("tabs.css not found")
@@ -133,7 +133,7 @@ class GripLabApp:
         )
 
         # Initialize widget groups
-        self.pages: List[PageType] = []
+        self.pages: list[PageType] = []
         self.data_widgets = DataInfoWidgets()
         self.app_settings_widgets = AppSettingsWidgets(self.config)
 
@@ -167,6 +167,7 @@ class GripLabApp:
         """Restore widget state and re-plot from cached session."""
         session = _cache.get("session", {})
         if not session or not self.dm.list_datasets():
+            self._update_data_select_options()
             self._add_scatter_tab()
             self.main_tabs.active = 0
             self._initialized = True
@@ -253,6 +254,7 @@ class GripLabApp:
                     "y_channel": page.controls.y_axis.value,
                     "z_channel": page.controls.z_axis.value,
                     "c_channel": page.controls.color_axis.value,
+                    "group_by": page.controls.group_by.value,
                     "downsample": page.controls.downsample_slider.value,
                     "node_count": page.controls.node_count.value,
                     "cmd_channels": [s.value for s in page.controls.cmd_selects],
@@ -442,6 +444,7 @@ class GripLabApp:
                         sizing_mode="stretch_width",
                     ),
                     pn.Column(
+                        page.controls.group_by,
                         page.controls.downsample_slider,
                         page.controls.node_count,
                         width=160,
@@ -549,6 +552,7 @@ class GripLabApp:
                     )
                 )
                 self.data_table.selection = current_selection + new_indices
+        self._save_session()
 
     def _on_settings_click(self, clicks):
         """Open settings modal."""
@@ -739,7 +743,7 @@ class GripLabApp:
 
     def _on_table_color_click(self, event):
         """Handle color cell click in data table."""
-        self.info_tabs.active = 1  # Switch to Data Info tab
+        self.info_tabs.active = 0  # Switch to Data Info tab
 
         if self.config.demo_mode:
             self.data_widgets.data_select.value = self.dm.list_demo_names()[event.row]
@@ -892,11 +896,10 @@ class GripLabApp:
 
     def _on_plot_scatter(self, page: ScatterPage, clicks):
         if not self.data_table.selection:
-            if clicks is not None:
-                if pn.state.notifications:
-                    pn.state.notifications.warning(
-                        "Select a dataset to plot", duration=4000
-                    )
+            if clicks is not None and pn.state.notifications:
+                pn.state.notifications.warning(
+                    "Select a dataset to plot", duration=4000
+                )
             return
         widgets = {
             "data_table": self.data_table,
@@ -972,7 +975,7 @@ class GripLabApp:
             line_width=cast(int, page.settings.line_width.value),
             demo_mode=self.config.demo_mode,
         )
-        page.pane.min_height = n_rows * 100 + 90  # 90 accounts for t=30 + b=60 margins
+        page.pane.min_height = n_rows * 85 + 90  # 90 accounts for t=30 + b=60 margins
         page.pane.object = fig
         page.subplots = subplots
         self._save_session()
@@ -1238,6 +1241,8 @@ class GripLabApp:
                 page.controls.y_axis.options = channels
                 page.controls.z_axis.options = channels
                 page.controls.color_axis.options = channels
+                cmd_channels = [ch for ch in channels if ch.startswith("Cmd")]
+                page.controls.group_by.options = ["Dataset"] + cmd_channels
             elif isinstance(page, TimeSeriesPage):
                 page.controls.update_channel_options(channels)
         self._update_all_cmd_options(None)

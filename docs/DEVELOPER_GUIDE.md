@@ -212,7 +212,7 @@ Business logic layer between UI callbacks and core services.
 #### `components.py`
 Widget groups instantiated once and passed to the layout and callbacks. Each class holds related widgets as instance attributes.
 
-- `PlotControlWidgets` — plot type, axis selectors, command channel filters, downsample slider
+- `PlotControlWidgets` — plot type, axis selectors, group-by selector, command channel filters, downsample slider
 - `PlotSettingsWidgets` — title, labels, color map, font/marker settings, marker opacity
 - `DataInfoWidgets` — dataset selector, metadata fields, color picker
 - `AppSettingsWidgets` — theme, unit system, sign convention, demo mode, data directory
@@ -237,8 +237,9 @@ Channel names are normalized to uppercase and temperature unit strings are norma
 #### `plotting.py`
 Visualization pipeline.
 
-- `PlotType` — `StrEnum` of supported plot types
+- `PlotType` — `Enum` of supported plot types
 - `PlotConfig` — dataclass of all parameters needed to build a figure
+- `PlotData` — one trace's extracted arrays, plus its `color` and `symbol`
 - `DataProcessor` — applies unit conversion, sign convention conversion, and command channel filters to a dataset
 - `PlotBuilder` — static methods that add Plotly traces to a `go.Figure`
 - `PlotMetadataBuilder` — builds titles, subtitles, and axis labels using `ChannelMetadata`
@@ -249,6 +250,12 @@ Two module-level utilities handle colorscale alpha:
 def hex_to_rgba(hex_color: str, alpha: float = 1.0) -> str: ...
 def colorscale_with_alpha(colorscale: list[str], alpha: float) -> list[list]: ...
 ```
+
+`MARKER_SYMBOLS` is the module-level list of marker symbols used to distinguish datasets when traces are grouped. It is deliberately limited to the eight symbols supported by both `scatter` and `scatter3d` — adding a 2D-only symbol will render as the default circle on 3D plots.
+
+**Grouping.** `PlottingUtils.plot_data()` accepts `group_by` and `colorway`. When `group_by` names a command channel, each dataset is split into one `PlotData` per unique value of that channel via `DataProcessor._filter_by_channel()`. Colors are keyed by condition value and shared across datasets; symbols are keyed by dataset index. Both wrap on overflow. Group values are compared as `int64`, matching the existing command channel filter behaviour.
+
+**Colorbars.** `PlotBuilder.add_colorbar_trace()` adds a single invisible trace carrying the opaque colorscale that renders the colorbar. It is called once per figure, after all data traces — not per trace — so grouped color plots produce one colorbar rather than one per group.
 
 #### `processing.py`
 Signal processing and downsampling.
@@ -520,7 +527,15 @@ Examples:
 - `2025.10.2` — Second release in October 2025
 - `2026.05.1` — First release in May 2026
 
-When releasing, update the version in **both** `pyproject.toml` and `version.txt`.
+When releasing, update the version in all four places:
+
+- `pyproject.toml` — `project.version`
+- `version.txt` — `filevers`, `prodvers`, `FileVersion`, and `ProductVersion`
+  (note this file uses `2026.5.1`, without the leading zero)
+- `docs/USER_GUIDE.md` — title heading
+- `docs/DEVELOPER_GUIDE.md` — title heading
+
+Tag the release as `v<version>`, lowercase (e.g. `v2026.05.1`).
 
 ### Release History
 

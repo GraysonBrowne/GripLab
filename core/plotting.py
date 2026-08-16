@@ -4,7 +4,7 @@
 from collections import defaultdict
 from dataclasses import dataclass, replace
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import panel as pn
@@ -17,6 +17,17 @@ from converters.units import UnitSystem, UnitSystemConverter
 from core.dataio import Dataset
 from core.processing import DataDownsampler
 from utils.logger import logger
+
+MARKER_SYMBOLS = [
+    "circle",
+    "square",
+    "diamond",
+    "cross",
+    "x",
+    "circle-open",
+    "square-open",
+    "diamond-open",
+]
 
 
 def hex_to_rgba(color: str, alpha: float = 1.0) -> str:
@@ -81,8 +92,8 @@ class PlotConfig:
     plot_type: PlotType
     x_channel: str
     y_channel: str
-    z_channel: Optional[str] = None
-    color_channel: Optional[str] = None
+    z_channel: str | None = None
+    color_channel: str | None = None
 
     # Units
     x_unit: str = ""
@@ -134,11 +145,12 @@ class PlotData:
 
     x: np.ndarray
     y: np.ndarray
-    z: Optional[np.ndarray] = None
-    c: Optional[np.ndarray] = None
+    z: np.ndarray | None = None
+    c: np.ndarray | None = None
     name: str = ""
     color: str = "#1f77b4"
-    hover_text: Optional[List[str]] = None
+    hover_text: list[str] | None = None
+    symbol: str = "circle"
 
     @property
     def point_count(self) -> int:
@@ -181,6 +193,7 @@ class PlotBuilder:
             name=data.name,
             marker=dict(
                 size=config.marker_size,
+                symbol=data.symbol,
                 color=hex_to_rgba(data.color, alpha=config.marker_opacity),
                 line=dict(color=data.color, width=1),
             ),
@@ -194,7 +207,7 @@ class PlotBuilder:
         fig: go.Figure,
         data: PlotData,
         config: PlotConfig,
-        color_range: Tuple[float, float],
+        color_range: tuple[float, float],
     ) -> None:
         """Add 2D scatter trace with color mapping."""
         if config.show_axes:
@@ -213,8 +226,10 @@ class PlotBuilder:
             x=data.x,
             y=data.y,
             mode="markers",
+            name=data.name,
             marker=dict(
                 size=config.marker_size,
+                symbol=data.symbol,
                 color=data.c,
                 colorscale=colorscale_with_alpha(
                     config.color_map, config.marker_opacity
@@ -234,29 +249,6 @@ class PlotBuilder:
             hovertemplate=hovertemplate,
         )
         fig.add_trace(trace)
-
-        # Invisible dummy trace — opaque colorscale, drives the colorbar
-        colorbar_trace = dict(
-            type="scatter",
-            x=[None],
-            y=[None],
-            mode="markers",
-            marker=dict(
-                size=0,
-                color=[color_range[0], color_range[1]],
-                colorscale=config.color_map,  # fully opaque
-                cmin=color_range[0],
-                cmax=color_range[1],
-                colorbar=dict(
-                    title=dict(text=config.color_label, side="right"),
-                    showticklabels=config.show_axes,
-                ),
-                showscale=True,
-            ),
-            showlegend=False,
-            hoverinfo="none",
-        )
-        fig.add_trace(colorbar_trace)
 
     @staticmethod
     def add_3d_trace(fig: go.Figure, data: PlotData, config: PlotConfig) -> None:
@@ -279,6 +271,7 @@ class PlotBuilder:
             name=data.name,
             marker=dict(
                 size=config.marker_size,
+                symbol=data.symbol,
                 color=hex_to_rgba(data.color, alpha=config.marker_opacity),
                 line=dict(color=data.color, width=1),
             ),
@@ -292,7 +285,7 @@ class PlotBuilder:
         fig: go.Figure,
         data: PlotData,
         config: PlotConfig,
-        color_range: Tuple[float, float],
+        color_range: tuple[float, float],
     ) -> None:
         """Add 3D scatter trace with color mapping."""
         if config.show_axes:
@@ -313,8 +306,10 @@ class PlotBuilder:
             y=data.z,
             z=data.y,
             mode="markers",
+            name=data.name,
             marker=dict(
                 size=config.marker_size,
+                symbol=data.symbol,
                 color=data.c,
                 colorscale=colorscale_with_alpha(
                     config.color_map, config.marker_opacity
@@ -335,29 +330,40 @@ class PlotBuilder:
         )
         fig.add_trace(trace)
 
-        # Invisible dummy trace — opaque colorscale, drives the colorbar
-        colorbar_trace = dict(
-            type="scatter3d",
+    @staticmethod
+    def add_colorbar_trace(
+        fig: go.Figure, config: PlotConfig, color_range: tuple[float, float]
+    ) -> None:
+        """Add invisible trace that renders the shared colorbar."""
+        is_3d = "3D" in config.plot_type.value
+        trace = dict(
+            type="scatter3d" if is_3d else "scatter",
             x=[None],
             y=[None],
-            z=[None],
             mode="markers",
             marker=dict(
                 size=0,
                 color=[color_range[0], color_range[1]],
-                colorscale=config.color_map,  # fully opaque
+                colorscale=config.color_map,
                 cmin=color_range[0],
                 cmax=color_range[1],
                 colorbar=dict(
                     title=dict(text=config.color_label, side="right"),
                     showticklabels=config.show_axes,
+                    x=1.02,
+                    xanchor="left",
+                    y=0.0,
+                    yanchor="bottom",
+                    len=0.7,
                 ),
                 showscale=True,
             ),
             showlegend=False,
             hoverinfo="none",
         )
-        fig.add_trace(colorbar_trace)
+        if is_3d:
+            trace["z"] = [None]
+        fig.add_trace(trace)
 
     @staticmethod
     def update_layout(fig: go.Figure, config: PlotConfig) -> None:
@@ -387,7 +393,8 @@ class PlotBuilder:
                     ),
                 ),
                 font=dict(size=config.font_size),
-                showlegend="Color" not in config.plot_type.value,
+                legend=dict(x=1.02, xanchor="left", y=1.0, yanchor="top"),
+                showlegend=True,
             )
         else:
             fig.update_layout(
@@ -399,7 +406,8 @@ class PlotBuilder:
                 xaxis=dict(title=config.x_label, showticklabels=config.show_axes),
                 yaxis=dict(title=config.y_label, showticklabels=config.show_axes),
                 font=dict(size=config.font_size),
-                showlegend="Color" not in config.plot_type.value,
+                legend=dict(x=1.02, xanchor="left", y=1.0, yanchor="top"),
+                showlegend=True,
             )
 
 
@@ -408,7 +416,7 @@ class DataProcessor:
 
     @staticmethod
     def prepare_dataset(
-        dataset: Any, config: PlotConfig, cmd_filters: Optional[Dict[str, List]] = None
+        dataset: Any, config: PlotConfig, cmd_filters: dict[str, list] | None = None
     ) -> Any:
         """
         Prepare dataset for plotting with conversions and parsing.
@@ -443,7 +451,7 @@ class DataProcessor:
         return dataset
 
     @staticmethod
-    def _filter_by_channel(dataset: Any, channel: str, values: List) -> Any:
+    def _filter_by_channel(dataset: Any, channel: str, values: list) -> Any:
         """Filter dataset by channel values."""
         if channel not in dataset.channels:
             return dataset
@@ -494,12 +502,11 @@ class DataProcessor:
         x, y, z, c = DataDownsampler.downsample_uniform(
             x_data, y_data, z_data, c_data, factor=config.downsample_factor
         )
-        if len(x) == 0 or len(y) == 0:
-            if pn.state.notifications:
-                pn.state.notifications.warning(
-                    f"No data to plot from {dataset.name} under selected conditions",
-                    duration=4000,
-                )
+        if (len(x) == 0 or len(y) == 0) and pn.state.notifications:
+            pn.state.notifications.warning(
+                f"No data to plot from {dataset.name} under selected conditions",
+                duration=4000,
+            )
 
         return PlotData(x=x, y=y, z=z, c=c, name=dataset.name, color=dataset.node_color)
 
@@ -509,7 +516,7 @@ class PlotMetadataBuilder:
 
     @staticmethod
     def build_title(
-        datasets: List[Any], config: PlotConfig, demo_mode: bool = False
+        datasets: list[Any], config: PlotConfig, demo_mode: bool = False
     ) -> str:
         """Build plot title from datasets."""
         if config.title:
@@ -548,7 +555,7 @@ class PlotMetadataBuilder:
         return title
 
     @staticmethod
-    def build_subtitle(datasets: List[Any], config: PlotConfig) -> str:
+    def build_subtitle(datasets: list[Any], config: PlotConfig) -> str:
         """Build plot subtitle with test conditions."""
         if config.subtitle:
             return config.subtitle
@@ -567,7 +574,7 @@ class PlotMetadataBuilder:
             if not values:
                 continue
 
-            unique_vals: List[Any] = [int(x) for x in list(set(values))]
+            unique_vals: list[Any] = [int(x) for x in list(set(values))]
             if len(unique_vals) == 1:
                 if key == "rim_width":
                     if not config.show_axes:
@@ -639,7 +646,9 @@ class PlottingUtils:
         font_size=18,
         marker_size=10,
         marker_opacity=1.0,
-    ) -> Tuple[go.Figure, int]:
+        group_by=None,
+        colorway=None,
+    ) -> tuple[go.Figure, int]:
         """
         Creates a plot from widget selections.
         """
@@ -690,23 +699,47 @@ class PlottingUtils:
         plot_data_list = []
         total_points = 0
 
-        for idx in selection:
+        group_channel = group_by if group_by and group_by != "Dataset" else None
+        palette = colorway or px.colors.qualitative.Plotly
+        group_colors: dict = {}
+        use_symbols = group_channel is not None or "Color" in config.plot_type.value
+
+        for i, idx in enumerate(selection):
             name = dm.list_datasets()[idx]
             dataset = dm.get_dataset(name)
 
-            # Process dataset
+            symbol = (
+                MARKER_SYMBOLS[i % len(MARKER_SYMBOLS)] if use_symbols else "circle"
+            )
             processed = DataProcessor.prepare_dataset(dataset, config, cmd_filters)
             datasets.append(processed)
+            display_name = dm.list_demo_names()[idx] if axis_visibility else name
 
-            # Extract plot data
-            plot_data = DataProcessor.extract_plot_data(processed, config)
+            if group_channel and group_channel in processed.channels:
+                col_idx = processed.channels.index(group_channel)
+                values = sorted(
+                    np.unique(processed.data[:, col_idx].astype(np.int64)).tolist(),
+                    key=abs,
+                )
+                for value in values:
+                    subset = DataProcessor._filter_by_channel(
+                        processed, group_channel, [value]
+                    )
+                    plot_data = DataProcessor.extract_plot_data(subset, config)
+                    plot_data.name = f"{display_name} | {group_channel}={value}"
+                    plot_data.symbol = symbol
+                    if value not in group_colors:
+                        group_colors[value] = palette[len(group_colors) % len(palette)]
+                    plot_data.color = group_colors[value]
+                    plot_data_list.append(plot_data)
+                    total_points += plot_data.point_count
 
-            # Update name for demo mode
-            if axis_visibility:
-                plot_data.name = dm.list_demo_names()[idx]
-
-            plot_data_list.append(plot_data)
-            total_points += plot_data.point_count
+            else:
+                plot_data = DataProcessor.extract_plot_data(processed, config)
+                plot_data.name = display_name
+                plot_data.symbol = symbol
+                plot_data_list.append(plot_data)
+                total_points += plot_data.point_count
 
         # Create figure
         fig = PlotBuilder.create_figure(config.plot_type)
@@ -782,17 +815,20 @@ class PlottingUtils:
                         fig, plot_data, config, color_range or (0.0, 1.0)
                     )
 
+        if "Color" in config.plot_type.value and color_range:
+            PlotBuilder.add_colorbar_trace(fig, config, color_range)
+
         # Update layout
         PlotBuilder.update_layout(fig, config)
 
         return fig, total_points
 
     @staticmethod
-    def _build_cmd_filters(selectors: List, multi_selectors: List) -> Dict[str, List]:
+    def _build_cmd_filters(selectors: list, multi_selectors: list) -> dict[str, list]:
         """Build command channel filters from widget selections."""
         filters = {}
 
-        for selector, multi in zip(selectors, multi_selectors):
+        for selector, multi in zip(selectors, multi_selectors, strict=True):
             if selector.value and multi.value:
                 # Get selected values from multi-select
                 selected_values = [
@@ -811,12 +847,12 @@ class TimeSeriesBuilder:
 
     @staticmethod
     def build_time_series(
-        datasets: List[Dataset],
-        subplots: List[List],
+        datasets: list[Dataset],
+        subplots: list[list],
         x_channel: str = "ET",
-        unit_system: Optional[UnitSystem] = None,
-        sign_convention: Optional[SignConvention] = None,
-        colorway: Optional[List[str]] = None,
+        unit_system: UnitSystem | None = None,
+        sign_convention: SignConvention | None = None,
+        colorway: list[str] | None = None,
         title: str = "",
         font_size: int = 12,
         line_width: int = 2,

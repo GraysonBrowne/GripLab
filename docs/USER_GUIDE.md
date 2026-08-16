@@ -157,7 +157,7 @@ Click the **Settings** button in the header to open the settings panel.
 | Setting | Description |
 |---|---|
 | **Theme** | Light or dark. Takes effect on next launch. |
-| **Color Sequence** | The order of auto-assigned node colors as datasets are imported. |
+| **Color Sequence** | The order of auto-assigned node colors as datasets are imported. Also used as the palette for **Group By** on scatter plots, where colors are assigned per condition value rather than per dataset. |
 | **Demo Mode** | Obfuscates dataset names and hides axis values across all scatter and time series plots — useful for demonstrations where TTC data should not be displayed publicly. |
 | **Unit System** | USCS or Metric (see below). |
 | **Sign Convention** | SAE, Adapted SAE, ISO, or Adapted ISO. |
@@ -232,8 +232,28 @@ Use the command channel selectors to filter the dataset to specific test conditi
 
 ![overview](images/overview.png)
 
+### Group By
+The **Group By** dropdown splits each selected dataset into a separate trace for every value of a command channel.
+
+Select any command channel (`CmdSA`, `CmdFZ`, `CmdIA`, `CmdP`, `CmdV`) to group by it, or leave it on **Dataset** to plot each dataset as a single trace.
+
+When grouping is active, two things encode the data:
+
+- **Color** — the condition value. A given value gets the same color in every dataset, so the same load or pressure is directly comparable across runs.
+- **Marker symbol** — the dataset. Each selected dataset gets its own symbol (circle, square, diamond, cross, and so on).
+
+Colors are drawn from the active **Color Sequence** and symbols from a set of eight. Both repeat if you exceed the available count, so a sweep with a large number of conditions may reuse a color.
+
 ### Overlaying Datasets
-Multiple datasets can be selected in the table and plotted simultaneously. Each dataset retains its assigned node color unless a color axis is active, in which case all datasets share the same color scale. Hover over any point to see which dataset it belongs to and its channel values.
+Multiple datasets can be selected in the table and plotted simultaneously. How each dataset is distinguished depends on the active options:
+
+| Mode | Color | Marker symbol |
+|---|---|---|
+| Default | Dataset node color | Circle for all |
+| Color axis active | Shared color scale across all datasets | One per dataset |
+| **Group By** active | Condition value, from the Color Sequence | One per dataset |
+
+Hover over any point to see which dataset it belongs to and its channel values. Click any legend entry to toggle that trace on or off.
 
 ### Plot Toolbar
 The Plotly toolbar appears in the top-right corner of the plot area and provides the following tools:
@@ -312,7 +332,7 @@ Click the **⚙** icon next to the Plot button on a time series page to open plo
 
 - **3D plots handle more points.** Due to how Plotly renders 3D vs 2D, you can use a lower downsample factor on 3D plots without significantly impacting responsiveness. That said, 3D plots are better suited for interactive exploration — they are difficult to interpret as static images in reports.
 
-- **Color plots work best with a single dataset.** When overlaying multiple datasets on a color plot, the color axis spans all datasets combined, making it difficult to distinguish between them. For multi-dataset comparisons, use standard 2D plots.
+- **Color plots span all datasets.** When overlaying multiple datasets on a color plot, the color axis is scaled across all of them combined, so color no longer identifies the run. Datasets are distinguished by marker symbol instead, and the legend lists them — but for a direct multi-dataset comparison, a standard 2D plot is still easier to read.
 
 - **Use time series plots to verify test conditions.** Overlaying a channel with its command channel (e.g. FZ and CmdFZ) in a single subplot is an effective way to confirm the machine was holding the intended condition throughout a run.
 

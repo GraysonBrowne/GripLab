@@ -4,7 +4,7 @@
 import math
 from dataclasses import replace
 from enum import StrEnum
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 
@@ -27,8 +27,8 @@ class UnitSystemConverter:
     ConversionTuple = tuple[
         float, float, float, float
     ]  # (to_si, from_si, to_offset, from_offset)
-    _CONVERSION_CACHE: Dict[
-        UnitSystem, Dict[UnitSystem, Dict[str, ConversionTuple]]
+    _CONVERSION_CACHE: dict[
+        UnitSystem, dict[UnitSystem, dict[str, ConversionTuple]]
     ] = {}
 
     # Static channel mappings (no Enum overhead)
@@ -166,7 +166,7 @@ class UnitSystemConverter:
                         )
 
     @classmethod
-    def map_channels_to_types(cls, channels: List[str]) -> List[str]:
+    def map_channels_to_types(cls, channels: list[str]) -> list[str]:
         """
         Mapping of channels to unit types.
 

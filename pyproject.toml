@@ -40,6 +40,9 @@ select = [
     "W",   # pycodestyle warnings
     "F",   # pyflakes
     "I",   # isort
+    "B",   # bugbear — likely bugs
+    "UP",  # pyupgrade — modernize syntax
+    "SIM", # simplify
 ]
 ignore = [
     "E203",  # whitespace before ':' — conflicts with formatter
