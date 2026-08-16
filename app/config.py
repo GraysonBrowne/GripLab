@@ -4,7 +4,7 @@
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import ClassVar, Dict
+from typing import ClassVar
 
 import yaml
 
@@ -54,7 +54,7 @@ class AppConfig:
             config = cls(data_dir=str(Path.cwd()))
             return config
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert configuration to dictionary for YAML export."""
         return {
             "theme": self.theme,

@@ -1,11 +1,9 @@
 # converters/channels.py
 """Container for channel labels and other metadata."""
 
-from typing import Dict
-
 
 class ChannelMetadata:
-    CHANNEL_LABELS: Dict[str, str] = {
+    CHANNEL_LABELS: dict[str, str] = {
         # Forces
         "FX": "Longitudinal Force",
         "FY": "Lateral Force",

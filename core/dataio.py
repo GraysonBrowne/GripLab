@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass, replace
 from itertools import islice
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -24,9 +24,9 @@ class Dataset:
     # Core data
     path: Path
     name: str
-    channels: List[str]
-    units: List[str]
-    unit_types: List[str]
+    channels: list[str]
+    units: list[str]
+    unit_types: list[str]
     data: NDArray[np.float64]
 
     # Metadata
@@ -50,7 +50,7 @@ class Dataset:
         if len(self.channels) != self.data.shape[1]:
             raise ValueError("Number of channels must match data columns")
 
-    def get_channel_data(self, channel: str) -> Optional[NDArray]:
+    def get_channel_data(self, channel: str) -> NDArray | None:
         """Get data for a specific channel."""
         try:
             idx = self.channels.index(channel)
@@ -59,7 +59,7 @@ class Dataset:
             logger.warning(f"Channel {channel} not found in dataset")
             return None
 
-    def get_channel_unit(self, channel: str) -> Optional[str]:
+    def get_channel_unit(self, channel: str) -> str | None:
         """Get unit for a specific channel."""
         try:
             idx = self.channels.index(channel)
@@ -72,7 +72,7 @@ class DataManager:
     """Manages collection of datasets with operations."""
 
     def __init__(self):
-        self._datasets: Dict[str, Dataset] = {}
+        self._datasets: dict[str, Dataset] = {}
 
     # ===== Core Operations =====
 
@@ -83,7 +83,7 @@ class DataManager:
         self._datasets[name] = dataset
         return True
 
-    def get_dataset(self, name: str) -> Optional[Dataset]:
+    def get_dataset(self, name: str) -> Dataset | None:
         """Retrieve a dataset by name."""
         return self._datasets.get(name)
 
@@ -95,13 +95,13 @@ class DataManager:
         logger.warning(f"Dataset {name} not found for removal")
         return False
 
-    def list_datasets(self) -> List[str]:
+    def list_datasets(self) -> list[str]:
         """Get list of all dataset names."""
         return list(self._datasets.keys())
 
     # ===== Bulk Operations =====
 
-    def get_channels(self, names: List[str]) -> List[str]:
+    def get_channels(self, names: list[str]) -> list[str]:
         """Get unique channels across multiple datasets."""
         channels = []
         for name in names:
@@ -112,8 +112,8 @@ class DataManager:
         return list(dict.fromkeys(channels))
 
     def parse_dataset(
-        self, dataset: Dataset, channel: str, condition: List[Any]
-    ) -> Optional[Dataset]:
+        self, dataset: Dataset, channel: str, condition: list[Any]
+    ) -> Dataset | None:
         """Filter dataset based on channel condition."""
         try:
             if channel not in dataset.channels:
@@ -133,19 +133,19 @@ class DataManager:
 
     # ===== Property Accessors =====
 
-    def list_tire_ids(self) -> List[str]:
+    def list_tire_ids(self) -> list[str]:
         """Get tire IDs from all datasets."""
         return [ds.tire_id for ds in self._datasets.values()]
 
-    def list_colors(self) -> List[str]:
+    def list_colors(self) -> list[str]:
         """Get node colors from all datasets."""
         return [ds.node_color for ds in self._datasets.values()]
 
-    def list_demo_names(self) -> List[str]:
+    def list_demo_names(self) -> list[str]:
         """Get demo names from all datasets."""
         return [ds.demo_name for ds in self._datasets.values()]
 
-    def list_demo_tire_ids(self) -> List[str]:
+    def list_demo_tire_ids(self) -> list[str]:
         """Get demo tire IDs from all datasets."""
         return [ds.demo_tire_id for ds in self._datasets.values()]
 
@@ -248,7 +248,7 @@ class DataImporter:
     @staticmethod
     def import_file(
         filepath: Path, name: str, node_color: str, demo_name: str
-    ) -> Optional[Dataset]:
+    ) -> Dataset | None:
         """Import data file based on extension."""
         if not filepath.exists():
             logger.error(f"File not found: {filepath}")
@@ -267,7 +267,7 @@ class DataImporter:
     @staticmethod
     def import_mat(
         filepath: Path, name: str, node_color: str, demo_name: str
-    ) -> Optional[Dataset]:
+    ) -> Dataset | None:
         """Import MATLAB .mat file."""
         try:
             # Load file
@@ -338,11 +338,11 @@ class DataImporter:
     @staticmethod
     def import_dat(
         filepath: Path, name: str, node_color: str, demo_name: str
-    ) -> Optional[Dataset]:
+    ) -> Dataset | None:
         """Import ASCII .dat or .txt file."""
         try:
             # Read metadata from first lines
-            with open(filepath, "r") as f:
+            with open(filepath) as f:
                 header_lines = list(islice(f, 3))
 
             # Parse header
@@ -404,7 +404,7 @@ class DataImporter:
             return None
 
     @staticmethod
-    def _extract_mat_metadata(file_data: Dict, name: str) -> Dict[str, Any]:
+    def _extract_mat_metadata(file_data: dict, name: str) -> dict[str, Any]:
         """Extract metadata from MAT file structure."""
         metadata = {
             "tire_id": "",
@@ -457,8 +457,8 @@ class DataImporter:
 
     @staticmethod
     def _extract_dat_metadata(
-        header_line: str, name: str, units: List[str]
-    ) -> Dict[str, Any]:
+        header_line: str, name: str, units: list[str]
+    ) -> dict[str, Any]:
         """Extract metadata from DAT file header."""
         metadata = {
             "tire_id": "",

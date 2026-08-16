@@ -2,7 +2,7 @@
 """Signal processing utilities for tire test data."""
 
 from enum import Enum
-from typing import Optional, Tuple, Union, cast
+from typing import cast
 
 import numpy as np
 from scipy.signal import butter, filtfilt
@@ -33,7 +33,7 @@ class SignalProcessor:
     @staticmethod
     def apply_butterworth_filter(
         data: np.ndarray,
-        cutoff: Union[float, Tuple[float, float]],
+        cutoff: float | tuple[float, float],
         fs: float = 100,
         order: int = 4,
         filter_type: FilterType = FilterType.LOWPASS,
@@ -83,7 +83,7 @@ class SignalProcessor:
                     raise ValueError(f"Unknown filter type: {filter_type}")
 
             b, a = cast(
-                Tuple[np.ndarray, np.ndarray],
+                tuple[np.ndarray, np.ndarray],
                 butter(order, normal_cutoff, btype=btype, analog=False, output="ba"),
             )
 
@@ -97,7 +97,7 @@ class SignalProcessor:
     @staticmethod
     def remove_outliers(
         data: np.ndarray, n_std: float = 3.0, method: str = "zscore"
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Remove outliers from data using statistical methods.
 
@@ -140,10 +140,10 @@ class DataDownsampler:
     def downsample_uniform(
         x: np.ndarray,
         y: np.ndarray,
-        z: Optional[np.ndarray] = None,
-        c: Optional[np.ndarray] = None,
+        z: np.ndarray | None = None,
+        c: np.ndarray | None = None,
         factor: int = 5,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Downsample arrays uniformly by selecting every nth element.
 
@@ -194,8 +194,8 @@ class DataDownsampler:
 
     @staticmethod
     def downsample_random(
-        x: np.ndarray, y: np.ndarray, size: int = 2000, seed: Optional[int] = None
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        x: np.ndarray, y: np.ndarray, size: int = 2000, seed: int | None = None
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Randomly downsample data to a target size.
 
@@ -224,9 +224,9 @@ class DataDownsampler:
         x: np.ndarray,
         y: np.ndarray,
         size: int = 2000,
-        bins: Tuple[int, int] = (50, 50),
-        seed: Optional[int] = None,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        bins: tuple[int, int] = (50, 50),
+        seed: int | None = None,
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Downsample using 2D grid binning for even coverage.
 
@@ -284,10 +284,10 @@ class DataDownsampler:
     def smart_downsample(
         x: np.ndarray,
         y: np.ndarray,
-        z: Optional[np.ndarray] = None,
-        c: Optional[np.ndarray] = None,
+        z: np.ndarray | None = None,
+        c: np.ndarray | None = None,
         target_points: int = 5000,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Intelligently downsample based on data characteristics.
 

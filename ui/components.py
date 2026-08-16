@@ -1,8 +1,6 @@
 # ui/components.py
 """UI component classes for GripLab application."""
 
-from typing import List, Optional
-
 import panel as pn
 import plotly.express as px
 
@@ -33,7 +31,7 @@ class WidgetFactory:
 
     @staticmethod
     def create_select(
-        name: str, options: Optional[List] = None, **kwargs
+        name: str, options: list | None = None, **kwargs
     ) -> pn.widgets.Select:
         """Create a select dropdown widget."""
         defaults = {"options": options or [], "sizing_mode": "stretch_width"}
@@ -72,6 +70,11 @@ class PlotControlWidgets:
         self.z_axis = wf.create_select("Z-Axis", disabled=True)
         self.color_axis = wf.create_select("Colorbar", disabled=True)
 
+        # Group by selector
+        self.group_by = wf.create_select("Group By", min_width=80)
+        self.group_by.options = ["Dataset"]
+        self.group_by.value = "Dataset"
+
         # Command channel selectors
         self.cmd_selects = [
             wf.create_select("Conditional Parsing", min_width=80),
@@ -99,8 +102,11 @@ class PlotControlWidgets:
             step=1,
             value=10,
             sizing_mode="stretch_width",
+            margin=(5, 10, 0, 10),
         )
-        self.node_count = pn.widgets.StaticText(name="Node Count", value="0")
+        self.node_count = pn.widgets.StaticText(
+            name="Node Count", value="0", margin=(0, 10)
+        )
 
         # Plot action buttons
         self.plot_button = wf.create_button(
@@ -142,12 +148,18 @@ class PlotControlWidgets:
             if value and value in widget.options:
                 widget.value = value
 
+        group_by = session.get("group_by", "Dataset")
+        if group_by in self.group_by.options:
+            self.group_by.value = group_by
+
         # Restore command channel selectors and multi-selects
         cmd_channels = session.get("cmd_channels", [])
         cmd_options = session.get("cmd_options", [])
         cmd_values = session.get("cmd_values", [])
 
-        for i, (sel, multi) in enumerate(zip(self.cmd_selects, self.cmd_multi_selects)):
+        for i, (sel, multi) in enumerate(
+            zip(self.cmd_selects, self.cmd_multi_selects, strict=True)
+        ):
             if i < len(cmd_channels) and cmd_channels[i] in sel.options:
                 sel.value = cmd_channels[i]
             if i < len(cmd_options):
@@ -377,8 +389,10 @@ class AppSettingsWidgets:
 
 
 class SubplotCellWidget:
-    def __init__(self, channels: list[str] = []):
+    def __init__(self, channels: list[str] | None = None):
         wf = WidgetFactory()
+        if channels is None:
+            channels = []
         opts = [""] + channels
         self.channel_selects = [
             wf.create_select(f"Channel {i + 1}", options=opts) for i in range(4)
@@ -407,7 +421,7 @@ class SubplotCellWidget:
 
 class TimeSeriesControlWidgets:
     def __init__(self):
-        self.cells: List[List[SubplotCellWidget]] = []
+        self.cells: list[list[SubplotCellWidget]] = []
         self.n_rows: int = 0
         self.n_cols: int = 0
 
@@ -449,7 +463,7 @@ class TimeSeriesControlWidgets:
             current if current in opts else (opts[0] if opts else None)
         )
 
-    def get_selected_cell(self) -> Optional[SubplotCellWidget]:
+    def get_selected_cell(self) -> SubplotCellWidget | None:
         val = self.subplot_select.value
         if not val:
             return None
@@ -472,8 +486,8 @@ class TimeSeriesControlWidgets:
             ]
 
     def add_row(
-        self, channels: list[str] = [], after: int = -1
-    ) -> List[SubplotCellWidget]:
+        self, channels: list[str] | None = None, after: int = -1
+    ) -> list[SubplotCellWidget]:
         new_row = [SubplotCellWidget(channels)]
         if 0 <= after < self.n_rows:
             self.cells.insert(after + 1, new_row)
@@ -485,7 +499,7 @@ class TimeSeriesControlWidgets:
         self._rebuild_select_options()
         return new_row
 
-    def add_col(self, channels: list[str] = []) -> List[SubplotCellWidget]:
+    def add_col(self, channels: list[str] | None = None) -> list[SubplotCellWidget]:
         new_cells = []
         for row in self.cells:
             cell = SubplotCellWidget(channels)
@@ -495,7 +509,7 @@ class TimeSeriesControlWidgets:
         self._rebuild_select_options()
         return new_cells
 
-    def remove_selected(self) -> Optional[tuple[int, int]]:
+    def remove_selected(self) -> tuple[int, int] | None:
         """Remove the currently selected cell. Returns (row, col) removed."""
         val = self.subplot_select.value
         if not val:
@@ -534,7 +548,7 @@ class TimeSeriesControlWidgets:
             for cell in row:
                 cell.update_channel_options(channels)
 
-    def get_subplot_grid(self) -> List[List[SubplotConfig]]:
+    def get_subplot_grid(self) -> list[list[SubplotConfig]]:
         return [
             [
                 SubplotConfig(channels=cell.selected_channels(), label=cell.label.value)
