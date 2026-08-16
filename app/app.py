@@ -975,7 +975,7 @@ class GripLabApp:
             line_width=cast(int, page.settings.line_width.value),
             demo_mode=self.config.demo_mode,
         )
-        page.pane.min_height = n_rows * 100 + 90  # 90 accounts for t=30 + b=60 margins
+        page.pane.min_height = n_rows * 85 + 90  # 90 accounts for t=30 + b=60 margins
         page.pane.object = fig
         page.subplots = subplots
         self._save_session()
