@@ -213,3 +213,4 @@ config.yaml
 
 # Claude
 .claude/
+private_docs/
