@@ -24,6 +24,7 @@ To stay in the loop and receive notifications when new releases are available, c
 - 2D and 3D interactive scatter plots
 - Overlay channels with time series plots
 - Filter data by test condition using auto-generated command channels
+- Group and color scatter data by test condition
 - Unit system conversion (USCS / Metric)
 - Sign convention conversion (SAE, Adapted SAE, ISO, Adapted ISO)
 - Configurable themes, color sequences, and plot styling
