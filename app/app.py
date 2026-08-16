@@ -1267,7 +1267,10 @@ class GripLabApp:
             server = self.template.show(threaded=True)
 
             def on_session_destroyed(session_context):
-                logger.info("Shutting down server...")
+                if list(session_context.server_context.sessions):
+                    logger.debug("Session ended, others still active")
+                    return
+                logger.info("Last session ended. Shutting down server...")
                 server.stop()
 
             pn.state.on_session_destroyed(on_session_destroyed)
